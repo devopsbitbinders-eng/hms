@@ -62,33 +62,24 @@ export async function GET(request: Request) {
         easemytripUrl:  "easemytrip.com",
       };
       const site = PLATFORM_DOMAINS[platform] || "booking.com";
-      const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(`site:${site} ${query}`)}`;
+      const searchUrl = `https://search.yahoo.com/search?p=${encodeURIComponent(`site:${site} ${query}`)}`;
       
       await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
       
       results = await page.evaluate(() => {
-        const cards = document.querySelectorAll('.result');
+        const cards = document.querySelectorAll('.algo');
         const items: any[] = [];
         cards.forEach(card => {
-          const name = card.querySelector('.result__title')?.textContent?.trim();
-          const a = card.querySelector('.result__a') as HTMLAnchorElement;
-          const snippet = card.querySelector('.result__snippet')?.textContent?.trim();
+          const a = card.querySelector('a') as HTMLAnchorElement;
+          const name = card.querySelector('h3')?.textContent?.trim() || a?.textContent?.trim();
+          const snippet = card.querySelector('.compText')?.textContent?.trim();
+          
           if (name && a && a.href) {
-            // DuckDuckGo wraps links in a redirect. Extract the real URL from the uddg= query param.
-            let finalUrl = a.href;
-            try {
-              const parsed = new URL(a.href);
-              const uddg = parsed.searchParams.get('uddg');
-              if (uddg) finalUrl = decodeURIComponent(uddg);
-            } catch {}
-            // Fallback: use the visible .result__url text if href parse fails
-            if (!finalUrl || finalUrl.includes('duckduckgo.com')) {
-              const urlText = card.querySelector('.result__url')?.textContent?.trim() || '';
-              if (urlText) finalUrl = urlText.startsWith('http') ? urlText : `https://${urlText}`;
-            }
-            if (finalUrl && !finalUrl.includes('duckduckgo.com')) {
-              items.push({ name, address: snippet?.substring(0, 80) + '...', link: finalUrl });
-            }
+            items.push({ 
+              name: name.replace(/http[^\s]+/g, '').trim(), 
+              address: snippet ? snippet.substring(0, 80) + '...' : '', 
+              link: a.href 
+            });
           }
         });
         return items.slice(0, 5);
