@@ -8,7 +8,7 @@ export interface Reservation {
   roomIndex: number;
   startIndex: number; // Index of date/hour column
   duration: number;   // Number of nights or 2-hour blocks
-  status: "checked-in" | "confirmed" | "pending" | "maintenance" | "checked-out";
+  status: "checked-in" | "confirmed" | "pending" | "maintenance" | "checked-out" | "cancelled";
   details: string;
   billingItems: { id: string; name: string; amount: number; category: string; invoiceGroup?: string }[];
   isGroup?: boolean;
@@ -24,6 +24,12 @@ export interface Reservation {
   // B2B Billing Details
   companyName?: string;
   guestGstin?: string;
+  guestGstNumber?: string;
+  billingType?: string;
+  paymentMethod?: string;
+  upiTransactionId?: string;
+  specialRequests?: string;
+  guestTag?: string;
 
   // Primary ID Verification
   idType?: string;
@@ -58,6 +64,7 @@ export interface Room {
   name: string;
   type: string;
   basePrice?: number;
+  cleanStatus?: string;
 }
 
 interface VisualGridProps {
@@ -66,7 +73,7 @@ interface VisualGridProps {
   onUpdateReservation: (updated: Reservation) => void;
   onSelectReservation: (res: Reservation) => void;
   timeScale: "daily" | "hourly";
-  addToast: (msg: string) => void;
+  addToast: (msg: string, type?: "success" | "error" | "warning") => void;
   currentUser?: any;
   onEditRoom?: (room: Room) => void;
   onAddBookingAtCell?: (roomIndex: number, colIndex: number) => void;

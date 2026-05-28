@@ -7,7 +7,7 @@ interface SplitBillingModalProps {
   room: Room;
   onUpdateReservation: (updated: Reservation) => void;
   onClose: () => void;
-  addToast: (msg: string) => void;
+  addToast: (msg: string, type?: "success" | "error" | "warning") => void;
   activePropertyType?: string;
   activeProperty?: any;
 }
@@ -709,7 +709,7 @@ export default function SplitBillingModal({
             <span style={{ color: "var(--text-secondary)", display: "block" }}>
               Room {room.number} — {room.name} ({room.type})
             </span>
-            <span style={{ color: "var(--text-secondary)", display: "block", marginTop: "4px", fontSize: "0.8rem", fontWeight: "500", padding: "4px 8px", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "4px", display: "inline-block" }}>
+            <span style={{ color: "var(--text-secondary)", marginTop: "4px", fontSize: "0.8rem", fontWeight: "500", padding: "4px 8px", backgroundColor: "rgba(255,255,255,0.03)", borderRadius: "4px", display: "inline-block" }}>
               🗓️ In: {reservation.checkInTime 
                 ? new Date(reservation.checkInTime).toLocaleString("en-IN", { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                 : new Date(new Date("2026-05-20T00:00:00").getTime() + reservation.startIndex * 86400000).toLocaleDateString("en-IN", { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -831,7 +831,7 @@ export default function SplitBillingModal({
                         const isCorp = e.target.checked;
                         const updated = { ...reservation, billingType: isCorp ? "corporate" : "individual" };
                         if (!isCorp) {
-                          updated.guestGstNumber = null;
+                          updated.guestGstNumber = undefined;
                         }
                         onUpdateReservation(updated);
                         
