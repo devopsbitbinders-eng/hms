@@ -703,30 +703,26 @@ async function fetchGoibiboReviews(propertyId: string, url: string) {
   }
 }
 
-// ==========================================
-// 6. OYO Rooms (Playwright Stealth - API Capture)
+// ===================================// 6. OYO Rooms (Puppeteer Stealth - API Capture)
 // ==========================================
 async function fetchOyoReviews(propertyId: string, url: string) {
   let browser;
   try {
-    const { addExtra } = require("playwright-extra");
-    const playwright = require("playwright");
-    const playwrightExtra = addExtra(playwright);
-    
-    const stealth = require("puppeteer-extra-plugin-stealth")();
-    playwrightExtra.use(stealth);
+    const puppeteer = require("puppeteer-extra");
+    const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+    if (!puppeteer.plugins || !puppeteer.plugins.find((p: any) => p.name === 'stealth')) {
+      puppeteer.use(StealthPlugin());
+    }
 
-    browser = await playwrightExtra.chromium.launch({
-      headless: false, // Must be false to bypass OYO bot detection
+    browser = await puppeteer.launch({
+      headless: true, // Use headless for Railway compatibility
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
-    const context = await browser.newContext({
-      viewport: { width: 1366, height: 900 },
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1366, height: 900 });
+    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
 
-    const page = await context.newPage();
     const capturedReviews: any[] = [];
     let reviewsApiCaptured = false;
 
@@ -759,26 +755,29 @@ async function fetchOyoReviews(propertyId: string, url: string) {
     });
 
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(3000);
+    await new Promise(r => setTimeout(r, 3000));
 
     // Scroll to trigger lazy-loaded reviews
     for (let i = 0; i < 5; i++) {
-      await page.mouse.wheel(0, 800);
-      await page.waitForTimeout(800);
+      await page.mouse.wheel({ deltaY: 800 });
+      await new Promise(r => setTimeout(r, 800));
     }
 
     // Try clicking "See all reviews"
     try {
-      const btn = page.getByText(/see all review/i).first();
-      if (await btn.isVisible({ timeout: 3000 })) {
-        await btn.click();
-        console.log("OYO: Clicked 'See all reviews'");
-        await page.waitForTimeout(5000);
-      }
+      await page.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button, a, span, div'));
+        const targetBtn = btns.find(b => b.textContent && b.textContent.toLowerCase().includes('see all review'));
+        if (targetBtn) {
+          (targetBtn as HTMLElement).click();
+        }
+      });
+      console.log("OYO: Attempted to click 'See all reviews'");
+      await new Promise(r => setTimeout(r, 5000));
     } catch (e) {}
 
     // Wait for API responses
-    await page.waitForTimeout(3000);
+    await new Promise(r => setTimeout(r, 3000));
 
     if (capturedReviews.length === 0) {
       // Fallback: extract from DOM using the known class pattern
@@ -798,7 +797,7 @@ async function fetchOyoReviews(propertyId: string, url: string) {
     }
 
     if (capturedReviews.length === 0) {
-      return { success: false, error: "OYO: 0 reviews captured. Bot protection may have blocked the page." };
+      return { success: false, error: "OYO's anti-bot system is blocking this datacenter server from extracting real reviews. Please run locally to extract OYO." };
     }
 
     const reviews = capturedReviews.slice(0, 30).map((r: any) => ({
@@ -825,24 +824,21 @@ async function fetchOyoReviews(propertyId: string, url: string) {
 async function fetchGenericReviews(propertyId: string, url: string, platformName: string) {
   let browser;
   try {
-    const { addExtra } = require("playwright-extra");
-    const playwright = require("playwright");
-    const playwrightExtra = addExtra(playwright);
-    const stealth = require("puppeteer-extra-plugin-stealth")();
-    playwrightExtra.use(stealth);
+    const puppeteer = require("puppeteer-extra");
+    const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+    if (!puppeteer.plugins || !puppeteer.plugins.find((p: any) => p.name === 'stealth')) {
+      puppeteer.use(StealthPlugin());
+    }
 
-    browser = await playwrightExtra.chromium.launch({
-      headless: false, // headless:false bypasses bot protection on all major OTA platforms
+    browser = await puppeteer.launch({
+      headless: true, // headless:true for Railway compatibility
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
-    const context = await browser.newContext({
-      viewport: { width: 1366, height: 900 },
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      locale: "en-US"
-    });
-
-    const page = await context.newPage();
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1366, height: 900 });
+    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+    
     const capturedReviews: any[] = [];
     const lowerPlatform = platformName.toLowerCase();
 
@@ -917,22 +913,26 @@ async function fetchGenericReviews(propertyId: string, url: string, platformName
     // Navigate to review section
     const reviewUrl = url.includes('#') ? url : `${url}#Reviews`;
     await page.goto(reviewUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(4000);
+    await new Promise(r => setTimeout(r, 4000));
 
     // Scroll to trigger lazy-loaded reviews
     for (let i = 0; i < 6; i++) {
-      await page.mouse.wheel(0, 1000);
-      await page.waitForTimeout(800);
+      await page.mouse.wheel({ deltaY: 1000 });
+      await new Promise(r => setTimeout(r, 800));
     }
-    await page.waitForTimeout(3000);
+    await new Promise(r => setTimeout(r, 3000));
 
     // Try clicking "See more reviews" / "Load more" buttons
     try {
-      const moreBtn = page.locator('button, a').filter({ hasText: /see (all|more) reviews|load more|show more reviews/i }).first();
-      if (await moreBtn.isVisible({ timeout: 2000 })) {
-        await moreBtn.click();
-        await page.waitForTimeout(3000);
-      }
+      await page.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button, a'));
+        const textToFind = /(see (all|more) reviews|load more|show more reviews)/i;
+        const targetBtn = btns.find(b => b.textContent && textToFind.test(b.textContent));
+        if (targetBtn) {
+          (targetBtn as HTMLElement).click();
+        }
+      });
+      await new Promise(r => setTimeout(r, 3000));
     } catch (e) {}
 
     // DOM fallback with platform-specific selectors
