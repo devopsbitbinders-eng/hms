@@ -79,6 +79,7 @@ export default function Dashboard() {
   const [newStaffPassword, setNewStaffPassword] = useState("");
   const [justCreatedStaff, setJustCreatedStaff] = useState<{name: string, pin: string} | null>(null);
   const [newStaffRole, setNewStaffRole] = useState("Front Office Clerk");
+  const [customStaffRole, setCustomStaffRole] = useState("");
   const [newStaffAvatar, setNewStaffAvatar] = useState("");
   const [newStaffPropertyId, setNewStaffPropertyId] = useState("");
 
@@ -1112,7 +1113,9 @@ export default function Dashboard() {
       return;
     }
 
-    if (newStaffRole !== "Super Admin" && !newStaffPropertyId) {
+    const finalRole = newStaffRole === "Other" ? customStaffRole : newStaffRole;
+
+    if (finalRole !== "Super Admin" && !newStaffPropertyId) {
       addToast("⚠️ Please select an Assigned Property for this staff member.");
       return;
     }
@@ -1125,9 +1128,9 @@ export default function Dashboard() {
           name: newStaffName,
           username: newStaffUsername.toLowerCase().trim(),
           password: newStaffPassword,
-          role: newStaffRole,
+          role: finalRole,
           avatar: newStaffAvatar.toUpperCase().substring(0, 2),
-          propertyId: newStaffRole === "Super Admin" ? null : newStaffPropertyId,
+          propertyId: finalRole === "Super Admin" ? null : newStaffPropertyId,
         }),
       });
       const data = await response.json();
@@ -1989,14 +1992,24 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <label style={labelStyle}>Role</label>
-                          <select style={{ ...inputStyle, padding: "8px 12px" }} value={newStaffRole} onChange={(e) => setNewStaffRole(e.target.value)}>
-                            <option value="Super Admin">Super Admin (Full Access)</option>
+                          <select style={{ ...inputStyle, padding: "8px 12px", marginBottom: newStaffRole === "Other" ? "8px" : "0" }} value={newStaffRole} onChange={(e) => setNewStaffRole(e.target.value)}>
                             <option value="General Manager">General Manager (Senior GM)</option>
                             <option value="Front Office Manager">Front Office Manager (Senior Staff)</option>
                             <option value="Receptionist">Receptionist (Front Desk)</option>
                             <option value="Housekeeping Supervisor">Housekeeping Supervisor</option>
                             <option value="Finance Executive">Finance Executive</option>
+                            <option value="Other">Other (Custom Role)</option>
                           </select>
+                          {newStaffRole === "Other" && (
+                            <input 
+                              style={{ ...inputStyle, padding: "8px 12px" }} 
+                              type="text" 
+                              placeholder="e.g. Security Guard" 
+                              value={customStaffRole} 
+                              onChange={(e) => setCustomStaffRole(e.target.value)} 
+                              required 
+                            />
+                          )}
                         </div>
                         <div>
                           <label style={labelStyle}>Avatar Initials</label>
@@ -2004,7 +2017,7 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {newStaffRole !== "Super Admin" && (
+                      {(newStaffRole === "Other" ? customStaffRole : newStaffRole).toLowerCase() !== "super admin" && (
                         <div style={{ display: "flex", flexDirection: "column", marginTop: "4px", marginBottom: "12px" }}>
                           <label style={labelStyle}>Assigned Property Branch</label>
                           {propertiesList.length > 0 ? (
