@@ -66,6 +66,8 @@ export default function Dashboard() {
   // Multi-User Staff & Session Authentication states
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [usersList, setUsersList] = useState<any[]>([]);
+  const [todayAttendance, setTodayAttendance] = useState<any>(null);
+  const [allAttendances, setAllAttendances] = useState<any[]>([]);
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   const [authenticatingUser, setAuthenticatingUser] = useState<any>(null);
   const [authPassword, setAuthPassword] = useState("");
@@ -401,6 +403,67 @@ export default function Dashboard() {
     }
   }
 
+  async function fetchAttendance() {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const res = await fetch("/api/attendance?date=" + today);
+      const data = await res.json();
+      if (data.success) {
+        setAllAttendances(data.attendances);
+      }
+    } catch (err) {
+      console.error("Failed to fetch attendance:", err);
+    }
+  }
+
+  useEffect(() => {
+    if (currentUser && allAttendances.length > 0) {
+      const myAtt = allAttendances.find((a: any) => a.userId === currentUser.id && !a.clockOut);
+      setTodayAttendance(myAtt || null);
+    } else {
+      setTodayAttendance(null);
+    }
+  }, [currentUser, allAttendances]);
+
+  const handleClockInOut = async (type: "clockIn" | "clockOut") => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id, type })
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast(type === "clockIn" ? "✅ Successfully Clocked In for the day!" : "✅ Clocked Out successfully.");
+        fetchAttendance();
+      } else {
+        addToast("⚠️ " + data.error, "error");
+      }
+    } catch (err) {
+      addToast("Failed to update attendance", "error");
+    }
+  }
+
+  const handleOwnerMarkAttendance = async (staffId: string) => {
+    try {
+      const res = await fetch("/api/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: staffId, type: "manual", markedBy: "Owner" })
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast("✅ Marked attendance successfully.");
+        fetchAttendance();
+      } else {
+        addToast("⚠️ " + data.error, "error");
+      }
+    } catch (err) {
+      addToast("Failed to mark attendance", "error");
+    }
+  }
+
   useEffect(() => {
     const saved = localStorage.getItem("aether_pms_user");
     if (saved) {
@@ -412,6 +475,7 @@ export default function Dashboard() {
     }
     loadData();
     fetchUsers();
+    fetchAttendance();
 
     // Poll for permission changes every 5 seconds so revoked managers see UI updates without reload
     const pollInterval = setInterval(() => {
@@ -1892,6 +1956,7 @@ export default function Dashboard() {
               <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", paddingBottom: "0" }}>
                 {([
                   { id: "system", label: "⚙️ System Settings" },
+                  { id: "attendance", label: "⏱️ Attendance" },
                   { id: "permissions", label: "🔑 Staff Permissions Layout" },
                 ] as const).map((tab) => (
                   <button
@@ -2104,6 +2169,73 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
+              )}
+
+              {/* ========== STAFF ATTENDANCE SUB-TAB ========== */}
+              {settingsSubTab === "attendance" && (
+                <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", marginBottom: "8px" }}>
+                  <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>⏱️ Today's Staff Attendance</h2>
+                  
+                  {allAttendances.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "32px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
+                      <p style={{ color: "var(--text-secondary)" }}>No staff members have clocked in today yet.</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
+                      {allAttendances.map((att: any) => (
+                        <div key={att.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                            <div className={styles.avatar} style={{ margin: 0, width: "36px", height: "36px", fontSize: "0.9rem" }}>{att.user.avatar}</div>
+                            <div>
+                              <strong style={{ fontSize: "0.9rem", color: "#fff", display: "block" }}>{att.user.name}</strong>
+                              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                                {att.user.role} • {new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {att.clockOut ? ` - ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : " (Active Shift)"}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <span style={{ 
+                              padding: "4px 8px", 
+                              borderRadius: "4px", 
+                              fontSize: "0.75rem", 
+                              fontWeight: "600",
+                              backgroundColor: att.clockOut ? "rgba(107, 114, 128, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                              color: att.clockOut ? "var(--text-muted)" : "var(--status-checkedin)",
+                              border: `1px solid ${att.clockOut ? "rgba(107, 114, 128, 0.2)" : "rgba(16, 185, 129, 0.2)"}`
+                            }}>
+                              {att.clockOut ? "Shift Completed" : "Clocked In"}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {currentUser?.role === "Super Admin" && (
+                    <div style={{ marginTop: "24px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
+                      <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>✅ Mark Staff Attendance Manually</h3>
+                      <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+                        <div style={{ flex: 1 }}>
+                          <select 
+                            style={{ ...inputStyle, padding: "8px 12px" }} 
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                handleOwnerMarkAttendance(e.target.value);
+                                e.target.value = "";
+                              }
+                            }}
+                          >
+                            <option value="">-- Choose a staff member to clock them in --</option>
+                            {usersList.map((u: any) => (
+                              <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* ========== STAFF PERMISSIONS LAYOUT SUB-TAB ========== */}
@@ -3511,8 +3643,28 @@ export default function Dashboard() {
                       <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{currentUser?.role || "Super Admin"}</p>
                     </div>
                   </div>
-                  <button
-                    type="button"
+                  <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                    {todayAttendance ? (
+                      <button
+                        type="button"
+                        onClick={() => handleClockInOut("clockOut")}
+                        className="btn-secondary"
+                        style={{ padding: "8px 12px", fontSize: "0.8rem", color: "#fff", borderColor: "rgba(239, 68, 68, 0.5)", backgroundColor: "rgba(239, 68, 68, 0.1)" }}
+                      >
+                        ⏱️ Clock Out
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleClockInOut("clockIn")}
+                        className="btn-primary"
+                        style={{ padding: "8px 12px", fontSize: "0.8rem", backgroundColor: "var(--status-checkedin)", border: "none" }}
+                      >
+                        ⏱️ Clock In
+                      </button>
+                    )}
+                    <button
+                      type="button"
                     onClick={() => {
                       localStorage.removeItem("aether_pms_user");
                       setCurrentUser(null);
@@ -3536,6 +3688,7 @@ export default function Dashboard() {
                   >
                     🔒 Lock Shift
                   </button>
+                  </div>
                 </div>
 
                 {/* Account selector list */}
