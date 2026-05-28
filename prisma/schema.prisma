@@ -1,0 +1,214 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Property {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   // homestay, hotel, resort
+  location  String
+  gstNumber String?
+  rooms              Room[]
+  housekeepers       Housekeeper[]
+  maintenanceTickets MaintenanceTicket[]
+  inventoryItems     InventoryItem[]
+  reviews            Review[]
+
+  // Reputation & OTA Profile Links
+  tripAdvisorUrl String?   @db.Text
+  googlePlaceId  String?
+  bookingComUrl  String?   @db.Text
+  agodaUrl       String?   @db.Text
+  makeMyTripUrl  String?   @db.Text
+  expediaUrl     String?   @db.Text
+  hotelsComUrl   String?   @db.Text
+  airbnbUrl      String?   @db.Text
+  goibiboUrl     String?   @db.Text
+  yatraUrl       String?   @db.Text
+  oyoUrl         String?   @db.Text
+  easemytripUrl  String?   @db.Text
+  customOtaUrls  String?   @db.Text  // JSON: [{name, url, domain}]
+  lastReviewSync DateTime?
+}
+
+model Room {
+  id           String        @id @default(uuid())
+  number       String
+  name         String
+  type         String        // suite, standard, loft, pod, desk
+  propertyId   String
+  property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+
+  // Housekeeping metadata
+  cleanStatus   String        @default("Clean") // Clean, Dirty, In Progress, Inspecting
+  hkAssignedTo  String?       // ID of Housekeeper
+  hkLastUpdated String?
+  basePrice     Float         @default(0.0)
+}
+
+model Reservation {
+  id           String        @id @default(uuid())
+  guestName    String
+  roomId       String
+  room         Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  startIndex   Int
+  duration     Int
+  status       String        // checked-in, confirmed, pending, maintenance
+  details      String?       @db.Text
+  isGroup      Boolean       @default(false)
+  groupName    String?
+  bookingType  String        @default("daily") // "daily" (nights) or "hourly" (2-hr slots)
+  billingItems BillingItem[]
+
+  // Contact Information
+  phone               String?
+  email               String?
+  dob                 String?       // YYYY-MM-DD
+  nationality         String?       // "Indian" or "Foreign"
+
+  // Primary ID Verification
+  idType              String?       // Aadhaar, Driving License, Voter ID, Passport
+  idNumber            String?
+  idScanData          String?       @db.LongText // Base64 document scan
+
+  // Foreign National - Form C Requirements
+  passportNumber      String?
+  passportPlace       String?
+  passportIssueDate   String?
+  passportExpiryDate  String?
+  visaNumber          String?
+  visaType            String?
+  visaExpiryDate      String?
+  indiaArrivalDate    String?
+  portOfEntry         String?
+  arrivedFrom         String?
+  proceedingTo        String?
+
+  // Stay & Occupants Metadata
+  checkInTime         String?
+  checkOutTime        String?
+  numAdults           Int           @default(1)
+  numChildren         Int           @default(0)
+  childAges           String?       // Comma-separated child age values
+  vehicleNumber       String?
+
+  // Billing, Preferences & VIP Tags
+  paymentMethod       String?       // UPI, Credit Card, Corporate, Pay at Property
+  upiTransactionId    String?
+  specialRequests     String?       @db.Text
+  guestTag            String?       // VIP, Corporate Guest, Frequent Flyer, Blacklisted
+  billingType         String        @default("individual") // "individual" or "corporate"
+  guestGstNumber      String?
+  reviews             Review[]
+}
+
+model BillingItem {
+  id            String      @id @default(uuid())
+  name          String
+  amount        Float
+  category      String      // room, service, amenity
+  invoiceGroup  String      @default("A") // "A" = Primary/Corporate, "B" = Split/Guest
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  name                String
+  username            String   @unique
+  password            String   // Plaintext PIN or password for simple demonstration & checking
+  role                String   // Super Admin, Front Office Manager, Housekeeping Supervisor, Finance Executive
+  avatar              String   // Two-character initials (e.g. "AM") or emojis
+  propertyId          String?  // Assigned property ID for staff members
+  allowRoomManagement Boolean  @default(true)
+}
+
+model Notification {
+  id           String   @id @default(uuid())
+  message      String
+  createdAt    DateTime @default(now())
+  read         Boolean  @default(false)
+  staffName    String
+  propertyName String
+}
+
+model Channel {
+  id              String    @id @default(uuid())
+  name            String    // "Booking.com", "Airbnb", "Agoda", "Expedia" or custom name
+  status          String    @default("inactive") // "active", "warning", "inactive"
+  markupType      String    @default("percentage") // "percentage" or "fixed"
+  markupValue     Float     @default(0.0)
+  connected       Boolean   @default(false)
+  listingId       String?   // Mapped OTA property / Listing ID
+  apiKey          String?   // Mapped connectivity credentials
+  lastSynced      DateTime?
+  propertyId      String
+  syncType        String    @default("api") // "api" or "ical"
+  externalIcalUrl String?   @db.Text
+  localIcalUrl    String?   @db.Text
+  isCustom        Boolean   @default(false)
+}
+
+model ChannelLog {
+  id           String   @id @default(uuid())
+  channelName  String
+  type         String   // "rate_sync", "inventory_sync", "booking_webhook"
+  status       String   // "success", "blocked", "warning"
+  message      String   @db.Text
+  timestamp    DateTime @default(now())
+  propertyId   String
+}
+
+model Housekeeper {
+  id         String   @id @default(uuid())
+  name       String
+  phone      String
+  status     String   @default("active")
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model MaintenanceTicket {
+  id         String   @id @default(uuid())
+  roomNumber String
+  issue      String   @db.Text
+  priority   String   @default("medium")
+  status     String   @default("Reported")
+  reportedAt String
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model InventoryItem {
+  id         String   @id @default(uuid())
+  itemId     String
+  name       String
+  count      Int      @default(0)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id            String       @id @default(uuid())
+  guestName     String
+  rating        Int
+  comment       String       @db.Text
+  status        String       @default("pending") // "published", "pending", "rejected"
+  source        String       @default("Internal") // "Internal", "Booking.com", "Airbnb", "TripAdvisor", "Google"
+  externalId    String?      @unique // Composite key or OTA ID to prevent duplicates (Phase 3 Upsert)
+  sentimentScore Int?        // 1-100 score from AI analysis (Phase 4)
+  topics        String?      @db.Text // JSON string of extracted topics/tags
+  reviewType    String?      // "Complaint", "Praise", "Suggestion", "Mixed"
+  autoReply     String?      @db.Text // AI generated reply draft
+  createdAt     DateTime     @default(now())
+  propertyId    String
+  property      Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+}
