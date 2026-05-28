@@ -105,7 +105,7 @@ export default function Dashboard() {
   const [gmError, setGmError] = useState<string | null>(null);
 
   // Settings sub-tab state
-  const [settingsSubTab, setSettingsSubTab] = useState<"system" | "permissions">("system");
+  const [settingsSubTab, setSettingsSubTab] = useState<"system" | "attendance" | "permissions">("system");
 
   
   // Store property rooms and reservations in local state
