@@ -42,6 +42,7 @@ export async function POST(request: Request) {
         avatar: user.avatar,
         propertyId: user.propertyId,
         allowRoomManagement: user.allowRoomManagement,
+        isFirstLogin: user.isFirstLogin,
       },
     });
   } catch (error: any) {

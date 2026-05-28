@@ -12,6 +12,7 @@ import HousekeepingOps from "../components/HousekeepingOps";
 import FinanceOps from "../components/FinanceOps";
 import FrontDeskOps from "../components/FrontDeskOps";
 import ReviewManagement from "../components/ReviewManagement";
+import LoginScreen from "../components/LoginScreen";
 
 // Helper to map DB property names to frontend property keys
 const mapPropertyKey = (name: string): string => {
@@ -1798,6 +1799,15 @@ export default function Dashboard() {
     );
   }
 
+  if (!currentUser) {
+    return (
+      <LoginScreen onLoginSuccess={(user) => {
+        setCurrentUser(user);
+        localStorage.setItem("aether_pms_user", JSON.stringify(user));
+      }} />
+    );
+  }
+
   return (
     <main className={styles.dashboardContainer}>
       <Sidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} currentUser={currentUser} onProfileClick={() => setShowProfileSwitcher(true)} activePropertyType={activePropertyType} />
@@ -2163,9 +2173,9 @@ export default function Dashboard() {
                     </div>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
-                      <div>
-                        <label style={labelStyle}>Password / PIN</label>
-                        <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" placeholder="PIN or text code" value={newStaffPassword} onChange={(e) => setNewStaffPassword(e.target.value)} required />
+                      <div style={{ flex: 1.5 }}>
+                        <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "4px", display: "block" }}>Temporary PIN (First Login)</label>
+                        <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" placeholder="e.g. 1234" value={newStaffPassword} onChange={(e) => setNewStaffPassword(e.target.value)} required />
                       </div>
                       <div>
                         <label style={labelStyle}>Role</label>

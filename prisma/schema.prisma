@@ -127,6 +127,7 @@ model User {
   avatar              String   // Two-character initials (e.g. "AM") or emojis
   propertyId          String?  // Assigned property ID for staff members
   allowRoomManagement Boolean  @default(true)
+  isFirstLogin        Boolean  @default(true) // Used for temporary PIN reset workflow
 }
 
 model Notification {
