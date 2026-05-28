@@ -77,7 +77,8 @@ export default function Dashboard() {
   const [newStaffName, setNewStaffName] = useState("");
   const [newStaffUsername, setNewStaffUsername] = useState("");
   const [newStaffPassword, setNewStaffPassword] = useState("");
-  const [newStaffRole, setNewStaffRole] = useState("Front Office Manager");
+  const [justCreatedStaff, setJustCreatedStaff] = useState<{name: string, pin: string} | null>(null);
+  const [newStaffRole, setNewStaffRole] = useState("Front Office Clerk");
   const [newStaffAvatar, setNewStaffAvatar] = useState("");
   const [newStaffPropertyId, setNewStaffPropertyId] = useState("");
 
@@ -1132,6 +1133,7 @@ export default function Dashboard() {
       const data = await response.json();
       if (data.success) {
         addToast(`✅ Staff member "${newStaffName}" registered persistently!`);
+        setJustCreatedStaff({ name: newStaffName, pin: newStaffPassword });
         setNewStaffName("");
         setNewStaffUsername("");
         setNewStaffPassword("");
@@ -2029,6 +2031,39 @@ export default function Dashboard() {
                       👥 Register Staff Account
                     </button>
                   </form>
+
+                  {justCreatedStaff && (
+                    <div style={{ padding: "16px", marginTop: "16px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid var(--status-checkedin)", borderRadius: "8px" }}>
+                      <h4 style={{ color: "var(--status-checkedin)", fontSize: "1rem", marginBottom: "8px" }}>✅ Profile Created Successfully!</h4>
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "16px", lineHeight: "1.5" }}>
+                        Share these login details with <strong>{justCreatedStaff.name}</strong> so they can log in and set their permanent PIN.
+                      </p>
+                      <div style={{ display: "flex", gap: "12px" }}>
+                        <button 
+                          type="button"
+                          className="btn-primary" 
+                          onClick={() => {
+                            const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
+                            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+                          }}
+                          style={{ flex: 1, backgroundColor: "#25D366", color: "#fff", border: "none" }}
+                        >
+                          💬 Send via WhatsApp
+                        </button>
+                        <button 
+                          type="button"
+                          className="btn-secondary" 
+                          onClick={() => {
+                            const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
+                            navigator.clipboard.writeText(msg);
+                          }}
+                          style={{ flex: 1 }}
+                        >
+                          📋 Copy Details
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 ) : (
                   <div className="glass-card" style={{ padding: "20px", display: "flex", alignItems: "center", gap: "16px", backgroundColor: "rgba(255,255,255,0.01)", borderStyle: "dashed" }}>
                     <div style={{ fontSize: "1.5rem" }}>🔒</div>
