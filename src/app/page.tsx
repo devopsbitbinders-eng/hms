@@ -1955,128 +1955,120 @@ export default function Dashboard() {
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = "transparent";
-                          }}
-                          title="Delete Operator"
-                        >
-                          🗑️
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Add User Form */}
+                               {/* Add User Form */}
                 {currentUser?.role === "Super Admin" ? (
-                  <form onSubmit={handleRegisterStaff} className="glass-card" style={{ padding: "20px", borderStyle: "dashed" }}>
-                    <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>➕ Register New Hotel Staff Member</h3>
-                    
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                      <div>
-                        <label style={labelStyle}>Full Name</label>
-                        <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" placeholder="e.g. Rahul Sharma" value={newStaffName} onChange={(e) => setNewStaffName(e.target.value)} required />
+                  <>
+                    <form onSubmit={handleRegisterStaff} className="glass-card" style={{ padding: "20px", borderStyle: "dashed" }}>
+                      <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>👤 Register New Hotel Staff Member</h3>
+                      
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                        <div>
+                          <label style={labelStyle}>Full Name</label>
+                          <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" placeholder="e.g. Rahul Sharma" value={newStaffName} onChange={(e) => setNewStaffName(e.target.value)} required />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Username</label>
+                          <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" placeholder="e.g. rahul" value={newStaffUsername} onChange={(e) => setNewStaffUsername(e.target.value)} required />
+                        </div>
                       </div>
-                      <div>
-                        <label style={labelStyle}>Username</label>
-                        <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" placeholder="e.g. rahul" value={newStaffUsername} onChange={(e) => setNewStaffUsername(e.target.value)} required />
-                      </div>
-                    </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
-                      <div style={{ flex: 1.5 }}>
-                        <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "4px", display: "block" }}>Temporary PIN (First Login)</label>
-                        <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" placeholder="e.g. 1234" value={newStaffPassword} onChange={(e) => setNewStaffPassword(e.target.value)} required />
-                      </div>
-                      <div>
-                        <label style={labelStyle}>Role</label>
-                        <select style={{ ...inputStyle, padding: "8px 12px" }} value={newStaffRole} onChange={(e) => setNewStaffRole(e.target.value)}>
-                          <option value="Super Admin">Super Admin (Full Access)</option>
-                          <option value="General Manager">General Manager (Senior GM)</option>
-                          <option value="Front Office Manager">Front Office Manager (Senior Staff)</option>
-                          <option value="Receptionist">Receptionist (Front Desk)</option>
-                          <option value="Housekeeping Supervisor">Housekeeping Supervisor</option>
-                          <option value="Finance Executive">Finance Executive</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label style={labelStyle}>Avatar Initials</label>
-                        <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" maxLength={2} placeholder="e.g. RS" value={newStaffAvatar} onChange={(e) => setNewStaffAvatar(e.target.value)} required />
-                      </div>
-                    </div>
-
-                    {newStaffRole !== "Super Admin" && (
-                      <div style={{ display: "flex", flexDirection: "column", marginTop: "4px", marginBottom: "12px" }}>
-                        <label style={labelStyle}>Assigned Property Branch</label>
-                        {propertiesList.length > 0 ? (
-                          <select
-                            style={{ ...inputStyle, padding: "8px 12px", marginBottom: "4px" }}
-                            value={newStaffPropertyId}
-                            onChange={(e) => setNewStaffPropertyId(e.target.value)}
-                            required
-                          >
-                            {propertiesList.map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.name} ({p.location})
-                              </option>
-                            ))}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                        <div style={{ flex: 1.5 }}>
+                          <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "4px", display: "block" }}>Temporary PIN (First Login)</label>
+                          <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" placeholder="e.g. 1234" value={newStaffPassword} onChange={(e) => setNewStaffPassword(e.target.value)} required />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Role</label>
+                          <select style={{ ...inputStyle, padding: "8px 12px" }} value={newStaffRole} onChange={(e) => setNewStaffRole(e.target.value)}>
+                            <option value="Super Admin">Super Admin (Full Access)</option>
+                            <option value="General Manager">General Manager (Senior GM)</option>
+                            <option value="Front Office Manager">Front Office Manager (Senior Staff)</option>
+                            <option value="Receptionist">Receptionist (Front Desk)</option>
+                            <option value="Housekeeping Supervisor">Housekeeping Supervisor</option>
+                            <option value="Finance Executive">Finance Executive</option>
                           </select>
-                        ) : (
-                          <span style={{ fontSize: "0.75rem", color: "#ef4444", fontStyle: "italic", marginBottom: "4px" }}>
-                            ⚠️ No properties registered. Please register a property first.
-                          </span>
-                        )}
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Avatar Initials</label>
+                          <input style={{ ...inputStyle, padding: "8px 12px" }} type="text" maxLength={2} placeholder="e.g. RS" value={newStaffAvatar} onChange={(e) => setNewStaffAvatar(e.target.value)} required />
+                        </div>
+                      </div>
+
+                      {newStaffRole !== "Super Admin" && (
+                        <div style={{ display: "flex", flexDirection: "column", marginTop: "4px", marginBottom: "12px" }}>
+                          <label style={labelStyle}>Assigned Property Branch</label>
+                          {propertiesList.length > 0 ? (
+                            <select
+                              style={{ ...inputStyle, padding: "8px 12px", marginBottom: "4px" }}
+                              value={newStaffPropertyId}
+                              onChange={(e) => setNewStaffPropertyId(e.target.value)}
+                              required
+                            >
+                              {propertiesList.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name} ({p.location})
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span style={{ fontSize: "0.75rem", color: "#ef4444", fontStyle: "italic", marginBottom: "4px" }}>
+                              ❌ No properties registered. Please register a property first.
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <button className="btn-primary" type="submit" style={{ fontSize: "0.85rem", padding: "8px 14px", marginTop: "4px" }}>
+                        ➕ Register Staff Account
+                      </button>
+                    </form>
+
+                    {justCreatedStaff && (
+                      <div style={{ padding: "16px", marginTop: "16px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid var(--status-checkedin)", borderRadius: "8px" }}>
+                        <h4 style={{ color: "var(--status-checkedin)", fontSize: "1rem", marginBottom: "8px" }}>✅ Profile Created Successfully!</h4>
+                        <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "16px", lineHeight: "1.5" }}>
+                          Share these login details with <strong>{justCreatedStaff.name}</strong> so they can log in and set their permanent PIN.
+                        </p>
+                        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                          <button 
+                            type="button"
+                            className="btn-primary" 
+                            onClick={() => {
+                              const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
+                              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+                            }}
+                            style={{ flex: 1, backgroundColor: "#25D366", color: "#fff", border: "none", minWidth: "160px" }}
+                          >
+                            💬 WhatsApp
+                          </button>
+                          <button 
+                            type="button"
+                            className="btn-primary" 
+                            onClick={() => {
+                              const subject = `Your AetherHMS Account is Ready!`;
+                              const msg = `Hi ${justCreatedStaff.name},\n\nYour AetherHMS account is ready!\n\nYour temporary PIN is: ${justCreatedStaff.pin}\n\nPlease log in and set your new permanent PIN.\n\nThanks!`;
+                              window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
+                            }}
+                            style={{ flex: 1, backgroundColor: "#3b82f6", color: "#fff", border: "none", minWidth: "160px" }}
+                          >
+                            ✉️ Email
+                          </button>
+                          <button 
+                            type="button"
+                            className="btn-secondary" 
+                            onClick={() => {
+                              const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
+                              navigator.clipboard.writeText(msg);
+                              addToast("📋 Credentials copied to clipboard!");
+                            }}
+                            style={{ flex: 1, minWidth: "160px" }}
+                          >
+                            📋 Copy Details
+                          </button>
+                        </div>
                       </div>
                     )}
-
-                    <button className="btn-primary" type="submit" style={{ fontSize: "0.85rem", padding: "8px 14px", marginTop: "4px" }}>
-                      👥 Register Staff Account
-                    </button>
-                  </form>
-
-                  {justCreatedStaff && (
-                    <div style={{ padding: "16px", marginTop: "16px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid var(--status-checkedin)", borderRadius: "8px" }}>
-                      <h4 style={{ color: "var(--status-checkedin)", fontSize: "1rem", marginBottom: "8px" }}>✅ Profile Created Successfully!</h4>
-                      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "16px", lineHeight: "1.5" }}>
-                        Share these login details with <strong>{justCreatedStaff.name}</strong> so they can log in and set their permanent PIN.
-                      </p>
-                      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                        <button 
-                          type="button"
-                          className="btn-primary" 
-                          onClick={() => {
-                            const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
-                            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
-                          }}
-                          style={{ flex: 1, backgroundColor: "#25D366", color: "#fff", border: "none", minWidth: "160px" }}
-                        >
-                          💬 WhatsApp
-                        </button>
-                        <button 
-                          type="button"
-                          className="btn-primary" 
-                          onClick={() => {
-                            const subject = `Your AetherHMS Account is Ready!`;
-                            const msg = `Hi ${justCreatedStaff.name},\n\nYour AetherHMS account is ready!\n\nYour temporary PIN is: ${justCreatedStaff.pin}\n\nPlease log in and set your new permanent PIN.\n\nThanks!`;
-                            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
-                          }}
-                          style={{ flex: 1, backgroundColor: "#3b82f6", color: "#fff", border: "none", minWidth: "160px" }}
-                        >
-                          ✉️ Email
-                        </button>
-                        <button 
-                          type="button"
-                          className="btn-secondary" 
-                          onClick={() => {
-                            const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
-                            navigator.clipboard.writeText(msg);
-                            addToast("📋 Credentials copied to clipboard!");
-                          }}
-                          style={{ flex: 1, minWidth: "160px" }}
-                        >
-                          📋 Copy Details
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  </>
                 ) : (
                   <div className="glass-card" style={{ padding: "20px", display: "flex", alignItems: "center", gap: "16px", backgroundColor: "rgba(255,255,255,0.01)", borderStyle: "dashed" }}>
                     <div style={{ fontSize: "1.5rem" }}>🔒</div>
