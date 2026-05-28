@@ -237,9 +237,9 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
                     style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }}
                     required
                   >
-                    <option value="">-- Choose Staff Profile --</option>
+                    <option value="" style={{ background: "#0f0c1b", color: "#fff" }}>-- Choose Staff Profile --</option>
                     {staffList.map(staff => (
-                      <option key={staff.username} value={staff.username}>
+                      <option key={staff.username} value={staff.username} style={{ background: "#0f0c1b", color: "#fff", padding: "10px" }}>
                         {staff.name} ({staff.role})
                       </option>
                     ))}
