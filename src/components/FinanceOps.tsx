@@ -83,11 +83,10 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
   };
 
   const calculateGST = (totalAmount: number, isLocal: boolean, gstMode: "exclusive" | "inclusive") => {
-    // Standard Indian Hotel GST Brackets
-    // < 1000 = 12% (Updated recently, used to be 0%)
-    // >= 1000 and <= 7500 = 12%
-    // > 7500 = 18%
-    const rate = totalAmount > 7500 ? 0.18 : 0.12;
+    // Syncing with Front Office logic: 
+    // <= 7500 = 5% (2.5% CGST/SGST)
+    // > 7500 = 18% (9% CGST/SGST)
+    const rate = totalAmount > 7500 ? 0.18 : 0.05;
     
     if (gstMode === "inclusive") {
       const baseAmount = totalAmount / (1 + rate);
@@ -382,9 +381,9 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
             <h4 style={{ margin: "0 0 8px 0", fontSize: "0.95rem", color: "#fcd34d" }}>Tally Ledger Mapping Guidelines:</h4>
             <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.85rem", color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: "6px" }}>
               <li>Room Sales mapped to ledger: <strong>"Local Room Sales Account"</strong></li>
-              <li>CGST 6% mapped to ledger: <strong>"Output CGST @ 6%"</strong></li>
-              <li>SGST 6% mapped to ledger: <strong>"Output SGST @ 6%"</strong></li>
-              <li>IGST 12% mapped to ledger: <strong>"Output IGST @ 12%"</strong></li>
+              <li>CGST 2.5% mapped to ledger: <strong>"Output CGST @ 2.5%"</strong></li>
+              <li>SGST 2.5% mapped to ledger: <strong>"Output SGST @ 2.5%"</strong></li>
+              <li>IGST 5% mapped to ledger: <strong>"Output IGST @ 5%"</strong></li>
             </ul>
           </div>
         </div>

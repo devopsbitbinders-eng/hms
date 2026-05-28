@@ -47,7 +47,7 @@ export async function GET(request: Request) {
         if (roomCharge <= 0) return;
 
         // GST Calculation
-        const rate = roomCharge > 7500 ? 0.18 : 0.12;
+        const rate = roomCharge > 7500 ? 0.18 : 0.05;
         const gstAmount = roomCharge * rate;
         
         // Randomly assign to IGST or CGST/SGST for demonstration
