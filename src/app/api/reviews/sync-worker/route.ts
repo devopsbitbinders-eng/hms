@@ -8,24 +8,20 @@ import * as cheerio from "cheerio";
 async function fetchTripAdvisorReviews(propertyId: string, url: string) {
   let browser;
   try {
-    const { addExtra } = require("playwright-extra");
-    const playwright = require("playwright");
-    const playwrightExtra = addExtra(playwright);
-    const stealth = require("puppeteer-extra-plugin-stealth")();
-    playwrightExtra.use(stealth);
+    const puppeteer = require("puppeteer-extra");
+    const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+    if (!puppeteer.plugins || !puppeteer.plugins.find((p: any) => p.name === 'stealth')) {
+      puppeteer.use(StealthPlugin());
+    }
 
-    browser = await playwrightExtra.chromium.launch({
-      headless: false, // Must be false to bypass TripAdvisor's DataDome bot protection
+    browser = await puppeteer.launch({
+      headless: true, // Use headless to prevent display crashes on Railway
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
-    const context = await browser.newContext({
-      viewport: { width: 1366, height: 900 },
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      locale: "en-US"
-    });
-
-    const page = await context.newPage();
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1366, height: 900 });
+    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
     const capturedReviews: any[] = [];
 
     // Intercept TripAdvisor's GraphQL reviews API
@@ -65,14 +61,14 @@ async function fetchTripAdvisorReviews(propertyId: string, url: string) {
     });
 
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(4000);
+    await new Promise(r => setTimeout(r, 4000));
 
     // Scroll to trigger lazy loading of reviews
     for (let i = 0; i < 6; i++) {
-      await page.mouse.wheel(0, 800);
-      await page.waitForTimeout(700);
+      await page.mouse.wheel({ deltaY: 800 });
+      await new Promise(r => setTimeout(r, 700));
     }
-    await page.waitForTimeout(3000);
+    await new Promise(r => setTimeout(r, 3000));
 
     // Fallback: DOM extraction with modern 2024 TripAdvisor selectors
     if (capturedReviews.length === 0) {
