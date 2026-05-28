@@ -2038,7 +2038,7 @@ export default function Dashboard() {
                       <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "16px", lineHeight: "1.5" }}>
                         Share these login details with <strong>{justCreatedStaff.name}</strong> so they can log in and set their permanent PIN.
                       </p>
-                      <div style={{ display: "flex", gap: "12px" }}>
+                      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                         <button 
                           type="button"
                           className="btn-primary" 
@@ -2046,9 +2046,21 @@ export default function Dashboard() {
                             const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
                             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
                           }}
-                          style={{ flex: 1, backgroundColor: "#25D366", color: "#fff", border: "none" }}
+                          style={{ flex: 1, backgroundColor: "#25D366", color: "#fff", border: "none", minWidth: "160px" }}
                         >
-                          💬 Send via WhatsApp
+                          💬 WhatsApp
+                        </button>
+                        <button 
+                          type="button"
+                          className="btn-primary" 
+                          onClick={() => {
+                            const subject = `Your AetherHMS Account is Ready!`;
+                            const msg = `Hi ${justCreatedStaff.name},\n\nYour AetherHMS account is ready!\n\nYour temporary PIN is: ${justCreatedStaff.pin}\n\nPlease log in and set your new permanent PIN.\n\nThanks!`;
+                            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
+                          }}
+                          style={{ flex: 1, backgroundColor: "#3b82f6", color: "#fff", border: "none", minWidth: "160px" }}
+                        >
+                          ✉️ Email
                         </button>
                         <button 
                           type="button"
@@ -2056,8 +2068,9 @@ export default function Dashboard() {
                           onClick={() => {
                             const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
                             navigator.clipboard.writeText(msg);
+                            addToast("📋 Credentials copied to clipboard!");
                           }}
-                          style={{ flex: 1 }}
+                          style={{ flex: 1, minWidth: "160px" }}
                         >
                           📋 Copy Details
                         </button>
