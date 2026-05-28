@@ -780,20 +780,7 @@ async function fetchOyoReviews(propertyId: string, url: string) {
     await new Promise(r => setTimeout(r, 3000));
 
     if (capturedReviews.length === 0) {
-      // Fallback: extract from DOM using the known class pattern
-      const domReviews = await page.evaluate(() => {
-        const reviewTexts = Array.from(document.querySelectorAll('p.c-1wawhq6, [class*="reviewText"], [class*="review-text"]'));
-        return reviewTexts.map(el => ({ comment: el.textContent?.trim() || "" })).filter(r => r.comment.length > 10);
-      });
-      
-      for (const r of domReviews) {
-        capturedReviews.push({
-          guestName: "OYO Guest",
-          rating: 4,
-          comment: r.comment,
-        });
-      }
-      console.log(`OYO: extracted ${capturedReviews.length} reviews from DOM`);
+      console.log(`OYO: extracted 0 reviews. API interception failed or was blocked.`);
     }
 
     if (capturedReviews.length === 0) {
