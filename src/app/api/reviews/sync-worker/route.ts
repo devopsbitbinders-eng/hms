@@ -116,15 +116,7 @@ async function fetchTripAdvisorReviews(propertyId: string, url: string) {
     }
 
     if (capturedReviews.length === 0) {
-      console.log("TripAdvisor: 0 reviews extracted. DataDome likely blocked the headless browser. Using intelligent fallback.");
-      // Fallback for DataDome blocks on Railway datacenters
-      capturedReviews.push(
-        { guestName: "Sarah M.", rating: 5, title: "Exceptional Stay!", comment: "The service was absolutely incredible from start to finish. The rooms were spotless and the staff went above and beyond." },
-        { guestName: "Rajeev K.", rating: 4, title: "Great location", comment: "Loved the location and the breakfast buffet. The WiFi was a bit slow in my room, but overall a wonderful experience." },
-        { guestName: "Emily W.", rating: 5, title: "Beautiful property", comment: "Stunning architecture and very comfortable beds. Will definitely be returning next time we visit!" },
-        { guestName: "David L.", rating: 3, title: "Good but could be better", comment: "The room was nice but the check-in process took way too long. The concierge was helpful though." },
-        { guestName: "Priya S.", rating: 5, title: "Perfect getaway", comment: "Everything was perfect. The spa was so relaxing and the dining options were top notch." }
-      );
+      return { success: false, error: "TripAdvisor's anti-bot system (DataDome) is blocking this datacenter server from extracting real reviews. To extract 100% real TripAdvisor reviews, you must run this application locally on your computer instead of Railway." };
     }
 
     const seen = new Set<string>();
