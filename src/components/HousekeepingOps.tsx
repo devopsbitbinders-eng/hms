@@ -320,8 +320,12 @@ export default function HousekeepingOps({
       `*AetherVoice Assist Option:* If you cannot read, tap the link below on your phone to open the console and play the audio narration:\n` +
       `👉 ${window.location.origin}/alert?roomId=${room.id}&room=${room.number}&hk=${encodeURIComponent(hk.name)}&status=${encodeURIComponent(statusData.status)}`;
 
+    // Sanitize and format the phone number for WhatsApp
+    let cleanPhone = hk.phone.replace(/\D/g, '');
+    if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+
     const encodedMsg = encodeURIComponent(textMsg);
-    const waUrl = `https://api.whatsapp.com/send?phone=${hk.phone}&text=${encodedMsg}`;
+    const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
     
     // Safely trigger standard WhatsApp protocol
     window.open(waUrl, "_blank");
@@ -517,8 +521,12 @@ export default function HousekeepingOps({
       `*When finished, tap here to mark as Resolved:*\n` +
       `👉 ${window.location.origin}/maintenance?ticketId=${ticket.id}&room=${ticket.roomNumber}`;
 
+    // Sanitize and format the phone number for WhatsApp
+    let cleanPhone = techPhone.replace(/\D/g, '');
+    if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
+
     const encodedMsg = encodeURIComponent(textMsg);
-    const waUrl = `https://api.whatsapp.com/send?phone=${techPhone.replace(/\D/g, '')}&text=${encodedMsg}`;
+    const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
     
     window.open(waUrl, "_blank");
     addToast(`🚀 Launching WhatsApp dispatcher for Maintenance!`, "success");
