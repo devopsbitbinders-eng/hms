@@ -1955,7 +1955,17 @@ export default function Dashboard() {
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.backgroundColor = "transparent";
-                               {/* Add User Form */}
+                          }}
+                          title="Delete Operator"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add User Form */}
                 {currentUser?.role === "Super Admin" ? (
                   <>
                     <form onSubmit={handleRegisterStaff} className="glass-card" style={{ padding: "20px", borderStyle: "dashed" }}>
