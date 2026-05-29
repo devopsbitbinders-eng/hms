@@ -1765,6 +1765,7 @@ export default function Dashboard() {
           onClearNotifications={handleClearNotifications}
           todayAttendance={todayAttendance}
           onClockInOut={handleClockInOut}
+          onRequestLeave={() => setShowLeaveModal(true)}
         />
 
         {/* Stats Summary Panel */}
@@ -3733,28 +3734,61 @@ export default function Dashboard() {
       {/* LEAVE REQUEST MODAL */}
       {showLeaveModal && (
         <div className={styles.modalOverlay}>
-          <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "450px" }}>
+          <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "500px", maxHeight: "90vh", overflowY: "auto" }}>
             <div className={styles.modalHeader}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>📅 Request Leave</h2>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>📅 My Leave Requests</h2>
               <button className={styles.modalCloseBtn} onClick={() => setShowLeaveModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleCreateLeave}>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Start Date</label>
-                <input type="date" required value={leaveStartDate} onChange={(e) => setLeaveStartDate(e.target.value)} style={{ ...inputStyle, width: "100%", padding: "12px" }} />
-              </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.9rem" }}>End Date</label>
-                <input type="date" required value={leaveEndDate} onChange={(e) => setLeaveEndDate(e.target.value)} style={{ ...inputStyle, width: "100%", padding: "12px" }} />
-              </div>
-              <div style={{ marginBottom: "24px" }}>
-                <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Reason / Remarks</label>
-                <textarea required value={leaveReason} onChange={(e) => setLeaveReason(e.target.value)} placeholder="e.g. Vacation, Sick Leave" style={{ ...inputStyle, width: "100%", padding: "12px", minHeight: "80px" }} />
-              </div>
-              <button type="submit" className="btn-primary" style={{ width: "100%", padding: "14px", fontSize: "1rem" }}>
-                Submit Request
-              </button>
-            </form>
+            
+            <div style={{ marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "12px" }}>Submit New Request</h3>
+              <form onSubmit={handleCreateLeave}>
+                <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.85rem" }}>Start Date</label>
+                    <input type="date" required value={leaveStartDate} onChange={(e) => setLeaveStartDate(e.target.value)} style={{ ...inputStyle, width: "100%", padding: "10px" }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.85rem" }}>End Date</label>
+                    <input type="date" required value={leaveEndDate} onChange={(e) => setLeaveEndDate(e.target.value)} style={{ ...inputStyle, width: "100%", padding: "10px" }} />
+                  </div>
+                </div>
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.85rem" }}>Reason / Remarks</label>
+                  <textarea required value={leaveReason} onChange={(e) => setLeaveReason(e.target.value)} placeholder="e.g. Vacation, Sick Leave" style={{ ...inputStyle, width: "100%", padding: "10px", minHeight: "60px" }} />
+                </div>
+                <button type="submit" className="btn-primary" style={{ width: "100%", padding: "12px", fontSize: "0.9rem" }}>
+                  Submit Request
+                </button>
+              </form>
+            </div>
+
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "24px" }}>
+              <h3 style={{ fontSize: "1rem", color: "#fff", marginBottom: "12px" }}>My Past Requests</h3>
+              {leaveRequests.filter(l => l.userId === currentUser?.id).length === 0 ? (
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", textAlign: "center" }}>You have no leave requests.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {leaveRequests.filter(l => l.userId === currentUser?.id).map((leave: any) => (
+                    <div key={leave.id} style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <span style={{ fontSize: "0.85rem", color: "#fff", display: "block" }}>
+                          {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
+                        </span>
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "4px" }}>"{leave.reason}"</p>
+                      </div>
+                      <span style={{ 
+                        padding: "4px 8px", borderRadius: "4px", fontSize: "0.7rem", fontWeight: "600",
+                        backgroundColor: leave.status === "Approved" ? "rgba(16, 185, 129, 0.1)" : leave.status === "Denied" ? "rgba(239, 68, 68, 0.1)" : "rgba(234, 179, 8, 0.1)",
+                        color: leave.status === "Approved" ? "#10b981" : leave.status === "Denied" ? "#ef4444" : "#eab308"
+                      }}>
+                        {leave.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

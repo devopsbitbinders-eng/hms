@@ -17,6 +17,7 @@ interface HeaderProps {
   onClearNotifications?: () => void;
   todayAttendance?: any;
   onClockInOut?: (type: "clockIn" | "clockOut") => void;
+  onRequestLeave?: () => void;
 }
 
 // Helper to map DB property names to frontend property keys
@@ -49,6 +50,7 @@ export default function Header({
   onClearNotifications,
   todayAttendance,
   onClockInOut,
+  onRequestLeave,
 }: HeaderProps) {
   const isSuperAdmin = currentUser?.role === "Super Admin";
   const activeProp = properties.find((p) => mapPropertyKey(p.name) === activeProperty);
@@ -132,6 +134,16 @@ export default function Header({
                   style={{ padding: "6px 12px", fontSize: "0.8rem", backgroundColor: "var(--status-checkedin)", border: "none", color: "#fff" }}
                 >
                   ⏱️ Clock In
+                </button>
+              )}
+              {onRequestLeave && (
+                <button
+                  type="button"
+                  onClick={onRequestLeave}
+                  className="btn-secondary"
+                  style={{ padding: "6px 12px", fontSize: "0.8rem", color: "#fff", borderColor: "rgba(255,255,255,0.2)", backgroundColor: "transparent", marginLeft: "12px" }}
+                >
+                  📅 My Leave
                 </button>
               )}
             </div>
