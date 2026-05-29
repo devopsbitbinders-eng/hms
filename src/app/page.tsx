@@ -2216,49 +2216,17 @@ export default function Dashboard() {
                 
             </div>
           </section>
-) : activeMenu === "settings" ? (
-          /* Sleek Settings View with Wipe Database Control */
-          <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1 }}>
+) : activeMenu === "staff-management" ? (
+          <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, maxHeight: "100%" }}>
             <div className="glass-card" style={{ padding: "48px", maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
               <div>
-                <h1 style={{ fontSize: "1.75rem", fontWeight: "700", marginBottom: "8px" }}>⚙️ Admin Control Centre</h1>
+                <h1 style={{ fontSize: "1.75rem", fontWeight: "700", marginBottom: "8px" }}>👥 Staff & Shifts Management</h1>
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.6" }}>
-                  Manage live database connections, staff permissions, and web booking synchronization.
+                  Manage hotel staff accounts, assign roles, set up shifts, and configure individual permissions.
                 </p>
               </div>
-
-              {/* Settings Sub-Tab Navigation */}
-              <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", paddingBottom: "0" }}>
-                {([
-                  { id: "system", label: "⚙️ System Settings" },
-                  { id: "permissions", label: "🔑 Staff Permissions Layout" },
-                ] as const).map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setSettingsSubTab(tab.id)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      borderBottom: settingsSubTab === tab.id ? "2px solid var(--border-focus)" : "2px solid transparent",
-                      color: settingsSubTab === tab.id ? "#fff" : "var(--text-secondary)",
-                      fontWeight: settingsSubTab === tab.id ? "600" : "400",
-                      fontSize: "0.85rem",
-                      padding: "10px 16px",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      whiteSpace: "nowrap",
-                      fontFamily: "inherit",
-                    }}
-                    onMouseEnter={(e) => { if (settingsSubTab !== tab.id) e.currentTarget.style.color = "#fff"; }}
-                    onMouseLeave={(e) => { if (settingsSubTab !== tab.id) e.currentTarget.style.color = "var(--text-secondary)"; }}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* ========== SYSTEM SETTINGS SUB-TAB ========== */}
-              {settingsSubTab === "system" && (
+              
+              
               <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", marginBottom: "8px" }}>
                 <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>👥 PMS Staff & Operator Accounts</h2>
                 
@@ -2515,7 +2483,50 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-              )}
+              
+
+              
+            </div>
+          </section>
+) : activeMenu === "settings" ? (
+          /* Sleek Settings View with Wipe Database Control */
+          <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1 }}>
+            <div className="glass-card" style={{ padding: "48px", maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div>
+                <h1 style={{ fontSize: "1.75rem", fontWeight: "700", marginBottom: "8px" }}>⚙️ Admin Control Centre</h1>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.6" }}>
+                  Manage live database connections, staff permissions, and web booking synchronization.
+                </p>
+              </div>
+
+              {/* Settings Sub-Tab Navigation */}
+              <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", paddingBottom: "0" }}>
+                {([
+                  { id: "permissions", label: "🔑 Staff Permissions Layout" },
+                ] as const).map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSettingsSubTab(tab.id)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      borderBottom: settingsSubTab === tab.id ? "2px solid var(--border-focus)" : "2px solid transparent",
+                      color: settingsSubTab === tab.id ? "#fff" : "var(--text-secondary)",
+                      fontWeight: settingsSubTab === tab.id ? "600" : "400",
+                      fontSize: "0.85rem",
+                      padding: "10px 16px",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      whiteSpace: "nowrap",
+                      fontFamily: "inherit",
+                    }}
+                    onMouseEnter={(e) => { if (settingsSubTab !== tab.id) e.currentTarget.style.color = "#fff"; }}
+                    onMouseLeave={(e) => { if (settingsSubTab !== tab.id) e.currentTarget.style.color = "var(--text-secondary)"; }}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
               {/* ========== STAFF PERMISSIONS LAYOUT SUB-TAB ========== */}
               {settingsSubTab === "permissions" && (
