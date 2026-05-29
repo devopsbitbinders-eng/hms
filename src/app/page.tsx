@@ -2178,39 +2178,49 @@ export default function Dashboard() {
                 <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", marginBottom: "8px" }}>
                   <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>⏱️ Today's Staff Attendance</h2>
                   
-                  {allAttendances.length === 0 ? (
+                  {usersList.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "32px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
-                      <p style={{ color: "var(--text-secondary)" }}>No staff members have clocked in today yet.</p>
+                      <p style={{ color: "var(--text-secondary)" }}>No staff members found.</p>
                     </div>
                   ) : (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
-                      {allAttendances.map((att: any) => (
-                        <div key={att.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                            <div className={styles.avatar} style={{ margin: 0, width: "36px", height: "36px", fontSize: "0.9rem" }}>{att.user.avatar}</div>
+                      {usersList.map((user: any) => {
+                        const att = allAttendances.find((a: any) => a.userId === user.id);
+                        return (
+                          <div key={user.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                              <div className={styles.avatar} style={{ margin: 0, width: "36px", height: "36px", fontSize: "0.9rem", filter: !att ? "grayscale(100%) opacity(0.5)" : "none" }}>{user.avatar}</div>
+                              <div>
+                                <strong style={{ fontSize: "0.9rem", color: !att ? "var(--text-muted)" : "#fff", display: "block" }}>{user.name}</strong>
+                                <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                                  {user.role}
+                                  {att && ` • ${new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                  {att?.clockOut && ` - ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                </span>
+                              </div>
+                            </div>
                             <div>
-                              <strong style={{ fontSize: "0.9rem", color: "#fff", display: "block" }}>{att.user.name}</strong>
-                              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                                {att.user.role} • {new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                {att.clockOut ? ` - ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : " (Active Shift)"}
-                              </span>
+                              {!att ? (
+                                <span style={{ padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
+                                  Absent / On Leave
+                                </span>
+                              ) : (
+                                <span style={{ 
+                                  padding: "4px 8px", 
+                                  borderRadius: "4px", 
+                                  fontSize: "0.75rem", 
+                                  fontWeight: "600",
+                                  backgroundColor: att.clockOut ? "rgba(107, 114, 128, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                                  color: att.clockOut ? "var(--text-muted)" : "var(--status-checkedin)",
+                                  border: `1px solid ${att.clockOut ? "rgba(107, 114, 128, 0.2)" : "rgba(16, 185, 129, 0.2)"}`
+                                }}>
+                                  {att.clockOut ? "Shift Completed" : "Clocked In"}
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <div>
-                            <span style={{ 
-                              padding: "4px 8px", 
-                              borderRadius: "4px", 
-                              fontSize: "0.75rem", 
-                              fontWeight: "600",
-                              backgroundColor: att.clockOut ? "rgba(107, 114, 128, 0.1)" : "rgba(16, 185, 129, 0.1)",
-                              color: att.clockOut ? "var(--text-muted)" : "var(--status-checkedin)",
-                              border: `1px solid ${att.clockOut ? "rgba(107, 114, 128, 0.2)" : "rgba(16, 185, 129, 0.2)"}`
-                            }}>
-                              {att.clockOut ? "Shift Completed" : "Clocked In"}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
