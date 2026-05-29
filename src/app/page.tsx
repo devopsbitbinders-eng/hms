@@ -2264,8 +2264,10 @@ export default function Dashboard() {
                                 <strong style={{ fontSize: "0.9rem", color: !att ? "var(--text-muted)" : "#fff", display: "block" }}>{user.name}</strong>
                                 <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
                                   {user.role}
-                                  {att && ` • ${new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                  {att?.clockOut && ` - ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                  {att && ` • In: ${new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                  {att?.clockOut && ` • Out: ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                  {att?.clockOut && att?.clockIn && ` • Worked: ${Math.round((new Date(att.clockOut).getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
+                                  {att && !att?.clockOut && ` • Working: ${Math.round((new Date().getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
                                 </span>
                               </div>
                             </div>
