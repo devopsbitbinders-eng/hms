@@ -74,11 +74,16 @@ export default function Dashboard() {
 
     // If they have explicitly defined custom permissions, STRICTLY rely on that array
     if (currentUser.permissions && Array.isArray(currentUser.permissions)) {
-      // If asking for a sub-permission (e.g. staff-management:add), they MUST explicitly have it in the array
-      // OR they must have the parent permission and it's something that used to be default.
-      // Actually, if we are doing explicit custom permissions, they just need exactly that string in the array.
-      // But to be safe for old users who only have 'staff-management', we might assume 'staff-management' implies all sub-permissions IF the sub-permissions aren't listed in the modal yet. But since we are adding them to the modal, they will check them.
-      return currentUser.permissions.includes(permId);
+      if (currentUser.permissions.includes(permId)) return true;
+      // Legacy support: if they have the parent module but NO sub-permissions are defined for it in their array, grant it.
+      if (permId.includes(":")) {
+        const parentId = permId.split(":")[0];
+        if (currentUser.permissions.includes(parentId)) {
+          const hasAnySub = currentUser.permissions.some((p: string) => p.startsWith(parentId + ":"));
+          if (!hasAnySub) return true;
+        }
+      }
+      return false;
     }
 
     // Default Fallbacks if no custom permissions set yet
@@ -433,14 +438,18 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.success) {
         setUsersList(data.users);
-        // Sync allowRoomManagement into current session reactively
+        // Sync user data into current session reactively
         setCurrentUser((prev: any) => {
           if (!prev) return prev;
           const freshRecord = data.users.find((u: any) => u.id === prev.id);
-          if (freshRecord && freshRecord.allowRoomManagement !== prev.allowRoomManagement) {
-            const merged = { ...prev, allowRoomManagement: freshRecord.allowRoomManagement };
-            localStorage.setItem("aether_pms_user", JSON.stringify(merged));
-            return merged;
+          if (freshRecord) {
+            const hasChanges = freshRecord.allowRoomManagement !== prev.allowRoomManagement || JSON.stringify(freshRecord.permissions) !== JSON.stringify(prev.permissions);
+            if (hasChanges) {
+              const merged = { ...prev, allowRoomManagement: freshRecord.allowRoomManagement, permissions: freshRecord.permissions };
+              localStorage.setItem("aether_pms_user", JSON.stringify(merged));
+              localStorage.setItem("aetherhms_user", JSON.stringify(merged));
+              return merged;
+            }
           }
           return prev;
         });
@@ -4485,7 +4494,8 @@ export default function Dashboard() {
                           checked={editPermissionsValue.includes(perm.id)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setEditPermissionsValue([...editPermissionsValue, perm.id]);
+                              const subs = perm.subPerms ? perm.subPerms.map(s => s.id) : [];
+                              setEditPermissionsValue(Array.from(new Set([...editPermissionsValue, perm.id, ...subs])));
                             } else {
                               setEditPermissionsValue(editPermissionsValue.filter((id) => id !== perm.id && !id.startsWith(perm.id + ":")));
                             }
