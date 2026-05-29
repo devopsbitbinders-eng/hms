@@ -2145,13 +2145,13 @@ export default function Dashboard() {
               
                   <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>⏱️ Today's Staff Attendance</h2>
                   
-                  {(["Super Admin", "General Manager", "Front Office Manager"].includes(currentUser?.role) ? usersList : usersList.filter(u => u.id === currentUser?.id)).length === 0 ? (
+                  {((currentUser?.role === "Super Admin" || hasPermission("attendance:manual-clock") || hasPermission("attendance:approve-leave") || hasPermission("attendance:approve-swap")) ? usersList : usersList.filter(u => u.id === currentUser?.id)).length === 0 ? (
                     <div style={{ textAlign: "center", padding: "32px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
                       <p style={{ color: "var(--text-secondary)" }}>No staff members found.</p>
                     </div>
                   ) : (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
-                      {(["Super Admin", "General Manager", "Front Office Manager"].includes(currentUser?.role) ? usersList : usersList.filter(u => u.id === currentUser?.id)).map((user: any) => {
+                      {((currentUser?.role === "Super Admin" || hasPermission("attendance:manual-clock") || hasPermission("attendance:approve-leave") || hasPermission("attendance:approve-swap")) ? usersList : usersList.filter(u => u.id === currentUser?.id)).map((user: any) => {
                         const att = allAttendances.find((a: any) => a.userId === user.id);
                         const todayStr = new Date().toISOString().split("T")[0];
                         const approvedLeave = leaveRequests.find((l: any) => 
@@ -2392,7 +2392,7 @@ export default function Dashboard() {
                             </button>
                           </div>
                         ) : (
-                          ["Super Admin", "General Manager", "Front Office Manager"].includes(currentUser?.role || "") && (
+                          (currentUser?.role === "Super Admin" || hasPermission("staff-management:edit-shift")) && (
                             <>
                               <button
                                 onClick={() => {
