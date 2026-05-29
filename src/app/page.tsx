@@ -89,8 +89,37 @@ export default function Dashboard() {
   const [customStaffRole, setCustomStaffRole] = useState("");
   const [newStaffAvatar, setNewStaffAvatar] = useState("");
   const [newStaffPropertyId, setNewStaffPropertyId] = useState("");
-  const [newStaffShift, setNewStaffShift] = useState("Morning");
-  const [newStaffShiftTiming, setNewStaffShiftTiming] = useState("");
+  const [editingShiftUserId, setEditingShiftUserId] = useState<string | null>(null);
+  const [editShiftValue, setEditShiftValue] = useState("Morning");
+  const [editShiftTimingValue, setEditShiftTimingValue] = useState("");
+  const [isUpdatingShift, setIsUpdatingShift] = useState(false);
+  
+  const handleUpdateShift = async (userId: string) => {
+    setIsUpdatingShift(true);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignedShift: editShiftValue,
+          shiftTiming: editShiftValue === "Custom" ? editShiftTimingValue : null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast("✅ Shift updated successfully");
+        setEditingShiftUserId(null);
+        fetchUsers();
+      } else {
+        addToast("⚠️ " + data.error, "error");
+      }
+    } catch (err) {
+      addToast("⚠️ Failed to update shift", "error");
+    } finally {
+      setIsUpdatingShift(false);
+    }
+  };
+
 
   // Onboarding Wizard states
   const [onboardingName, setOnboardingName] = useState("");
@@ -1271,7 +1300,6 @@ export default function Dashboard() {
           role: finalRole,
           avatar: newStaffAvatar.toUpperCase().substring(0, 2),
           propertyId: finalRole === "Super Admin" ? null : newStaffPropertyId,
-          assignedShift: newStaffShift,
         }),
       });
       const data = await response.json();
@@ -2205,46 +2233,94 @@ export default function Dashboard() {
                 <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>👥 PMS Staff & Operator Accounts</h2>
                 
                 {/* User List Grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
-                  {usersList.map((user) => (
-                    <div key={user.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <div className={styles.avatar} style={{ margin: 0, width: "32px", height: "32px", fontSize: "0.8rem" }}>{user.avatar}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "10px", marginBottom: "20px" }}>
+                  {usersList.map((user: any) => (
+                    <div key={user.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
+                        <div className={styles.avatar} style={{ margin: 0, width: "36px", height: "36px", fontSize: "0.85rem", flexShrink: 0 }}>{user.avatar}</div>
                         <div>
-                          <strong style={{ fontSize: "0.85rem", color: "#fff", display: "block" }}>{user.name}</strong>
+                          <strong style={{ fontSize: "0.875rem", color: "#fff", display: "block" }}>{user.name}</strong>
                           <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
                             @{user.username} • <span style={{ color: "var(--border-focus)", fontWeight: "500" }}>{user.role}</span>
+                            {user.assignedShift && (
+                              <span style={{ marginLeft: "8px", color: "#fbbf24", fontWeight: "600" }}>
+                                • 🕐 {user.assignedShift}{user.shiftTiming ? ` (${user.shiftTiming})` : ""}
+                              </span>
+                            )}
+                            {!user.assignedShift && (
+                              <span style={{ marginLeft: "8px", color: "var(--text-muted)", fontStyle: "italic" }}>
+                                • No shift assigned
+                              </span>
+                            )}
                           </span>
                         </div>
                       </div>
-                      {currentUser?.role === "Super Admin" && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteStaff(user.id, user.name)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#ef4444",
-                            cursor: "pointer",
-                            fontSize: "1.1rem",
-                            padding: "6px",
-                            borderRadius: "6px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            transition: "all 0.2s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "transparent";
-                          }}
-                          title="Delete Operator"
-                        >
-                          🗑️
-                        </button>
-                      )}
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexShrink: 0 }}>
+                        {/* Inline Shift Assignment */}
+                        {editingShiftUserId === user.id ? (
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", background: "rgba(255,255,255,0.04)", padding: "6px 10px", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
+                            <select
+                              style={{ ...inputStyle, padding: "4px 8px", fontSize: "0.8rem", width: "120px", height: "auto" }}
+                              value={editShiftValue}
+                              onChange={(e) => setEditShiftValue(e.target.value)}
+                            >
+                              <option value="Morning">Morning</option>
+                              <option value="Evening">Evening</option>
+                              <option value="Night">Night</option>
+                              <option value="Custom">Custom</option>
+                            </select>
+                            {editShiftValue === "Custom" && (
+                              <input
+                                style={{ ...inputStyle, padding: "4px 8px", fontSize: "0.8rem", width: "150px", height: "auto" }}
+                                type="text"
+                                placeholder="e.g. 10 AM – 6 PM"
+                                value={editShiftTimingValue}
+                                onChange={(e) => setEditShiftTimingValue(e.target.value)}
+                              />
+                            )}
+                            <button
+                              onClick={() => handleUpdateShift(user.id)}
+                              disabled={isUpdatingShift}
+                              style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", padding: "4px 10px", borderRadius: "6px", cursor: "pointer", fontSize: "0.8rem", fontWeight: "600", whiteSpace: "nowrap" }}
+                            >
+                              {isUpdatingShift ? "…" : "Save"}
+                            </button>
+                            <button
+                              onClick={() => setEditingShiftUserId(null)}
+                              style={{ background: "none", color: "var(--text-secondary)", border: "1px solid var(--border-color)", padding: "4px 8px", borderRadius: "6px", cursor: "pointer", fontSize: "0.8rem" }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          ["Super Admin", "General Manager", "Front Office Manager"].includes(currentUser?.role || "") && (
+                            <button
+                              onClick={() => {
+                                setEditingShiftUserId(user.id);
+                                setEditShiftValue(user.assignedShift || "Morning");
+                                setEditShiftTimingValue(user.shiftTiming || "");
+                              }}
+                              style={{ background: "none", border: "1px solid var(--border-color)", color: "var(--text-secondary)", cursor: "pointer", fontSize: "0.75rem", padding: "4px 10px", borderRadius: "6px", transition: "all 0.2s", whiteSpace: "nowrap" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--border-focus)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--border-color)"; }}
+                            >
+                              🕐 Assign Shift
+                            </button>
+                          )
+                        )}
+                        {currentUser?.role === "Super Admin" && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteStaff(user.id, user.name)}
+                            style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "1.1rem", padding: "6px", borderRadius: "6px", display: "flex", alignItems: "center", transition: "all 0.2s ease" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(239,68,68,0.1)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                            title="Delete Operator"
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2291,14 +2367,6 @@ export default function Dashboard() {
                               required 
                             />
                           )}
-                        </div>
-                        <div>
-                          <label style={labelStyle}>Assigned Shift</label>
-                          <select style={{ ...inputStyle, padding: "8px 12px" }} value={newStaffShift} onChange={(e) => setNewStaffShift(e.target.value)}>
-                            <option value="Morning">Morning</option>
-                            <option value="Evening">Evening</option>
-                            <option value="Night">Night</option>
-                          </select>
                         </div>
                         <div>
                           <label style={labelStyle}>Avatar Initials</label>
