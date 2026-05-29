@@ -2241,11 +2241,11 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {(currentUser?.role === "Super Admin" ? leaveRequests : leaveRequests.filter((l: any) => l.userId === currentUser?.id)).length === 0 ? (
+                    {(currentUser?.role === "Super Admin" || hasPermission("attendance:approve-leave") ? leaveRequests : leaveRequests.filter((l: any) => l.userId === currentUser?.id)).length === 0 ? (
                       <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", textAlign: "center" }}>No leave requests found.</p>
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {(currentUser?.role === "Super Admin" ? leaveRequests : leaveRequests.filter((l: any) => l.userId === currentUser?.id)).map((leave: any) => (
+                        {(currentUser?.role === "Super Admin" || hasPermission("attendance:approve-leave") ? leaveRequests : leaveRequests.filter((l: any) => l.userId === currentUser?.id)).map((leave: any) => (
                           <div key={leave.id} style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <div>
                               <strong style={{ fontSize: "0.9rem", color: "#fff" }}>{leave.user?.name || "Unknown"}</strong>
@@ -2449,7 +2449,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Add User Form */}
-                {currentUser?.role === "Super Admin" ? (
+                {(currentUser?.role === "Super Admin" || hasPermission("staff-management:add")) ? (
                   <>
                     <form onSubmit={handleRegisterStaff} className="glass-card" style={{ padding: "20px", borderStyle: "dashed" }}>
                       <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>👤 Register New Hotel Staff Member</h3>
@@ -2578,7 +2578,7 @@ export default function Dashboard() {
                     <div>
                       <h4 style={{ fontSize: "0.875rem", color: "#fff", fontWeight: "600" }}>Operator Onboarding Locked</h4>
                       <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                        Only the registered **Super Admin** has permission to onboard new hotel staff members or operator profiles.
+                        Only the **Super Admin** (or users with 'Register New Staff' permission) can onboard new staff members.
                       </p>
                     </div>
                   </div>
