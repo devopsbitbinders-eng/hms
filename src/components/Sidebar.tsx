@@ -49,11 +49,11 @@ export default function Sidebar({
     // Otherwise fallback to default role-based logic
     if (role === "Super Admin") return true;
     if (role === "General Manager") {
-      // General Manager sees everything except dangerous DB actions (which are hidden inside settings by role check)
-      return true;
+      // General Manager sees everything except settings by default (can be overridden by permissions)
+      return item.id !== "settings";
     }
     if (role === "Front Office Manager") {
-      return ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "settings"].includes(item.id);
+      return ["front-office", "front-desk", "housekeeping", "reviews", "attendance"].includes(item.id);
     }
     if (role === "Receptionist") {
       return ["front-office", "front-desk", "housekeeping", "reviews", "attendance"].includes(item.id);

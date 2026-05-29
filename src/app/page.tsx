@@ -2343,8 +2343,9 @@ export default function Dashboard() {
                                     setEditingPermissionsUserId(user.id);
                                     let defaultPerms = user.permissions || [];
                                     if (!user.permissions) {
-                                      if (user.role === "Super Admin" || user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "settings"];
-                                      else if (user.role === "Front Office Manager") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "settings"];
+                                      if (user.role === "Super Admin") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "settings"];
+                                      else if (user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance"];
+                                      else if (user.role === "Front Office Manager") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance"];
                                       else if (user.role === "Receptionist") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance"];
                                       else if (user.role === "Finance Executive") defaultPerms = ["front-office", "front-desk", "finance", "attendance"];
                                       else if (user.role === "Housekeeper" || user.role === "Housekeeping Supervisor") defaultPerms = ["housekeeping", "attendance"];
