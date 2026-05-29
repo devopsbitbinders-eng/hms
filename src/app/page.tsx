@@ -2234,8 +2234,11 @@ export default function Dashboard() {
                   {/* Leave Management Section */}
                   <div style={{ marginTop: "32px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                      <h3 style={{ fontSize: "1rem", color: "#fff", fontWeight: "600" }}>📅 Leave Management</h3>
-                      <button onClick={() => setShowLeaveModal(true)} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>➕ Request Leave</button>
+                      <h3 style={{ fontSize: "1rem", color: "#fff", fontWeight: "600" }}>📅 Leave & Shift Requests</h3>
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <button onClick={() => setShowLeaveModal(true)} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>➕ Request Leave</button>
+                        <button onClick={() => setShowShiftSwapModal(true)} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem", background: "linear-gradient(135deg,#8b5cf6,#6366f1)" }}>🔄 Request Shift Change</button>
+                      </div>
                     </div>
 
                     {(currentUser?.role === "Super Admin" ? leaveRequests : leaveRequests.filter((l: any) => l.userId === currentUser?.id)).length === 0 ? (
@@ -2272,7 +2275,47 @@ export default function Dashboard() {
                     )}
                   </div>
                 
-            </div>
+            
+                    <h3 style={{ fontSize: "1rem", color: "#fff", fontWeight: "600", marginTop: "24px", marginBottom: "16px" }}>🔄 Shift Swap / Change Requests</h3>
+                    {(currentUser?.role === "Super Admin" || hasPermission("attendance:approve-swap") ? shiftSwapRequests : shiftSwapRequests.filter((l: any) => l.requesterId === currentUser?.id || l.targetUserId === currentUser?.id)).length === 0 ? (
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", textAlign: "center" }}>No shift swap requests found.</p>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        {(currentUser?.role === "Super Admin" || hasPermission("attendance:approve-swap") ? shiftSwapRequests : shiftSwapRequests.filter((l: any) => l.requesterId === currentUser?.id || l.targetUserId === currentUser?.id)).map((req: any) => (
+                          <div key={req.id} style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <strong style={{ fontSize: "0.9rem", color: "#fff" }}>{req.requester?.name || "Unknown"}</strong>
+                              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginLeft: "8px" }}>
+                                requested change to <strong style={{color:"#fff"}}>{req.proposedShift}</strong> {req.targetUser ? ` (swapping with ${req.targetUser.name})` : ""}
+                              </span>
+                              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>"{req.reason}"</p>
+                            </div>
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                              <span style={{ 
+                                padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600",
+                                backgroundColor: req.status === "Approved" ? "rgba(16, 185, 129, 0.1)" : req.status === "Denied" ? "rgba(239, 68, 68, 0.1)" : "rgba(234, 179, 8, 0.1)",
+                                color: req.status === "Approved" ? "#10b981" : req.status === "Denied" ? "#ef4444" : "#eab308"
+                              }}>
+                                {req.status}
+                              </span>
+                              {hasPermission("attendance:approve-swap") && req.status === "Pending" && (
+                                <div style={{ display: "flex", gap: "4px" }}>
+                                  <button onClick={async () => {
+                                    const res = await fetch(`/api/shift-swap?id=${req.id}&status=Approved`, { method: 'PUT' });
+                                    if(res.ok) { addToast("Approved shift swap"); fetchShiftSwapRequests(); loadData(); }
+                                  }} style={{ background: "#10b981", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Approve</button>
+                                  <button onClick={async () => {
+                                    const res = await fetch(`/api/shift-swap?id=${req.id}&status=Denied`, { method: 'PUT' });
+                                    if(res.ok) { addToast("Denied shift swap"); fetchShiftSwapRequests(); }
+                                  }} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Deny</button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
           </section>
 ) : activeMenu === "staff-management" ? (
           <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, minHeight: 0 }}>
@@ -4393,12 +4436,12 @@ export default function Dashboard() {
             
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px", maxHeight: "70vh", flexGrow: 1, overflowY: "auto", paddingRight: "8px" }}>
               {[
-                { id: "front-office", label: "🗓️ Front Office (Bookings)" },
-                { id: "front-desk", label: "🛎️ Front Desk (Check-in/out)" },
-                { id: "channel-manager", label: "🌍 Channel Manager" },
-                { id: "housekeeping", label: "🧹 Housekeeping & Ops" },
-                { id: "finance", label: "💰 Finance & GST" },
-                { id: "reviews", label: "⭐ Reviews" },
+                { id: "front-office", label: "🗓️ Front Office (Bookings)", subPerms: [{id: "front-office:manage", label: "Create & Edit Bookings"}, {id: "front-office:delete", label: "Cancel Bookings"}] },
+                { id: "front-desk", label: "🛎️ Front Desk (Check-in/out)", subPerms: [{id: "front-desk:checkin", label: "Check Guests In/Out"}, {id: "front-desk:payments", label: "Manage Folio & Payments"}] },
+                { id: "channel-manager", label: "🌍 Channel Manager", subPerms: [{id: "channel-manager:sync", label: "Sync OTAs"}, {id: "channel-manager:rates", label: "Manage Room Rates"}] },
+                { id: "housekeeping", label: "🧹 Housekeeping & Ops", subPerms: [{id: "housekeeping:status", label: "Update Room Status"}, {id: "housekeeping:assign", label: "Assign Tasks to Staff"}] },
+                { id: "finance", label: "💰 Finance & GST", subPerms: [{id: "finance:reports", label: "View Financial Reports"}, {id: "finance:invoices", label: "Export Invoices & GST"}] },
+                { id: "reviews", label: "⭐ Reviews", subPerms: [{id: "reviews:reply", label: "Reply to Guest Reviews"}, {id: "reviews:moderate", label: "Moderate & Hide Reviews"}] },
                 { 
                   id: "attendance", label: "⏱️ Attendance", 
                   subPerms: [
@@ -4415,9 +4458,9 @@ export default function Dashboard() {
                     { id: "staff-management:delete", label: "Delete Staff Accounts" }
                   ]
                 },
-                { id: "settings", label: "⚙️ Settings" },
+                { id: "settings", label: "⚙️ Settings", subPerms: [{id: "settings:config", label: "Modify System Config"}, {id: "settings:properties", label: "Manage Branches"}] },
               ].map((perm) => (
-                <div key={perm.id} style={{ display: "flex", flexDirection: "column", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden" }}>
+                <div key={perm.id} style={{ display: "flex", flexDirection: "column", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", borderRadius: "8px" }}>
                   {!perm.subPerms ? (
                     <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 14px", transition: "all 0.2s ease" }}>
                       <input
