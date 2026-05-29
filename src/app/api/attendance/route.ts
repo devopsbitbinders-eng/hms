@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const { userId, type, status, markedBy } = data; // type: "clockIn", "clockOut", or "manual"
+    const { userId, type, status, markedBy, shift } = data; // type: "clockIn", "clockOut", or "manual"
     
     const today = new Date();
     today.setUTCHours(0,0,0,0);
@@ -46,12 +46,12 @@ export async function POST(request: Request) {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     if (type === "clockIn") {
-      // Check if already clocked in today
+      // Check if already clocked in to this shift today
       const existing = await prisma.attendance.findFirst({
-        where: { userId, date: { gte: today, lt: tomorrow } }
+        where: { userId, date: { gte: today, lt: tomorrow }, shift: shift || "Morning" }
       });
       if (existing) {
-        return NextResponse.json({ success: false, error: "Already clocked in today" });
+        return NextResponse.json({ success: false, error: "Already clocked into this shift today" });
       }
       
       const att = await prisma.attendance.create({
@@ -59,6 +59,7 @@ export async function POST(request: Request) {
           userId,
           date: new Date(),
           clockIn: new Date(),
+          shift: shift || "Morning",
           status: status || "Present",
           markedBy: markedBy || "Self"
         }
@@ -92,6 +93,7 @@ export async function POST(request: Request) {
           date: dateToUse,
           clockIn: clockInTime,
           clockOut: data.clockOut ? new Date(data.clockOut) : null,
+          shift: shift || "Morning",
           status: status || "Present",
           markedBy: markedBy || "Owner"
         }

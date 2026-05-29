@@ -445,10 +445,17 @@ export default function Dashboard() {
   const handleClockInOut = async (type: "clockIn" | "clockOut") => {
     if (!currentUser) return;
     try {
+      let shift = "Morning";
+      if (type === "clockIn") {
+        const hours = new Date().getHours();
+        if (hours >= 5 && hours < 14) shift = "Morning";
+        else if (hours >= 14 && hours < 22) shift = "Evening";
+        else shift = "Night";
+      }
       const res = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser.id, type })
+        body: JSON.stringify({ userId: currentUser.id, type, shift })
       });
       const data = await res.json();
       if (data.success) {
@@ -464,10 +471,16 @@ export default function Dashboard() {
 
   const handleOwnerMarkAttendance = async (staffId: string) => {
     try {
+      const hours = new Date().getHours();
+      let shift = "Morning";
+      if (hours >= 5 && hours < 14) shift = "Morning";
+      else if (hours >= 14 && hours < 22) shift = "Evening";
+      else shift = "Night";
+
       const res = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: staffId, type: "manual", markedBy: "Owner" })
+        body: JSON.stringify({ userId: staffId, type: "manual", markedBy: "Owner", shift })
       });
       const data = await res.json();
       if (data.success) {
@@ -2037,6 +2050,7 @@ export default function Dashboard() {
                                 <strong style={{ fontSize: "0.9rem", color: !att ? "var(--text-muted)" : "#fff", display: "block" }}>{user.name}</strong>
                                 <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
                                   {user.role}
+                                  {att && ` • Shift: ${att.shift || 'Morning'}`}
                                   {att && ` • In: ${new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                                   {att?.clockOut && ` • Out: ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                                   {att?.clockOut && att?.clockIn && ` • Worked: ${Math.round((new Date(att.clockOut).getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}

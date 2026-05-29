@@ -223,6 +223,7 @@ model Attendance {
   date      DateTime @db.Date
   clockIn   DateTime
   clockOut  DateTime?
+  shift     String   @default("Morning") // "Morning", "Evening", "Night"
   status    String   @default("Present") // "Present", "Absent", "Half Day"
   markedBy  String?  // e.g., "Self" or "Super Admin"
   createdAt DateTime @default(now())
