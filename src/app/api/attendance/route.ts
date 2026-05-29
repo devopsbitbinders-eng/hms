@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const { userId, type, status, markedBy, shift } = data; // type: "clockIn", "clockOut", or "manual"
+    const { userId, type, status, markedBy, shift, shiftTiming } = data; // type: "clockIn", "clockOut", or "manual"
     
     const today = new Date();
     today.setUTCHours(0,0,0,0);
@@ -60,6 +60,7 @@ export async function POST(request: Request) {
           date: new Date(),
           clockIn: new Date(),
           shift: shift || "Morning",
+          shiftTiming: shiftTiming || null,
           status: status || "Present",
           markedBy: markedBy || "Self"
         }
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
           clockIn: clockInTime,
           clockOut: data.clockOut ? new Date(data.clockOut) : null,
           shift: shift || "Morning",
+          shiftTiming: shiftTiming || null,
           status: status || "Present",
           markedBy: markedBy || "Owner"
         }

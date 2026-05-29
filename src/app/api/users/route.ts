@@ -14,6 +14,7 @@ export async function GET() {
         propertyId: true,
         allowRoomManagement: true,
         assignedShift: true,
+        shiftTiming: true,
       },
     });
 
@@ -30,7 +31,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, username, password, role, avatar, propertyId, assignedShift } = body;
+    const { name, username, password, role, avatar, propertyId, assignedShift, shiftTiming } = body;
 
     if (!name || !username || !password || !role || !avatar) {
       return NextResponse.json(
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
         propertyId: propertyId || null,
         allowRoomManagement: true, // Managers defaulted to ON
         assignedShift: assignedShift || "Morning",
+        shiftTiming: shiftTiming || null,
       },
     });
 

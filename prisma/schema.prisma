@@ -128,7 +128,8 @@ model User {
   propertyId          String?  // Assigned property ID for staff members
   allowRoomManagement Boolean  @default(true)
   isFirstLogin        Boolean  @default(true) // Used for temporary PIN reset workflow
-  assignedShift       String   @default("Morning") // "Morning", "Evening", "Night"
+  assignedShift       String   @default("Morning") // "Morning", "Evening", "Night", "Custom"
+  shiftTiming         String?  // e.g., "09:00 AM - 06:00 PM"
   attendances         Attendance[]
   leaveRequests       LeaveRequest[]
 }
@@ -225,6 +226,7 @@ model Attendance {
   clockIn   DateTime
   clockOut  DateTime?
   shift     String   @default("Morning") // "Morning", "Evening", "Night"
+  shiftTiming String?
   status    String   @default("Present") // "Present", "Absent", "Half Day"
   markedBy  String?  // e.g., "Self" or "Super Admin"
   createdAt DateTime @default(now())

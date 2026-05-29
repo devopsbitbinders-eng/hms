@@ -90,6 +90,7 @@ export default function Dashboard() {
   const [newStaffAvatar, setNewStaffAvatar] = useState("");
   const [newStaffPropertyId, setNewStaffPropertyId] = useState("");
   const [newStaffShift, setNewStaffShift] = useState("Morning");
+  const [newStaffShiftTiming, setNewStaffShiftTiming] = useState("");
 
   // Onboarding Wizard states
   const [onboardingName, setOnboardingName] = useState("");
@@ -153,7 +154,7 @@ export default function Dashboard() {
   const [newResGuestName, setNewResGuestName] = useState("");
   const [newResRoomId, setNewResRoomId] = useState("");
   const [newResStartIndex, setNewResStartIndex] = useState(0);
-  const [newResDate, setNewResDate] = useState("2026-05-20"); // Arrival date picker — base date is May 20 2026
+  const [newResDate, setNewResDate] = useState("2026-05-20"); // Arrival date picker â€” base date is May 20 2026
   const [newResDuration, setNewResDuration] = useState(2);
   const [newResStatus, setNewResStatus] = useState<"checked-in" | "confirmed" | "pending" | "maintenance">("confirmed");
   const [newResDetails, setNewResDetails] = useState("");
@@ -224,12 +225,12 @@ export default function Dashboard() {
     const diff = Math.round((picked.getTime() - base.getTime()) / 86400000);
     return Math.min(Math.max(diff, 0), 13);
   };
-  // Called when the date picker changes — syncs startIndex
+  // Called when the date picker changes â€” syncs startIndex
   const handleResDateChange = (dateStr: string) => {
     setNewResDate(dateStr);
     setNewResStartIndex(dateToIndex(dateStr));
   };
-  // Called when the startIndex dropdown changes — syncs date picker
+  // Called when the startIndex dropdown changes â€” syncs date picker
   const handleResStartIndexChange = (idx: number) => {
     setNewResStartIndex(idx);
     setNewResDate(indexToDate(idx));
@@ -240,7 +241,7 @@ export default function Dashboard() {
   const [tempChargeAmount, setTempChargeAmount] = useState("");
   const [tempChargeCategory, setTempChargeCategory] = useState("service");
 
-  // Auto-dismiss toast — errors stay 5s, others 3s
+  // Auto-dismiss toast â€” errors stay 5s, others 3s
   useEffect(() => {
     if (toastMessage) {
       const timer = setTimeout(() => {
@@ -360,8 +361,8 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.success) {
         addToast(newVal
-          ? `✅ Room Management ENABLED for ${data.user.name}.`
-          : `🔒 Room Management DISABLED for ${data.user.name}.`
+          ? `âœ… Room Management ENABLED for ${data.user.name}.`
+          : `ðŸ”’ Room Management DISABLED for ${data.user.name}.`
         );
         // Immediately sync if the toggled user is the active session
         setCurrentUser((prev: any) => {
@@ -400,7 +401,7 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.success) {
         setNotificationsList([]);
-        addToast("🔔 Notifications cleared.");
+        addToast("ðŸ”” Notifications cleared.");
       } else {
         throw new Error(data.error || "Failed to clear notifications");
       }
@@ -460,10 +461,10 @@ export default function Dashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        addToast(type === "clockIn" ? "✅ Successfully Clocked In for the day!" : "✅ Clocked Out successfully.");
+        addToast(type === "clockIn" ? "âœ… Successfully Clocked In for the day!" : "âœ… Clocked Out successfully.");
         fetchAttendance();
       } else {
-        addToast("⚠️ " + data.error, "error");
+        addToast("âš ï¸  " + data.error, "error");
       }
     } catch (err) {
       addToast("Failed to update attendance", "error");
@@ -472,23 +473,26 @@ export default function Dashboard() {
 
   const handleOwnerMarkAttendance = async (staffId: string) => {
     try {
-      const hours = new Date().getHours();
-      let shift = "Morning";
-      if (hours >= 5 && hours < 14) shift = "Morning";
-      else if (hours >= 14 && hours < 22) shift = "Evening";
-      else shift = "Night";
+      const staffMember = usersList.find((u: any) => u.id === staffId);
+      let shift = staffMember?.assignedShift || "Morning";
+      if (!staffMember?.assignedShift) {
+        const hours = new Date().getHours();
+        if (hours >= 5 && hours < 14) shift = "Morning";
+        else if (hours >= 14 && hours < 22) shift = "Evening";
+        else shift = "Night";
+      }
 
       const res = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: staffId, type: "manual", markedBy: "Owner", shift })
+        body: JSON.stringify({ userId: staffId, type: "manual", markedBy: "Owner", shift, shiftTiming: staffMember?.shiftTiming })
       });
       const data = await res.json();
       if (data.success) {
-        addToast("✅ Marked attendance successfully.");
+        addToast("âœ… Marked attendance successfully.");
         fetchAttendance();
       } else {
-        addToast("⚠️ " + data.error, "error");
+        addToast("âš ï¸ " + data.error, "error");
       }
     } catch (err) {
       addToast("Failed to mark attendance", "error");
@@ -635,7 +639,7 @@ export default function Dashboard() {
   const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPropName || !newPropLocation) {
-      addToast("⚠️ Please fill in all fields.");
+      addToast("âš ï¸ Please fill in all fields.");
       return;
     }
 
@@ -660,7 +664,7 @@ export default function Dashboard() {
       });
       const data = await response.json();
       if (data.success) {
-        addToast(`🏢 Property "${newPropName}" created successfully!`);
+        addToast(`ðŸ¢ Property "${newPropName}" created successfully!`);
         setShowPropertyModal(false);
         setNewPropName("");
         setNewPropLocation("");
@@ -681,13 +685,13 @@ export default function Dashboard() {
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newRoomNumber || !newRoomName) {
-      addToast("⚠️ Please fill in number and name.");
+      addToast("âš ï¸ Please fill in number and name.");
       return;
     }
 
     const activePropDetails = propertiesList.find(p => mapPropertyKey(p.name) === activeProperty);
     if (!activePropDetails) {
-      addToast("❌ Active property not found.");
+      addToast("âŒ Active property not found.");
       return;
     }
 
@@ -707,7 +711,7 @@ export default function Dashboard() {
       });
       const data = await response.json();
       if (data.success) {
-        addToast(`🔑 Room ${newRoomNumber} added to branch!`);
+        addToast(`ðŸ”‘ Room ${newRoomNumber} added to branch!`);
         setShowRoomModal(false);
         setNewRoomNumber("");
         setNewRoomName("");
@@ -726,7 +730,7 @@ export default function Dashboard() {
   const handleUpdateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoomToEdit || !editRoomNumber || !editRoomName) {
-      addToast("⚠️ Please fill in room number and name.");
+      addToast("âš ï¸ Please fill in room number and name.");
       return;
     }
 
@@ -743,7 +747,7 @@ export default function Dashboard() {
       });
       const data = await response.json();
       if (data.success) {
-        addToast(`💾 Room ${editRoomNumber} details updated persistently!`);
+        addToast(`ðŸ’¾ Room ${editRoomNumber} details updated persistently!`);
         setShowEditRoomModal(false);
         setSelectedRoomToEdit(null);
         await loadData();
@@ -762,7 +766,7 @@ export default function Dashboard() {
       currentUser?.role === "General Manager";
     
     if (!isSeniorStaff) {
-      addToast("🚫 Permission Denied: Only Super Admins and General Managers can alter room maintenance statuses.", "error");
+      addToast("ðŸš« Permission Denied: Only Super Admins and General Managers can alter room maintenance statuses.", "error");
       return;
     }
 
@@ -772,7 +776,7 @@ export default function Dashboard() {
     );
 
     if (maintenanceBlock) {
-      if (!window.confirm(`🔧 Do you want to RELEASE Room ${room.number} back to active guest booking service? This will delete the active maintenance block.`)) {
+      if (!window.confirm(`ðŸ”§ Do you want to RELEASE Room ${room.number} back to active guest booking service? This will delete the active maintenance block.`)) {
         return;
       }
 
@@ -782,7 +786,7 @@ export default function Dashboard() {
         });
         const data = await response.json();
         if (data.success || response.ok) {
-          addToast(`🟢 Room ${room.number} released to service successfully!`);
+          addToast(`ðŸŸ¢ Room ${room.number} released to service successfully!`);
           setShowEditRoomModal(false);
           setSelectedRoomToEdit(null);
           await loadData();
@@ -790,7 +794,7 @@ export default function Dashboard() {
           throw new Error(data.error || "Failed to release room from maintenance.");
         }
       } catch (err: any) {
-        addToast(`❌ Release Failed: ${err.message}`, "error");
+        addToast(`âŒ Release Failed: ${err.message}`, "error");
       }
     } else {
       const overlappingGuest = activeResList.find(
@@ -802,11 +806,11 @@ export default function Dashboard() {
       );
 
       if (overlappingGuest) {
-        if (!window.confirm(`⚠️ Warning: Room ${room.number} is occupied or booked by "${overlappingGuest.guestName}" within the next 7 days. Setting maintenance will overlap with their stay. Proceed anyway?`)) {
+        if (!window.confirm(`âš ï¸ Warning: Room ${room.number} is occupied or booked by "${overlappingGuest.guestName}" within the next 7 days. Setting maintenance will overlap with their stay. Proceed anyway?`)) {
           return;
         }
       } else {
-        if (!window.confirm(`🛠️ Are you sure you want to place Room ${room.number} OUT OF ORDER for a 7-day maintenance block?`)) {
+        if (!window.confirm(`ðŸ› ï¸ Are you sure you want to place Room ${room.number} OUT OF ORDER for a 7-day maintenance block?`)) {
           return;
         }
       }
@@ -829,7 +833,7 @@ export default function Dashboard() {
         });
         const data = await response.json();
         if (data.success) {
-          addToast(`🛠️ Room ${room.number} placed OUT OF ORDER persistently!`);
+          addToast(`ðŸ› ï¸ Room ${room.number} placed OUT OF ORDER persistently!`);
           setShowEditRoomModal(false);
           setSelectedRoomToEdit(null);
           await loadData();
@@ -837,7 +841,7 @@ export default function Dashboard() {
           throw new Error(data.error || "Failed to create maintenance block.");
         }
       } catch (err: any) {
-        addToast(`❌ Maintenance Block Failed: ${err.message}`, "error");
+        addToast(`âŒ Maintenance Block Failed: ${err.message}`, "error");
       }
     }
   };
@@ -847,7 +851,7 @@ export default function Dashboard() {
     e.preventDefault();
     const assignedRoomId = newResRoomId || currentRooms[0]?.id;
     if (!newResGuestName || !assignedRoomId) {
-      addToast("⚠️ Please fill in Guest Name and select a Room.");
+      addToast("âš ï¸ Please fill in Guest Name and select a Room.");
       return;
     }
 
@@ -980,7 +984,7 @@ export default function Dashboard() {
       });
       const data = await response.json();
       if (data.success) {
-        addToast(`📅 Booking for "${newResGuestName}" registered persistently!`);
+        addToast(`ðŸ“… Booking for "${newResGuestName}" registered persistently!`);
 
         // --- OUTBOUND OTA CHANNEL SYNC PIPELINE ---
         const currentPropertyId = propertiesList.find((p) => mapPropertyKey(p.name) === activeProperty)?.id || "";
@@ -1035,7 +1039,7 @@ export default function Dashboard() {
                         action: "log_inventory_push",
                         propertyId: currentPropertyId,
                         status: "success",
-                        message: `[🚀 Webhook Outbound Push] Synced inventory lock for Direct Guest "${targetGuestName}" in room "${roomName}" across dates [${dates.join(", ")}]. Connected OTA Status: ${gatewayData.status}.`
+                        message: `[ðŸš€ Webhook Outbound Push] Synced inventory lock for Direct Guest "${targetGuestName}" in room "${roomName}" across dates [${dates.join(", ")}]. Connected OTA Status: ${gatewayData.status}.`
                       })
                     });
                   } else {
@@ -1047,7 +1051,7 @@ export default function Dashboard() {
                         action: "log_inventory_push",
                         propertyId: currentPropertyId,
                         status: "warning",
-                        message: `[⚠️ Outbound Push Failed] Attempted to push direct guest "${targetGuestName}" reservation in room "${roomName}" to ${channel.name} but gateway rejected request: ${gatewayData.error || "Handshake mismatch"}`
+                        message: `[âš ï¸ Outbound Push Failed] Attempted to push direct guest "${targetGuestName}" reservation in room "${roomName}" to ${channel.name} but gateway rejected request: ${gatewayData.error || "Handshake mismatch"}`
                       })
                     });
                   }
@@ -1116,7 +1120,7 @@ export default function Dashboard() {
   // Open booking modal pre-filled from a calendar grid cell click
   const handleAddBookingAtCell = (roomIdx: number, colIdx: number) => {
     if (currentRooms.length === 0) {
-      addToast("⚠️ Please add a Room before booking a guest!");
+      addToast("âš ï¸ Please add a Room before booking a guest!");
       return;
     }
 
@@ -1188,7 +1192,7 @@ export default function Dashboard() {
           setAuthPassword("");
           setAuthSuccess(false);
           setShowProfileSwitcher(false);
-          addToast(`🔑 Session initialized as ${data.user.name} (${data.user.role}).`);
+          addToast(`ðŸ”‘ Session initialized as ${data.user.name} (${data.user.role}).`);
 
           // Redirect to appropriate module based on role mapping
           if (data.user.role === "Housekeeping Supervisor") {
@@ -1230,7 +1234,7 @@ export default function Dashboard() {
       const data = await response.json();
       if (data.success) {
         setChannelManagerUnlocked(true);
-        addToast("🔓 Channel Manager access unlocked for this shift session.");
+        addToast("ðŸ”“ Channel Manager access unlocked for this shift session.");
       } else {
         throw new Error(data.error || "Incorrect password.");
       }
@@ -1248,14 +1252,14 @@ export default function Dashboard() {
   const handleRegisterStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStaffName || !newStaffUsername || !newStaffPassword || !newStaffAvatar) {
-      addToast("⚠️ Please enter all staff member details.");
+      addToast("âš ï¸ Please enter all staff member details.");
       return;
     }
 
     const finalRole = newStaffRole === "Other" ? customStaffRole : newStaffRole;
 
     if (finalRole !== "Super Admin" && !newStaffPropertyId) {
-      addToast("⚠️ Please select an Assigned Property for this staff member.");
+      addToast("âš ï¸ Please select an Assigned Property for this staff member.");
       return;
     }
 
@@ -1275,7 +1279,7 @@ export default function Dashboard() {
       });
       const data = await response.json();
       if (data.success) {
-        addToast(`✅ Staff member "${newStaffName}" registered persistently!`);
+        addToast(`âœ… Staff member "${newStaffName}" registered persistently!`);
         setJustCreatedStaff({ name: newStaffName, pin: newStaffPassword });
         setNewStaffName("");
         setNewStaffUsername("");
@@ -1301,7 +1305,7 @@ export default function Dashboard() {
       const response = await fetch(`/api/users/${userId}`, { method: "DELETE" });
       const data = await response.json();
       if (data.success) {
-        addToast(`👥 Staff member "${userName}" deleted.`);
+        addToast(`ðŸ‘¥ Staff member "${userName}" deleted.`);
         
         // If the deleted user is the active session user, log out safely
         if (currentUser?.id === userId) {
@@ -1320,7 +1324,7 @@ export default function Dashboard() {
 
   // WIPE ALL STAFF ACCOUNTS
   const handleClearStaffAccounts = async () => {
-    if (!confirm("🚨 DANGER: Are you sure you want to delete all staff and administrator profiles? You will be logged out immediately and redirected to the Initial Setup Wizard. This cannot be undone!")) {
+    if (!confirm("ðŸš¨ DANGER: Are you sure you want to delete all staff and administrator profiles? You will be logged out immediately and redirected to the Initial Setup Wizard. This cannot be undone!")) {
       return;
     }
 
@@ -1329,7 +1333,7 @@ export default function Dashboard() {
       const response = await fetch("/api/users/clear", { method: "POST" });
       const data = await response.json();
       if (data.success) {
-        addToast("🗑️ All staff accounts wiped successfully.");
+        addToast("ðŸ—‘ï¸ All staff accounts wiped successfully.");
         localStorage.removeItem("aether_pms_user");
         setCurrentUser(null);
         setUsersList([]);
@@ -1389,7 +1393,7 @@ export default function Dashboard() {
 
       const data = await response.json();
       if (data.success) {
-        addToast(`👑 Super Admin "${onboardingName}" registered successfully!`);
+        addToast(`ðŸ‘‘ Super Admin "${onboardingName}" registered successfully!`);
         
         // Log them in immediately
         setCurrentUser(data.user);
@@ -1426,7 +1430,7 @@ export default function Dashboard() {
       setTabOverrides(prev => ({ ...prev, [menuId]: true }));
       setOverridePassword("");
       setOverrideError(null);
-      addToast(`🔓 Section "${menuId.toUpperCase()}" unlocked via Admin Override.`);
+      addToast(`ðŸ”“ Section "${menuId.toUpperCase()}" unlocked via Admin Override.`);
     } else {
       setOverrideError("Invalid Super Admin Override PIN / Password.");
       const el = document.getElementById("override-input");
@@ -1439,7 +1443,7 @@ export default function Dashboard() {
 
   // 4. WIPE DATABASE
   const handleClearDatabase = async () => {
-    if (!confirm("🚨 DANGER: Are you sure you want to delete all database tables? This will delete all properties, rooms, bookings, and splits. This cannot be undone!")) {
+    if (!confirm("ðŸš¨ DANGER: Are you sure you want to delete all database tables? This will delete all properties, rooms, bookings, and splits. This cannot be undone!")) {
       return;
     }
 
@@ -1448,7 +1452,7 @@ export default function Dashboard() {
       const response = await fetch("/api/clear", { method: "POST" });
       const data = await response.json();
       if (data.success) {
-        addToast("🗑️ MySQL Database fully wiped.");
+        addToast("ðŸ—‘ï¸ MySQL Database fully wiped.");
         setPropertiesList([]);
         setPropertyRooms({});
         setAllReservations({});
@@ -1471,7 +1475,7 @@ export default function Dashboard() {
       const response = await fetch("/api/seed");
       const data = await response.json();
       if (data.success) {
-        addToast("🌱 Seeded Goan, Manali & Delhi demo branches successfully!");
+        addToast("ðŸŒ± Seeded Goan, Manali & Delhi demo branches successfully!");
         await loadData();
       } else {
         throw new Error(data.error || "Seed failed.");
@@ -1561,16 +1565,16 @@ export default function Dashboard() {
         {toastMessage && (
           toastType === "error" ? (
             <div className={styles.toastError}>
-              <span className={styles.toastErrorIcon}>🚫</span>
+              <span className={styles.toastErrorIcon}>ðŸš«</span>
               <div>
                 <div className={styles.toastErrorTitle}>{toastMessage.split("|")[0]}</div>
                 <div className={styles.toastErrorBody}>{toastMessage.split("|")[1] || toastMessage.split("|")[0]}</div>
               </div>
             </div>
           ) : toastType === "warning" ? (
-            <div className={styles.toastWarning}>⚠️ {toastMessage}</div>
+            <div className={styles.toastWarning}>âš ï¸ {toastMessage}</div>
           ) : (
-            <div className={styles.toast}>🔔 {toastMessage}</div>
+            <div className={styles.toast}>ðŸ”” {toastMessage}</div>
           )
         )}
       </main>
@@ -1688,7 +1692,7 @@ export default function Dashboard() {
                       fontSize: "0.85rem"
                     }}
                   >
-                    {onboardingShowPassword ? "👁️" : "🙈"}
+                    {onboardingShowPassword ? "ðŸ‘ï¸" : "ðŸ™ˆ"}
                   </button>
                 </div>
               </div>
@@ -1718,7 +1722,7 @@ export default function Dashboard() {
                 textAlign: "center",
                 fontWeight: "500",
               }}>
-                ⚠️ {onboardingError}
+                âš ï¸ {onboardingError}
               </div>
             )}
 
@@ -1735,13 +1739,13 @@ export default function Dashboard() {
                 justifyContent: "center",
               }}
             >
-              {onboardingSubmitting ? "Initializing System..." : "👑 Register & Launch HMS"}
+              {onboardingSubmitting ? "Initializing System..." : "ðŸ‘‘ Register & Launch HMS"}
             </button>
           </form>
 
           <div style={{ display: "flex", gap: "8px", alignItems: "center", borderTop: "1px solid var(--border-color)", paddingTop: "16px", width: "100%", justifyContent: "center" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-              ⚡ Powered by AetherHMS Production Engine
+              âš¡ Powered by AetherHMS Production Engine
             </span>
           </div>
         </div>
@@ -1770,7 +1774,7 @@ export default function Dashboard() {
           activeProperty={activeProperty}
           setActiveProperty={(prop) => {
             setActiveProperty(prop);
-            addToast(`🏢 Switched property context to ${prop.toUpperCase()} branch.`);
+            addToast(`ðŸ¢ Switched property context to ${prop.toUpperCase()} branch.`);
           }}
           stats={stats}
           properties={propertiesList}
@@ -1789,25 +1793,25 @@ export default function Dashboard() {
             <div className={`${styles.statCard} glass-card`}>
               <div className={styles.statTitle}>Occupancy Rate</div>
               <div className={styles.statValue}>{stats.occupancy}%</div>
-              <div className={styles.statTrend}>📈 Live updates</div>
+              <div className={styles.statTrend}>ðŸ“ˆ Live updates</div>
             </div>
             <div className={`${styles.statCard} glass-card`}>
               <div className={styles.statTitle}>Checked-In Guests</div>
               <div className={styles.statValue}>{stats.checkedIn} Rooms</div>
-              <div className={styles.statTrend}>🟢 Active occupancy</div>
+              <div className={styles.statTrend}>ðŸŸ¢ Active occupancy</div>
             </div>
             <div className={`${styles.statCard} glass-card`}>
               <div className={styles.statTitle}>Upcoming Check-Ins</div>
               <div className={styles.statValue}>{stats.upcoming} Arrivals</div>
               <div className={styles.statTrend} style={{ color: "var(--status-confirmed)" }}>
-                📅 Confirmed status
+                ðŸ“… Confirmed status
               </div>
             </div>
             <div className={`${styles.statCard} glass-card`}>
               <div className={styles.statTitle}>Out-of-Order Rooms</div>
               <div className={styles.statValue}>{stats.maintenance} Spaces</div>
               <div className={styles.statTrend} style={{ color: stats.maintenance > 0 ? "var(--status-pending)" : "var(--status-checkedin)" }}>
-                🛠️ Maintenance Tickets
+                ðŸ› ï¸ Maintenance Tickets
               </div>
             </div>
           </section>
@@ -1817,7 +1821,7 @@ export default function Dashboard() {
         {!checkTabPermission(activeMenu) ? (
           <section style={{ padding: "40px 32px", flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div className="glass-card" style={{ padding: "48px", textAlign: "center", maxWidth: "550px", display: "flex", flexDirection: "column", gap: "24px", alignItems: "center" }}>
-              <div style={{ fontSize: "3rem" }}>🛡️</div>
+              <div style={{ fontSize: "3rem" }}>ðŸ›¡ï¸</div>
               <div>
                 <h1 style={{ fontSize: "1.50rem", fontWeight: "700", color: "#fff", marginBottom: "12px" }}>Access Restricted</h1>
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: "1.6", marginBottom: "8px" }}>
@@ -1840,12 +1844,12 @@ export default function Dashboard() {
                     required
                   />
                   <button className="btn-primary" type="submit" style={{ whiteSpace: "nowrap" }}>
-                    🔑 Unlock Tab
+                    ðŸ”‘ Unlock Tab
                   </button>
                 </div>
                 {overrideError && (
                   <p style={{ color: "#ef4444", fontSize: "0.8rem", marginTop: "8px", fontWeight: "600" }}>
-                    ❌ {overrideError}
+                    âŒ {overrideError}
                   </p>
                 )}
               </form>
@@ -1855,10 +1859,10 @@ export default function Dashboard() {
                   const permitted = ["front-office", "channel-manager", "housekeeping", "finance", "settings"].find(t => checkTabPermission(t));
                   if (permitted) setActiveMenu(permitted);
                 }}>
-                  👈 Back to Allowed Tab
+                  ðŸ‘ˆ Back to Allowed Tab
                 </button>
                 <button className="btn-secondary" style={{ padding: "8px 14px", fontSize: "0.85rem" }} onClick={() => setShowProfileSwitcher(true)}>
-                  🔄 Switch Staff Profile
+                  ðŸ”„ Switch Staff Profile
                 </button>
               </div>
             </div>
@@ -1868,7 +1872,7 @@ export default function Dashboard() {
             /* Sleek Empty State / Setup Wizard */
             <section style={{ padding: "40px 32px", flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <div className="glass-card" style={{ padding: "48px", textAlign: "center", maxWidth: "600px", display: "flex", flexDirection: "column", gap: "24px", alignItems: "center" }}>
-                <div style={{ fontSize: "3.5rem", background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>🏢</div>
+                <div style={{ fontSize: "3.5rem", background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ðŸ¢</div>
                 <div>
                   <h1 style={{ fontSize: "1.75rem", fontWeight: "700", color: "#fff", marginBottom: "12px" }}>AetherHMS Database Slate is Clean!</h1>
                   <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "8px" }}>
@@ -1878,15 +1882,15 @@ export default function Dashboard() {
                 {currentUser?.role === "Super Admin" ? (
                   <div style={{ display: "flex", gap: "16px", marginTop: "8px" }}>
                     <button className="btn-primary" onClick={() => setShowPropertyModal(true)}>
-                      🏢 Create Property Branch
+                      ðŸ¢ Create Property Branch
                     </button>
                     <button className="btn-secondary" onClick={handleSeedDatabase}>
-                      🌱 Load Visual Demo Data
+                      ðŸŒ± Load Visual Demo Data
                     </button>
                   </div>
                 ) : (
                   <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontStyle: "italic", textAlign: "center" }}>
-                    🔒 Property setup is locked. Please login as a Super Admin to create a property or seed demo data.
+                    ðŸ”’ Property setup is locked. Please login as a Super Admin to create a property or seed demo data.
                   </p>
                 )}
               </div>
@@ -1903,7 +1907,7 @@ export default function Dashboard() {
                       className={`${styles.toggleBtn} ${timeScale === "daily" ? styles.toggleBtnActive : ""}`}
                       onClick={() => {
                         setTimeScale("daily");
-                        addToast("📅 Visual Grid shifted to 14-Day Calendar Scale.");
+                        addToast("ðŸ“… Visual Grid shifted to 14-Day Calendar Scale.");
                       }}
                     >
                       Daily Scale
@@ -1913,7 +1917,7 @@ export default function Dashboard() {
                       className={`${styles.toggleBtn} ${timeScale === "hourly" ? styles.toggleBtnActive : ""}`}
                       onClick={() => {
                         setTimeScale("hourly");
-                        addToast("⏱️ Visual Grid shifted to 24-Hour Transit Slots.");
+                        addToast("â±ï¸ Visual Grid shifted to 24-Hour Transit Slots.");
                       }}
                     >
                       Hourly/Flexible Slots
@@ -1925,25 +1929,25 @@ export default function Dashboard() {
                 <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                   {currentUser?.role === "Super Admin" && (
                     <button className="btn-secondary" style={{ padding: "8px 14px", fontSize: "0.85rem" }} onClick={() => setShowPropertyModal(true)}>
-                      🏢 Add Property
+                      ðŸ¢ Add Property
                     </button>
                   )}
                   {(currentUser?.role === "Super Admin" ||
                     ((currentUser?.role === "Front Office Manager" || currentUser?.role === "General Manager") &&
                       currentUser?.allowRoomManagement !== false)) && (
                     <button className="btn-secondary" style={{ padding: "8px 14px", fontSize: "0.85rem" }} onClick={() => setShowRoomModal(true)}>
-                      🔑 Add Room
+                      ðŸ”‘ Add Room
                     </button>
                   )}
                   {currentUser?.role !== "Housekeeping Supervisor" && (
                     <button className="btn-primary" style={{ padding: "8px 14px", fontSize: "0.85rem" }} onClick={() => {
                       if (currentRooms.length === 0) {
-                        addToast("⚠️ Please add a Room before booking a guest!");
+                        addToast("âš ï¸ Please add a Room before booking a guest!");
                         return;
                       }
                       setShowBookingModal(true);
                     }}>
-                      📅 New Booking
+                      ðŸ“… New Booking
                     </button>
                   )}
                 </div>
@@ -1961,24 +1965,24 @@ export default function Dashboard() {
                       currentUser?.role === "General Manager";
                     
                     if (!isSeniorStaff) {
-                      addToast(`🛠️ "${res.guestName}" is an active Out of Order maintenance block. Only Super Admins and General Managers can release it.`, "warning");
+                      addToast(`ðŸ› ï¸ "${res.guestName}" is an active Out of Order maintenance block. Only Super Admins and General Managers can release it.`, "warning");
                       return;
                     }
                     
-                    if (window.confirm(`🛠️ Out-of-Order Block: "${res.guestName}"\n\nDo you want to RELEASE this room back to active guest service? (This will delete the maintenance block)`)) {
+                    if (window.confirm(`ðŸ› ï¸ Out-of-Order Block: "${res.guestName}"\n\nDo you want to RELEASE this room back to active guest service? (This will delete the maintenance block)`)) {
                       try {
                         const response = await fetch(`/api/reservations/${res.id}`, {
                           method: "DELETE",
                         });
                         const data = await response.json();
                         if (data.success || response.ok) {
-                          addToast(`🟢 Room released to service successfully!`);
+                          addToast(`ðŸŸ¢ Room released to service successfully!`);
                           await loadData();
                         } else {
                           throw new Error(data.error || "Failed to release room.");
                         }
                       } catch (err: any) {
-                        addToast(`❌ Release Failed: ${err.message}`, "error");
+                        addToast(`âŒ Release Failed: ${err.message}`, "error");
                       }
                     }
                     return;
@@ -2026,7 +2030,7 @@ export default function Dashboard() {
             <div className="glass-card" style={{ padding: "32px", display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
               {/* ========== STAFF ATTENDANCE SUB-TAB ========== */}
               
-                  <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>⏱️ Today's Staff Attendance</h2>
+                  <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>â±ï¸ Today's Staff Attendance</h2>
                   
                   {(["Super Admin", "General Manager", "Front Office Manager"].includes(currentUser?.role) ? usersList : usersList.filter(u => u.id === currentUser?.id)).length === 0 ? (
                     <div style={{ textAlign: "center", padding: "32px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
@@ -2052,11 +2056,11 @@ export default function Dashboard() {
                                 <strong style={{ fontSize: "0.9rem", color: !att ? "var(--text-muted)" : "#fff", display: "block" }}>{user.name}</strong>
                                 <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
                                   {user.role}
-                                  {att && ` • Shift: ${att.shift || 'Morning'}`}
-                                  {att && ` • In: ${new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                  {att?.clockOut && ` • Out: ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                  {att?.clockOut && att?.clockIn && ` • Worked: ${Math.round((new Date(att.clockOut).getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
-                                  {att && !att?.clockOut && ` • Working: ${Math.round((new Date().getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
+                                  {att && ` â€¢ Shift: ${att.shift || 'Morning'} ${att.shiftTiming ? '(' + att.shiftTiming + ')' : ''}`}
+                                  {att && ` â€¢ In: ${new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                  {att?.clockOut && ` â€¢ Out: ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                  {att?.clockOut && att?.clockIn && ` â€¢ Worked: ${Math.round((new Date(att.clockOut).getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
+                                  {att && !att?.clockOut && ` â€¢ Working: ${Math.round((new Date().getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
                                 </span>
                               </div>
                             </div>
@@ -2093,7 +2097,7 @@ export default function Dashboard() {
 
                   {currentUser?.role === "Super Admin" && (
                     <div style={{ marginTop: "24px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
-                      <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>✅ Mark Staff Attendance Manually</h3>
+                      <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>âœ… Mark Staff Attendance Manually</h3>
                       <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
                         <div style={{ flex: 1 }}>
                           <select 
@@ -2117,8 +2121,8 @@ export default function Dashboard() {
                   {/* Leave Management Section */}
                   <div style={{ marginTop: "32px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                      <h3 style={{ fontSize: "1rem", color: "#fff", fontWeight: "600" }}>📅 Leave Management</h3>
-                      <button onClick={() => setShowLeaveModal(true)} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>➕ Request Leave</button>
+                      <h3 style={{ fontSize: "1rem", color: "#fff", fontWeight: "600" }}>ðŸ“… Leave Management</h3>
+                      <button onClick={() => setShowLeaveModal(true)} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>âž• Request Leave</button>
                     </div>
 
                     {(currentUser?.role === "Super Admin" ? leaveRequests : leaveRequests.filter((l: any) => l.userId === currentUser?.id)).length === 0 ? (
@@ -2162,7 +2166,7 @@ export default function Dashboard() {
           <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1 }}>
             <div className="glass-card" style={{ padding: "48px", maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
               <div>
-                <h1 style={{ fontSize: "1.75rem", fontWeight: "700", marginBottom: "8px" }}>⚙️ Admin Control Centre</h1>
+                <h1 style={{ fontSize: "1.75rem", fontWeight: "700", marginBottom: "8px" }}>âš™ï¸ Admin Control Centre</h1>
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.6" }}>
                   Manage live database connections, staff permissions, and web booking synchronization.
                 </p>
@@ -2171,8 +2175,8 @@ export default function Dashboard() {
               {/* Settings Sub-Tab Navigation */}
               <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", paddingBottom: "0" }}>
                 {([
-                  { id: "system", label: "⚙️ System Settings" },
-                  { id: "permissions", label: "🔑 Staff Permissions Layout" },
+                  { id: "system", label: "âš™ï¸ System Settings" },
+                  { id: "permissions", label: "ðŸ”‘ Staff Permissions Layout" },
                 ] as const).map((tab) => (
                   <button
                     key={tab.id}
@@ -2201,7 +2205,7 @@ export default function Dashboard() {
               {/* ========== SYSTEM SETTINGS SUB-TAB ========== */}
               {settingsSubTab === "system" && (
               <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", marginBottom: "8px" }}>
-                <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>👥 PMS Staff & Operator Accounts</h2>
+                <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>ðŸ‘¥ PMS Staff & Operator Accounts</h2>
                 
                 {/* User List Grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
@@ -2212,7 +2216,7 @@ export default function Dashboard() {
                         <div>
                           <strong style={{ fontSize: "0.85rem", color: "#fff", display: "block" }}>{user.name}</strong>
                           <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                            @{user.username} • <span style={{ color: "var(--border-focus)", fontWeight: "500" }}>{user.role}</span>
+                            @{user.username} â€¢ <span style={{ color: "var(--border-focus)", fontWeight: "500" }}>{user.role}</span>
                           </span>
                         </div>
                       </div>
@@ -2241,7 +2245,7 @@ export default function Dashboard() {
                           }}
                           title="Delete Operator"
                         >
-                          🗑️
+                          ðŸ—‘ï¸
                         </button>
                       )}
                     </div>
@@ -2252,7 +2256,7 @@ export default function Dashboard() {
                 {currentUser?.role === "Super Admin" ? (
                   <>
                     <form onSubmit={handleRegisterStaff} className="glass-card" style={{ padding: "20px", borderStyle: "dashed" }}>
-                      <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>👤 Register New Hotel Staff Member</h3>
+                      <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>ðŸ‘¤ Register New Hotel Staff Member</h3>
                       
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                         <div>
@@ -2323,20 +2327,20 @@ export default function Dashboard() {
                             </select>
                           ) : (
                             <span style={{ fontSize: "0.75rem", color: "#ef4444", fontStyle: "italic", marginBottom: "4px" }}>
-                              ❌ No properties registered. Please register a property first.
+                              âŒ No properties registered. Please register a property first.
                             </span>
                           )}
                         </div>
                       )}
 
                       <button className="btn-primary" type="submit" style={{ fontSize: "0.85rem", padding: "8px 14px", marginTop: "4px" }}>
-                        ➕ Register Staff Account
+                        âž• Register Staff Account
                       </button>
                     </form>
 
                     {justCreatedStaff && (
                       <div style={{ padding: "16px", marginTop: "16px", backgroundColor: "rgba(16, 185, 129, 0.1)", border: "1px solid var(--status-checkedin)", borderRadius: "8px" }}>
-                        <h4 style={{ color: "var(--status-checkedin)", fontSize: "1rem", marginBottom: "8px" }}>✅ Profile Created Successfully!</h4>
+                        <h4 style={{ color: "var(--status-checkedin)", fontSize: "1rem", marginBottom: "8px" }}>âœ… Profile Created Successfully!</h4>
                         <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "16px", lineHeight: "1.5" }}>
                           Share these login details with <strong>{justCreatedStaff.name}</strong> so they can log in and set their permanent PIN.
                         </p>
@@ -2350,7 +2354,7 @@ export default function Dashboard() {
                             }}
                             style={{ flex: 1, backgroundColor: "#25D366", color: "#fff", border: "none", minWidth: "160px" }}
                           >
-                            💬 WhatsApp
+                            ðŸ’¬ WhatsApp
                           </button>
                           <button 
                             type="button"
@@ -2362,7 +2366,7 @@ export default function Dashboard() {
                             }}
                             style={{ flex: 1, backgroundColor: "#3b82f6", color: "#fff", border: "none", minWidth: "160px" }}
                           >
-                            ✉️ Email
+                            âœ‰ï¸ Email
                           </button>
                           <button 
                             type="button"
@@ -2370,11 +2374,11 @@ export default function Dashboard() {
                             onClick={() => {
                               const msg = `Hi ${justCreatedStaff.name}, your AetherHMS account is ready! Your temporary PIN is: ${justCreatedStaff.pin}. Please log in and set your new PIN.`;
                               navigator.clipboard.writeText(msg);
-                              addToast("📋 Credentials copied to clipboard!");
+                              addToast("ðŸ“‹ Credentials copied to clipboard!");
                             }}
                             style={{ flex: 1, minWidth: "160px" }}
                           >
-                            📋 Copy Details
+                            ðŸ“‹ Copy Details
                           </button>
                         </div>
                       </div>
@@ -2382,7 +2386,7 @@ export default function Dashboard() {
                   </>
                 ) : (
                   <div className="glass-card" style={{ padding: "20px", display: "flex", alignItems: "center", gap: "16px", backgroundColor: "rgba(255,255,255,0.01)", borderStyle: "dashed" }}>
-                    <div style={{ fontSize: "1.5rem" }}>🔒</div>
+                    <div style={{ fontSize: "1.5rem" }}>ðŸ”’</div>
                     <div>
                       <h4 style={{ fontSize: "0.875rem", color: "#fff", fontWeight: "600" }}>Operator Onboarding Locked</h4>
                       <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: "2px" }}>
@@ -2398,7 +2402,7 @@ export default function Dashboard() {
               {settingsSubTab === "permissions" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                   <div>
-                    <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "6px" }}>🔑 Staff Permissions Layout</h2>
+                    <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "6px" }}>ðŸ”‘ Staff Permissions Layout</h2>
                     <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: "1.6" }}>
                       Control granular permissions for senior staff members. Toggle <strong style={{ color: "#fff" }}>Allow Room Management</strong> to grant or revoke the ability to add and edit rooms. Changes take effect in under 5 seconds without requiring a logout.
                     </p>
@@ -2409,7 +2413,7 @@ export default function Dashboard() {
                     u.role === "General Manager" || u.role === "Front Office Manager"
                   ).length === 0 ? (
                     <div className="glass-card" style={{ padding: "24px", textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem", borderStyle: "dashed" }}>
-                      🏷️ No managers registered yet. Add a General Manager or Front Office Manager from System Settings.
+                      ðŸ·ï¸ No managers registered yet. Add a General Manager or Front Office Manager from System Settings.
                     </div>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -2449,7 +2453,7 @@ export default function Dashboard() {
                               <div>
                                 <strong style={{ fontSize: "0.9rem", color: "#fff", display: "block" }}>{manager.name}</strong>
                                 <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                                  @{manager.username} •{" "}
+                                  @{manager.username} â€¢{" "}
                                   <span style={{ color: "var(--border-focus)", fontWeight: "500" }}>{manager.role}</span>
                                 </span>
                               </div>
@@ -2527,10 +2531,10 @@ export default function Dashboard() {
                       padding: "14px 16px",
                     }}
                   >
-                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: "1px" }}>💡</span>
+                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: "1px" }}>ðŸ’¡</span>
                     <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: "1.6" }}>
                       <strong style={{ color: "#fff", display: "block", marginBottom: "2px" }}>How it works</strong>
-                      By default, all newly registered managers are granted Room Management access (<strong style={{ color: "#6ee7b7" }}>YES</strong>). Flip a toggle to <strong style={{ color: "#ef4444" }}>NO</strong> to instantly hide the <strong style={{ color: "#fff" }}>🔑 Add Room</strong> button and disable room editing from that manager's dashboard. The change propagates automatically within 5 seconds — no logout required.
+                      By default, all newly registered managers are granted Room Management access (<strong style={{ color: "#6ee7b7" }}>YES</strong>). Flip a toggle to <strong style={{ color: "#ef4444" }}>NO</strong> to instantly hide the <strong style={{ color: "#fff" }}>ðŸ”‘ Add Room</strong> button and disable room editing from that manager's dashboard. The change propagates automatically within 5 seconds â€” no logout required.
                     </div>
                   </div>
                 </div>
@@ -2538,7 +2542,7 @@ export default function Dashboard() {
 
               {settingsSubTab === "system" && (
               <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
-                <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "4px" }}>⚠️ Dangerous Database Actions</h2>
+                <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "4px" }}>âš ï¸ Dangerous Database Actions</h2>
                 
                 {currentUser?.role === "Super Admin" ? (
                   <>
@@ -2568,7 +2572,7 @@ export default function Dashboard() {
                   </>
                 ) : (
                   <div style={{ backgroundColor: "rgba(239, 68, 68, 0.02)", border: "1px solid rgba(239, 68, 68, 0.1)", borderRadius: "8px", padding: "20px", display: "flex", alignItems: "center", gap: "16px" }}>
-                    <div style={{ fontSize: "1.5rem" }}>🔒</div>
+                    <div style={{ fontSize: "1.5rem" }}>ðŸ”’</div>
                     <div>
                       <strong style={{ color: "var(--text-secondary)", display: "block" }}>Database Wipes Locked</strong>
                       <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", lineHeight: "1.4", display: "block", marginTop: "2px" }}>
@@ -2586,7 +2590,7 @@ export default function Dashboard() {
             {currentUser?.role === "General Manager" && !channelManagerUnlocked ? (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
                 <div className="glass-card" style={{ padding: "40px", maxWidth: "450px", width: "100%", textAlign: "center", display: "flex", flexDirection: "column", gap: "24px", alignItems: "center", boxShadow: "0 20px 40px rgba(0,0,0,0.4)" }}>
-                  <div style={{ fontSize: "3rem" }}>🔒</div>
+                  <div style={{ fontSize: "3rem" }}>ðŸ”’</div>
                   <div>
                     <h2 style={{ fontSize: "1.25rem", fontWeight: "700", color: "#fff", marginBottom: "8px" }}>General Manager Security Lock</h2>
                     <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: "1.5" }}>
@@ -2599,7 +2603,7 @@ export default function Dashboard() {
                         id="gm-pin-input"
                         type="password"
                         style={{ ...inputStyle, marginBottom: 0, textAlign: "center", fontSize: "1.25rem", letterSpacing: "4px", fontWeight: "700" }}
-                        placeholder="••••••••"
+                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                         value={gmPasswordInput}
                         onChange={(e) => setGmPasswordInput(e.target.value)}
                         required
@@ -2608,7 +2612,7 @@ export default function Dashboard() {
                     </div>
                     {gmError && (
                       <p style={{ color: "#f87171", fontSize: "0.8rem", fontWeight: "500", margin: 0 }}>
-                        ⚠️ {gmError}
+                        âš ï¸ {gmError}
                       </p>
                     )}
                     
@@ -2654,12 +2658,12 @@ export default function Dashboard() {
                         style={{ height: "45px", fontSize: "0.8rem", fontWeight: "600", justifyContent: "center", borderRadius: "10px", color: "var(--text-secondary)" }}
                         onClick={() => setGmPasswordInput((prev) => prev.slice(0, -1))}
                       >
-                        ⌫
+                        âŒ«
                       </button>
                     </div>
 
                     <button className="btn-primary" type="submit" style={{ justifyContent: "center", width: "100%", padding: "10px", marginTop: "8px" }}>
-                      🔑 Unlock Channel Manager
+                      ðŸ”‘ Unlock Channel Manager
                     </button>
                   </form>
                 </div>
@@ -2702,12 +2706,12 @@ export default function Dashboard() {
           <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1 }}>
             <div className="glass-card" style={{ padding: "48px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", maxWidth: "800px", margin: "0 auto", gap: "24px" }}>
               <div style={{ width: "70px", height: "70px", borderRadius: "50%", backgroundColor: "rgba(99, 102, 241, 0.15)", display: "flex", alignItems: "center", fontSize: "2rem", alignSelf: "center", justifyContent: "center" }}>
-                {activeMenu === "finance" && "📊"}
+                {activeMenu === "finance" && "ðŸ“Š"}
               </div>
 
               <div>
                 <h1 style={{ fontSize: "1.75rem", fontWeight: "700", marginBottom: "8px" }}>
-                  {activeMenu === "finance" && "📊 Localization & Finance Engine (India Ready)"}
+                  {activeMenu === "finance" && "ðŸ“Š Localization & Finance Engine (India Ready)"}
                 </h1>
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.6" }}>
                   {activeMenu === "finance" && "Indian GST calculation engine supporting tariff tax brackets (12% vs 18% splits), BOI Form C schema generators for foreign visitors, and Tally ERP ledger direct sync integrations."}
@@ -2715,7 +2719,7 @@ export default function Dashboard() {
               </div>
 
               <div style={{ backgroundColor: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "16px", width: "100%", fontSize: "0.85rem", textAlign: "left" }}>
-                <strong style={{ display: "block", color: "#fff", marginBottom: "6px" }}>⚡ Roadmap Status: Integration Ready</strong>
+                <strong style={{ display: "block", color: "#fff", marginBottom: "6px" }}>âš¡ Roadmap Status: Integration Ready</strong>
                 The visual layout for this module is fully scoped. When database sync keys are configured, live REST API pipelines will fetch and populate active data directly to these ledger nodes.
               </div>
 
@@ -2727,13 +2731,13 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* 🏬 ADD PROPERTY MODAL */}
+      {/* ðŸ¬ ADD PROPERTY MODAL */}
       {showPropertyModal && (
         <div className={styles.modalOverlay}>
           <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "450px" }}>
             <div className={styles.modalHeader}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>🏢 Register New Branch</h2>
-              <button className={styles.modalCloseBtn} onClick={() => setShowPropertyModal(false)}>✕</button>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>ðŸ¢ Register New Branch</h2>
+              <button className={styles.modalCloseBtn} onClick={() => setShowPropertyModal(false)}>âœ•</button>
             </div>
             <form onSubmit={handleCreateProperty}>
               <label style={labelStyle}>Property Name</label>
@@ -2741,9 +2745,9 @@ export default function Dashboard() {
 
               <label style={labelStyle}>Property Type</label>
               <select style={inputStyle} value={newPropType} onChange={(e) => setNewPropType(e.target.value)}>
-                <option value="homestay">🌴 Homestay / Villa</option>
-                <option value="hotel">🏨 Premium Hotel</option>
-                <option value="resort">⛰️ Mountain/Beach Resort</option>
+                <option value="homestay">ðŸŒ´ Homestay / Villa</option>
+                <option value="hotel">ðŸ¨ Premium Hotel</option>
+                <option value="resort">â›°ï¸ Mountain/Beach Resort</option>
               </select>
 
               <label style={labelStyle}>Location</label>
@@ -2761,13 +2765,13 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 🔑 ADD ROOM MODAL */}
+      {/* ðŸ”‘ ADD ROOM MODAL */}
       {showRoomModal && (
         <div className={styles.modalOverlay}>
           <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "450px" }}>
             <div className={styles.modalHeader}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>🔑 Add Room / Space</h2>
-              <button className={styles.modalCloseBtn} onClick={() => setShowRoomModal(false)}>✕</button>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>ðŸ”‘ Add Room / Space</h2>
+              <button className={styles.modalCloseBtn} onClick={() => setShowRoomModal(false)}>âœ•</button>
             </div>
             <form onSubmit={handleCreateRoom}>
               <label style={labelStyle}>Room Number</label>
@@ -2786,7 +2790,7 @@ export default function Dashboard() {
                 <option value="Co-working Desk">Co-working Desk</option>
               </select>
 
-              <label style={labelStyle}>Room Base Price (₹)</label>
+              <label style={labelStyle}>Room Base Price (â‚¹)</label>
               <input style={inputStyle} type="number" placeholder="e.g. 2500" value={newRoomPrice} onChange={(e) => setNewRoomPrice(e.target.value)} required />
 
               <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
@@ -2798,16 +2802,16 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ✏️ EDIT ROOM MODAL */}
+      {/* âœï¸ EDIT ROOM MODAL */}
       {showEditRoomModal && selectedRoomToEdit && (
         <div className={styles.modalOverlay}>
           <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "450px" }}>
             <div className={styles.modalHeader}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>✏️ Edit Room Details</h2>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>âœï¸ Edit Room Details</h2>
               <button className={styles.modalCloseBtn} onClick={() => {
                 setShowEditRoomModal(false);
                 setSelectedRoomToEdit(null);
-              }}>✕</button>
+              }}>âœ•</button>
             </div>
             <form onSubmit={handleUpdateRoom}>
               <label style={labelStyle}>Room Number</label>
@@ -2826,13 +2830,13 @@ export default function Dashboard() {
                 <option value="Co-working Desk">Co-working Desk</option>
               </select>
 
-              <label style={labelStyle}>Room Base Price (₹)</label>
+              <label style={labelStyle}>Room Base Price (â‚¹)</label>
               <input style={inputStyle} type="number" placeholder="e.g. 2500" value={editRoomPrice} onChange={(e) => setEditRoomPrice(e.target.value)} required />
 
               {/* Maintenance Toggle restricted to Super Admins & General Managers */}
               {(currentUser?.role === "Super Admin" || currentUser?.role === "General Manager") && (
                 <div style={{ marginTop: "16px", borderTop: "1px solid var(--border-color)", paddingTop: "16px", marginBottom: "16px" }}>
-                  <label style={{ ...labelStyle, display: "block", marginBottom: "8px", fontWeight: "600" }}>🔧 Room Operations & Maintenance</label>
+                  <label style={{ ...labelStyle, display: "block", marginBottom: "8px", fontWeight: "600" }}>ðŸ”§ Room Operations & Maintenance</label>
                   <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "12px", lineHeight: "1.4" }}>
                     Toggle Room Operational status. Placing a room out of order blocks bookings for 7 days.
                   </p>
@@ -2868,7 +2872,7 @@ export default function Dashboard() {
                           e.currentTarget.style.color = isMaint ? "#10b981" : "#ef4444";
                         }}
                       >
-                        {isMaint ? "🟢 Release to Guest Service (Clean/Operational)" : "🛠️ Place Room Out-of-Order (Maintenance Block)"}
+                        {isMaint ? "ðŸŸ¢ Release to Guest Service (Clean/Operational)" : "ðŸ› ï¸ Place Room Out-of-Order (Maintenance Block)"}
                       </button>
                     );
                   })()}
@@ -2887,19 +2891,19 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 📅 NEW BOOKING / RESERVATION MODAL */}
+      {/* ðŸ“… NEW BOOKING / RESERVATION MODAL */}
       {showBookingModal && (
         <div className={styles.modalOverlay}>
           <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "800px" }}>
             <div className={styles.modalHeader}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>📅 New Guest Booking</h2>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>ðŸ“… New Guest Booking</h2>
               <button className={styles.modalCloseBtn} onClick={() => { 
                 setShowBookingModal(false); 
                 setNewResDate("2026-05-20"); 
                 setNewResStartIndex(0); 
                 setNewResCheckInTime(""); 
                 setNewResStep(1); 
-              }}>✕</button>
+              }}>âœ•</button>
             </div>
 
             {/* Stepper Progress Indicator */}
@@ -2986,7 +2990,7 @@ export default function Dashboard() {
                       }
                     }}
                     >
-                      {isCompleted ? "✓" : s.step}
+                      {isCompleted ? "âœ“" : s.step}
                     </div>
                     <span style={{ 
                       fontSize: "0.75rem", 
@@ -3027,18 +3031,18 @@ export default function Dashboard() {
                         <option value="">-- Select Assigned Room --</option>
                         {currentRooms.map((room) => (
                           <option key={room.id} value={room.id}>
-                            Room {room.number} — {room.name} ({room.type})
+                            Room {room.number} â€” {room.name} ({room.type})
                           </option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label style={labelStyle}>🏷️ Reservation Status</label>
+                      <label style={labelStyle}>ðŸ·ï¸ Reservation Status</label>
                       <select style={inputStyle} value={newResStatus} onChange={(e) => setNewResStatus(e.target.value as any)}>
-                        <option value="confirmed">🔵 Confirmed Booking</option>
-                        <option value="checked-in">🟢 Checked-In Guest</option>
-                        <option value="pending">🟡 Unpaid / Pending Booking</option>
-                        <option value="maintenance">🛠️ Out of Order / Maintenance</option>
+                        <option value="confirmed">ðŸ”µ Confirmed Booking</option>
+                        <option value="checked-in">ðŸŸ¢ Checked-In Guest</option>
+                        <option value="pending">ðŸŸ¡ Unpaid / Pending Booking</option>
+                        <option value="maintenance">ðŸ› ï¸ Out of Order / Maintenance</option>
                       </select>
                     </div>
                   </div>
@@ -3047,7 +3051,7 @@ export default function Dashboard() {
                   {timeScale === "daily" ? (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
                       <div>
-                        <label style={labelStyle}>📆 Arrival Date</label>
+                        <label style={labelStyle}>ðŸ“† Arrival Date</label>
                         <input
                           style={inputStyle}
                           type="date"
@@ -3060,17 +3064,17 @@ export default function Dashboard() {
                         />
                       </div>
                       <div>
-                        <label style={labelStyle}>🌙 Duration (Nights)</label>
+                        <label style={labelStyle}>ðŸŒ™ Duration (Nights)</label>
                         <input style={inputStyle} type="number" min="1" max="14" value={newResDuration} onChange={(e) => setNewResDuration(parseInt(e.target.value, 10))} required />
                       </div>
                       <div>
-                        <label style={labelStyle}>⏰ Flexible Check-in <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(optional)</span></label>
+                        <label style={labelStyle}>â° Flexible Check-in <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(optional)</span></label>
                         <select
                           style={inputStyle}
                           value={newResCheckInTime}
                           onChange={(e) => setNewResCheckInTime(e.target.value)}
                         >
-                          <option value="">— No preference —</option>
+                          <option value="">â€” No preference â€”</option>
                           {["08:00 AM","10:00 AM","12:00 PM","02:00 PM","04:00 PM","06:00 PM","08:00 PM","10:00 PM"].map((t) => (
                             <option key={t} value={t}>{t}</option>
                           ))}
@@ -3080,7 +3084,7 @@ export default function Dashboard() {
                   ) : (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                       <div>
-                        <label style={labelStyle}>⏱️ Start Time Slot</label>
+                        <label style={labelStyle}>â±ï¸ Start Time Slot</label>
                         <select
                           style={inputStyle}
                           value={newResStartIndex}
@@ -3092,7 +3096,7 @@ export default function Dashboard() {
                         </select>
                       </div>
                       <div>
-                        <label style={labelStyle}>⏳ Duration (2-Hr Slots)</label>
+                        <label style={labelStyle}>â³ Duration (2-Hr Slots)</label>
                         <input style={inputStyle} type="number" min="1" max="12" value={newResDuration} onChange={(e) => setNewResDuration(parseInt(e.target.value, 10))} required />
                       </div>
                     </div>
@@ -3100,26 +3104,26 @@ export default function Dashboard() {
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
                     <div>
-                      <label style={labelStyle}>🗓️ Check-out Date <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(auto)</span></label>
+                      <label style={labelStyle}>ðŸ—“ï¸ Check-out Date <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(auto)</span></label>
                       <input style={{...inputStyle, backgroundColor: "rgba(255,255,255,0.02)", color: "var(--text-secondary)"}} type="date" value={new Date(new Date(newResDate).getTime() + (newResDuration * 86400000)).toISOString().split("T")[0]} readOnly disabled />
                     </div>
                     <div>
-                      <label style={labelStyle}>⏰ Expected Check-out Time <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(optional)</span></label>
+                      <label style={labelStyle}>â° Expected Check-out Time <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(optional)</span></label>
                       <input style={inputStyle} type="text" placeholder="e.g. 11:00 AM" value={newResCheckOutTime} onChange={(e) => setNewResCheckOutTime(e.target.value)} />
                     </div>
                     <div>
-                      <label style={labelStyle}>🚗 Vehicle Number (Parking) <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(optional)</span></label>
+                      <label style={labelStyle}>ðŸš— Vehicle Number (Parking) <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(optional)</span></label>
                       <input style={inputStyle} type="text" placeholder="e.g. GA-03-X-1234" value={newResVehicleNumber} onChange={(e) => setNewResVehicleNumber(e.target.value)} />
                     </div>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                     <div>
-                      <label style={labelStyle}>👨 Adults Count</label>
+                      <label style={labelStyle}>ðŸ‘¨ Adults Count</label>
                       <input style={inputStyle} type="number" min="1" max="10" value={newResNumAdults} onChange={(e) => setNewResNumAdults(parseInt(e.target.value, 10))} required />
                     </div>
                     <div>
-                      <label style={labelStyle}>👶 Children Count</label>
+                      <label style={labelStyle}>ðŸ‘¶ Children Count</label>
                       <input style={inputStyle} type="number" min="0" max="10" value={newResNumChildren} onChange={(e) => {
                         const count = parseInt(e.target.value, 10) || 0;
                         setNewResNumChildren(count);
@@ -3150,7 +3154,7 @@ export default function Dashboard() {
                     }}>
                       {Array.from({ length: newResNumChildren }).map((_, childIdx) => (
                         <div key={childIdx}>
-                          <label style={{ ...labelStyle, fontSize: "0.75rem" }}>👶 Child {childIdx + 1} Age</label>
+                          <label style={{ ...labelStyle, fontSize: "0.75rem" }}>ðŸ‘¶ Child {childIdx + 1} Age</label>
                           <select
                             style={{ ...inputStyle, marginBottom: 0, padding: "6px 10px", fontSize: "0.8rem" }}
                             value={newResChildAges[childIdx] || ""}
@@ -3185,7 +3189,7 @@ export default function Dashboard() {
                       } else {
                         setNewResStep(2);
                       }
-                    }}>Next Step ➔</button>
+                    }}>Next Step âž”</button>
                   </div>
                 </div>
               )}
@@ -3195,31 +3199,31 @@ export default function Dashboard() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                     <div>
-                      <label style={labelStyle}>👤 Guest Full Name</label>
+                      <label style={labelStyle}>ðŸ‘¤ Guest Full Name</label>
                       <input style={inputStyle} type="text" placeholder="As shown in government ID" value={newResGuestName} onChange={(e) => setNewResGuestName(e.target.value)} required />
                     </div>
                     <div>
-                      <label style={labelStyle}>🌐 Nationality</label>
+                      <label style={labelStyle}>ðŸŒ Nationality</label>
                       <select style={inputStyle} value={newResNationality} onChange={(e) => setNewResNationality(e.target.value)}>
-                        <option value="Indian">🇮🇳 Indian National</option>
-                        <option value="Foreign">🌐 Foreign National (Form C Required)</option>
+                        <option value="Indian">ðŸ‡®ðŸ‡³ Indian National</option>
+                        <option value="Foreign">ðŸŒ Foreign National (Form C Required)</option>
                       </select>
                     </div>
                   </div>
 
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                     <div>
-                      <label style={labelStyle}>📞 Phone Number</label>
+                      <label style={labelStyle}>ðŸ“ž Phone Number</label>
                       <input style={inputStyle} type="tel" placeholder="e.g. +91 98765 43210 (WhatsApp alerts)" value={newResPhone} onChange={(e) => setNewResPhone(e.target.value)} required />
                     </div>
                     <div>
-                      <label style={labelStyle}>✉️ Email Address</label>
+                      <label style={labelStyle}>âœ‰ï¸ Email Address</label>
                       <input style={inputStyle} type="email" placeholder="e.g. guest@example.com (digital invoices)" value={newResEmail} onChange={(e) => setNewResEmail(e.target.value)} required />
                     </div>
                   </div>
 
                   <div>
-                    <label style={labelStyle}>🎂 Date of Birth</label>
+                    <label style={labelStyle}>ðŸŽ‚ Date of Birth</label>
                     <input
                       style={inputStyle}
                       type="date"
@@ -3253,7 +3257,7 @@ export default function Dashboard() {
                           gap: "10px",
                           lineHeight: "1.4"
                         }}>
-                          <span style={{ fontSize: "1.1rem" }}>⚠️</span>
+                          <span style={{ fontSize: "1.1rem" }}>âš ï¸</span>
                           <span><strong>Age Policy Alert:</strong> The primary guest is under 18 (Age: {age}). Under standard regulatory frameworks, the registering primary guest must be 18 years or older to book a stay.</span>
                         </div>
                       );
@@ -3262,7 +3266,7 @@ export default function Dashboard() {
                   })()}
 
                   <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
-                    <button className="btn-secondary" type="button" onClick={() => setNewResStep(1)}>⬅ Back</button>
+                    <button className="btn-secondary" type="button" onClick={() => setNewResStep(1)}>â¬… Back</button>
                     <button className="btn-primary" type="button" onClick={() => {
                       if (!newResGuestName.trim()) { addToast("Full Name|Guest Full Name is required.", "error"); return; }
                       if (!newResPhone.trim()) { addToast("Phone Number|Phone Number is required.", "error"); return; }
@@ -3278,7 +3282,7 @@ export default function Dashboard() {
                         return;
                       }
                       setNewResStep(3);
-                    }}>Next Step ➔</button>
+                    }}>Next Step âž”</button>
                   </div>
                 </div>
               )}
@@ -3288,7 +3292,7 @@ export default function Dashboard() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   {newResNationality === "Indian" ? (
                     <>
-                      <h3 style={{ fontSize: "0.95rem", fontWeight: "700", color: "#fff", marginBottom: "4px" }}>🇮🇳 Domestic Indian Guest Verification</h3>
+                      <h3 style={{ fontSize: "0.95rem", fontWeight: "700", color: "#fff", marginBottom: "4px" }}>ðŸ‡®ðŸ‡³ Domestic Indian Guest Verification</h3>
                       
                       {/* PAN Card Policy notice */}
                       <div style={{
@@ -3303,7 +3307,7 @@ export default function Dashboard() {
                         gap: "10px",
                         lineHeight: "1.4"
                       }}>
-                        <span style={{ fontSize: "1.1rem" }}>⚠️</span>
+                        <span style={{ fontSize: "1.1rem" }}>âš ï¸</span>
                         <div>
                           <strong>PAN Card Invalid for Check-In:</strong> Under tourism & civil regulations in India, a <strong>PAN Card is explicitly NOT accepted</strong> as valid proof of identity for checking into a hotel. Provide an Aadhaar Card, Driving License, Voter ID, or Passport.
                         </div>
@@ -3311,7 +3315,7 @@ export default function Dashboard() {
 
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                         <div>
-                          <label style={labelStyle}>🆔 ID Document Type</label>
+                          <label style={labelStyle}>ðŸ†” ID Document Type</label>
                           <select 
                             style={inputStyle} 
                             value={newResIdType === "PAN Card" ? "Aadhaar Card" : newResIdType} 
@@ -3325,14 +3329,14 @@ export default function Dashboard() {
                           </select>
                         </div>
                         <div>
-                          <label style={labelStyle}>🔢 Alphanumeric ID Number</label>
+                          <label style={labelStyle}>ðŸ”¢ Alphanumeric ID Number</label>
                           <input style={inputStyle} type="text" placeholder="e.g. 1234 5678 9012" value={newResIdNumber} onChange={(e) => setNewResIdNumber(e.target.value)} required />
                         </div>
                       </div>
                     </>
                   ) : (
                     <>
-                      <h3 style={{ fontSize: "0.95rem", fontWeight: "700", color: "#fff", marginBottom: "4px" }}>🌐 Form C Immigration Requirements (Foreign National)</h3>
+                      <h3 style={{ fontSize: "0.95rem", fontWeight: "700", color: "#fff", marginBottom: "4px" }}>ðŸŒ Form C Immigration Requirements (Foreign National)</h3>
                       
                       <div style={{
                         backgroundColor: "rgba(59, 130, 246, 0.06)",
@@ -3343,12 +3347,12 @@ export default function Dashboard() {
                         fontSize: "0.82rem",
                         lineHeight: "1.4"
                       }}>
-                        ℹ️ <strong>Form C Mandate:</strong> In accordance with government regulations, all foreign guests must supply Passport, Visa, and Arrival details upon registration.
+                        â„¹ï¸ <strong>Form C Mandate:</strong> In accordance with government regulations, all foreign guests must supply Passport, Visa, and Arrival details upon registration.
                       </div>
 
                       {/* Passport Details Box */}
                       <div style={{ border: "1px solid var(--border-color)", padding: "16px", borderRadius: "8px", backgroundColor: "rgba(255,255,255,0.01)" }}>
-                        <h4 style={{ fontSize: "0.85rem", fontWeight: "600", color: "#818cf8", marginBottom: "12px" }}>🛂 Passport Details</h4>
+                        <h4 style={{ fontSize: "0.85rem", fontWeight: "600", color: "#818cf8", marginBottom: "12px" }}>ðŸ›‚ Passport Details</h4>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                           <div>
                             <label style={{ ...labelStyle, fontSize: "0.8rem" }}>Passport Number</label>
@@ -3387,7 +3391,7 @@ export default function Dashboard() {
 
                       {/* Visa Details Box */}
                       <div style={{ border: "1px solid var(--border-color)", padding: "16px", borderRadius: "8px", backgroundColor: "rgba(255,255,255,0.01)" }}>
-                        <h4 style={{ fontSize: "0.85rem", fontWeight: "600", color: "#818cf8", marginBottom: "12px" }}>📄 Visa Details</h4>
+                        <h4 style={{ fontSize: "0.85rem", fontWeight: "600", color: "#818cf8", marginBottom: "12px" }}>ðŸ“„ Visa Details</h4>
                         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "16px" }}>
                           <div>
                             <label style={{ ...labelStyle, fontSize: "0.8rem" }}>Visa Number</label>
@@ -3413,7 +3417,7 @@ export default function Dashboard() {
 
                       {/* Arrival info */}
                       <div style={{ border: "1px solid var(--border-color)", padding: "16px", borderRadius: "8px", backgroundColor: "rgba(255,255,255,0.01)" }}>
-                        <h4 style={{ fontSize: "0.85rem", fontWeight: "600", color: "#818cf8", marginBottom: "12px" }}>✈️ Arrival & Form C Details</h4>
+                        <h4 style={{ fontSize: "0.85rem", fontWeight: "600", color: "#818cf8", marginBottom: "12px" }}>âœˆï¸ Arrival & Form C Details</h4>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                           <div>
                             <label style={{ ...labelStyle, fontSize: "0.8rem" }}>India Arrival Date</label>
@@ -3448,7 +3452,7 @@ export default function Dashboard() {
                   {/* ID Document scan upload box */}
                   <div style={{ border: "1px dashed var(--border-color)", padding: "20px", borderRadius: "8px", backgroundColor: "rgba(255,255,255,0.01)", textAlign: "center" }}>
                     <label style={{ ...labelStyle, color: "#fff", display: "inline-flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                      📸 Upload ID Document Photocopy Scan (Aadhaar/DL/Passport)
+                      ðŸ“¸ Upload ID Document Photocopy Scan (Aadhaar/DL/Passport)
                     </label>
                     <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "12px" }}>Supported formats: JPEG, PNG, PDF. Max size: 2MB. Stored locally inside the PMS.</p>
                     
@@ -3467,7 +3471,7 @@ export default function Dashboard() {
                         cursor: "pointer",
                         transition: "var(--transition-fast)"
                       }}>
-                        📁 Choose File
+                        ðŸ“ Choose File
                         <input 
                           type="file" 
                           accept="image/*,application/pdf" 
@@ -3502,19 +3506,19 @@ export default function Dashboard() {
                           borderRadius: "6px",
                           border: "1px solid rgba(52, 211, 153, 0.2)"
                         }}>
-                          ✓ Scan Uploaded ({Math.round(newResIdScanData.length / 1024)} KB)
+                          âœ“ Scan Uploaded ({Math.round(newResIdScanData.length / 1024)} KB)
                           <button 
                             type="button" 
                             style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.9rem", padding: "0 2px" }}
                             onClick={() => setNewResIdScanData("")}
-                          >✕</button>
+                          >âœ•</button>
                         </span>
                       )}
                     </div>
                   </div>
 
                   <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
-                    <button className="btn-secondary" type="button" onClick={() => setNewResStep(2)}>⬅ Back</button>
+                    <button className="btn-secondary" type="button" onClick={() => setNewResStep(2)}>â¬… Back</button>
                     <button className="btn-primary" type="button" onClick={() => {
                       if (newResNationality === "Indian") {
                         if (newResIdType === "PAN Card") {
@@ -3536,7 +3540,7 @@ export default function Dashboard() {
                         }
                       }
                       setNewResStep(4);
-                    }}>Next Step ➔</button>
+                    }}>Next Step âž”</button>
                   </div>
                 </div>
               )}
@@ -3546,7 +3550,7 @@ export default function Dashboard() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                     <div>
-                      <label style={labelStyle}>💳 Payment Method</label>
+                      <label style={labelStyle}>ðŸ’³ Payment Method</label>
                       <select style={inputStyle} value={newResPaymentMethod} onChange={(e) => setNewResPaymentMethod(e.target.value)}>
                         <option value="Pay at Property">Pay at Property</option>
                         <option value="UPI">UPI / QR Transfer</option>
@@ -3555,13 +3559,13 @@ export default function Dashboard() {
                       </select>
                     </div>
                     <div>
-                      <label style={labelStyle}>🏷️ Special Guest Tag badge</label>
+                      <label style={labelStyle}>ðŸ·ï¸ Special Guest Tag badge</label>
                       <select style={inputStyle} value={newResGuestTag} onChange={(e) => setNewResGuestTag(e.target.value)}>
                         <option value="">-- No Tag --</option>
-                        <option value="VIP">⭐ VIP Guest</option>
-                        <option value="Corporate Guest">🏢 Corporate / Business Guest</option>
-                        <option value="Frequent Flyer">✈️ Frequent Flyer (Loyalty)</option>
-                        <option value="Blacklisted">⚠️ Blacklisted (Refuse Entry)</option>
+                        <option value="VIP">â­ VIP Guest</option>
+                        <option value="Corporate Guest">ðŸ¢ Corporate / Business Guest</option>
+                        <option value="Frequent Flyer">âœˆï¸ Frequent Flyer (Loyalty)</option>
+                        <option value="Blacklisted">âš ï¸ Blacklisted (Refuse Entry)</option>
                       </select>
                     </div>
                   </div>
@@ -3569,7 +3573,7 @@ export default function Dashboard() {
                   {/* UPI transaction ID input conditionally */}
                   {newResPaymentMethod === "UPI" && (
                     <div>
-                      <label style={labelStyle}>⚡ UPI Transaction ID / Reference No.</label>
+                      <label style={labelStyle}>âš¡ UPI Transaction ID / Reference No.</label>
                       <input style={inputStyle} type="text" placeholder="e.g. 612345678901 (12-digit transaction number)" value={newResUpiTransactionId} onChange={(e) => setNewResUpiTransactionId(e.target.value)} required />
                     </div>
                   )}
@@ -3608,7 +3612,7 @@ export default function Dashboard() {
                     marginTop: "16px"
                   }}>
                     <label style={{ ...labelStyle, marginBottom: "12px", display: "block", color: "#818cf8", fontSize: "0.9rem", fontWeight: "600" }}>
-                      📊 GST Billing Mode Preference
+                      ðŸ“Š GST Billing Mode Preference
                     </label>
                     <div style={{ display: "flex", gap: "24px" }}>
                       <label style={{ 
@@ -3653,15 +3657,15 @@ export default function Dashboard() {
                   {/* Billing Type & Guest GST Selection */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
                     <div>
-                      <label style={labelStyle}>💼 Billing Type</label>
+                      <label style={labelStyle}>ðŸ’¼ Billing Type</label>
                       <select style={inputStyle} value={newResBillingType} onChange={(e) => {
                         setNewResBillingType(e.target.value as "individual" | "corporate");
                         if (e.target.value === "individual") {
                           setNewResGuestGstNumber("");
                         }
                       }}>
-                        <option value="individual">👤 Individual Guest (B2C)</option>
-                        <option value="corporate">🏢 Corporate / Business (B2B)</option>
+                        <option value="individual">ðŸ‘¤ Individual Guest (B2C)</option>
+                        <option value="corporate">ðŸ¢ Corporate / Business (B2B)</option>
                       </select>
                     </div>
                     {newResBillingType === "corporate" && (
@@ -3679,9 +3683,9 @@ export default function Dashboard() {
                     )}
                   </div>
 
-                  {/* 📋 STARTING INVOICE CHARGES */}
+                  {/* ðŸ“‹ STARTING INVOICE CHARGES */}
                   <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "16px" }}>
-                    <h3 style={{ fontSize: "0.95rem", fontWeight: "600", color: "#fff", marginBottom: "12px" }}>📋 Starting Invoice Charges</h3>
+                    <h3 style={{ fontSize: "0.95rem", fontWeight: "600", color: "#fff", marginBottom: "12px" }}>ðŸ“‹ Starting Invoice Charges</h3>
                     
                     {newResBillingItems.length === 0 ? (
                       <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "12px" }}>No invoice charges added yet.</p>
@@ -3700,9 +3704,9 @@ export default function Dashboard() {
                             <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.02)" }}>
                               <td style={{ fontSize: "0.8rem", padding: "6px 4px" }}>{item.name}</td>
                               <td style={{ fontSize: "0.75rem", color: "var(--text-secondary)", padding: "6px 4px" }}>{item.category.toUpperCase()}</td>
-                              <td style={{ fontSize: "0.8rem", textAlign: "right", padding: "6px 4px" }}>₹{item.amount.toLocaleString("en-IN")}</td>
+                              <td style={{ fontSize: "0.8rem", textAlign: "right", padding: "6px 4px" }}>â‚¹{item.amount.toLocaleString("en-IN")}</td>
                               <td style={{ textAlign: "center" }}>
-                                <button type="button" style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.8rem" }} onClick={() => handleRemoveTempCharge(idx)}>✕</button>
+                                <button type="button" style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.8rem" }} onClick={() => handleRemoveTempCharge(idx)}>âœ•</button>
                               </td>
                             </tr>
                           ))}
@@ -3717,7 +3721,7 @@ export default function Dashboard() {
                         <input style={{ ...inputStyle, marginBottom: 0, padding: "6px 10px" }} type="text" placeholder="e.g. SPA Massage" value={tempChargeName} onChange={(e) => setTempChargeName(e.target.value)} />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Amount (₹)</label>
+                        <label style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Amount (â‚¹)</label>
                         <input style={{ ...inputStyle, marginBottom: 0, padding: "6px 10px" }} type="number" placeholder="2500" value={tempChargeAmount} onChange={(e) => setTempChargeAmount(e.target.value)} />
                       </div>
                       <div style={{ flex: 1.2 }}>
@@ -3728,13 +3732,13 @@ export default function Dashboard() {
                           <option value="amenity">AMENITY</option>
                         </select>
                       </div>
-                      <button className="btn-secondary" type="button" style={{ padding: "6px 12px", fontSize: "0.8rem", height: "34px" }} onClick={handleAddTempCharge}>➕ Add</button>
+                      <button className="btn-secondary" type="button" style={{ padding: "6px 12px", fontSize: "0.8rem", height: "34px" }} onClick={handleAddTempCharge}>âž• Add</button>
                     </div>
                   </div>
 
                   <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
-                    <button className="btn-secondary" type="button" onClick={() => setNewResStep(3)}>⬅ Back</button>
-                    <button className="btn-primary" type="submit">Confirm Guest Booking ✓</button>
+                    <button className="btn-secondary" type="button" onClick={() => setNewResStep(3)}>â¬… Back</button>
+                    <button className="btn-primary" type="submit">Confirm Guest Booking âœ“</button>
                   </div>
                 </div>
               )}
@@ -3764,8 +3768,8 @@ export default function Dashboard() {
         <div className={styles.modalOverlay}>
           <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "500px", maxHeight: "90vh", overflowY: "auto" }}>
             <div className={styles.modalHeader}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>📅 My Leave Requests</h2>
-              <button className={styles.modalCloseBtn} onClick={() => setShowLeaveModal(false)}>✕</button>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>ðŸ“… My Leave Requests</h2>
+              <button className={styles.modalCloseBtn} onClick={() => setShowLeaveModal(false)}>âœ•</button>
             </div>
             
             <div style={{ marginBottom: "24px" }}>
@@ -3821,20 +3825,20 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 🔄 PROFILE SWITCHER & CREDENTIALS KEYPAD MODAL */}
+      {/* ðŸ”„ PROFILE SWITCHER & CREDENTIALS KEYPAD MODAL */}
       {showProfileSwitcher && (
         <div className={styles.modalOverlay}>
           <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "450px", position: "relative" }}>
             <div className={styles.modalHeader}>
               <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>
-                {authenticatingUser ? "🔑 Staff Verification" : "🔄 Switch Staff Session"}
+                {authenticatingUser ? "ðŸ”‘ Staff Verification" : "ðŸ”„ Switch Staff Session"}
               </h2>
               <button className={styles.modalCloseBtn} onClick={() => {
                 setShowProfileSwitcher(false);
                 setAuthenticatingUser(null);
                 setAuthPassword("");
                 setAuthError(null);
-              }}>✕</button>
+              }}>âœ•</button>
             </div>
 
             {!authenticatingUser ? (
@@ -3868,7 +3872,7 @@ export default function Dashboard() {
                       localStorage.removeItem("aether_pms_user");
                       setCurrentUser(null);
                       setShowProfileSwitcher(false);
-                      addToast("🔒 PMS Terminal Locked. Active shift session suspended.");
+                      addToast("ðŸ”’ PMS Terminal Locked. Active shift session suspended.");
                     }}
                     className="btn-secondary"
                     style={{
@@ -3885,7 +3889,7 @@ export default function Dashboard() {
                       border: "1px solid rgba(239, 68, 68, 0.3)"
                     }}
                   >
-                    🔒 Lock Shift
+                    ðŸ”’ Lock Shift
                   </button>
                   </div>
                 </div>
@@ -3945,7 +3949,7 @@ export default function Dashboard() {
                             <strong style={{ fontSize: "0.85rem", color: "#fff", display: "block" }}>{user.name}</strong>
                             <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{user.role}</span>
                           </div>
-                          {!isActive && <span style={{ fontSize: "0.8rem", color: "var(--border-focus)" }}>🔑 Login</span>}
+                          {!isActive && <span style={{ fontSize: "0.8rem", color: "var(--border-focus)" }}>ðŸ”‘ Login</span>}
                         </div>
                       );
                     })}
@@ -3969,7 +3973,7 @@ export default function Dashboard() {
                       justifyContent: "center",
                       fontSize: "2rem",
                       color: "var(--status-checkedin)",
-                    }}>✓</div>
+                    }}>âœ“</div>
                     <div>
                       <h3 style={{ color: "#fff", fontSize: "1.1rem", fontWeight: "600" }}>Access Granted</h3>
                       <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "4px" }}>Initializing console workspace...</p>
@@ -4002,7 +4006,7 @@ export default function Dashboard() {
                             letterSpacing: "4px",
                             fontWeight: "700"
                           }}
-                          placeholder="••••••••"
+                          placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                           value={authPassword}
                           onChange={(e) => setAuthPassword(e.target.value)}
                           required
@@ -4021,12 +4025,12 @@ export default function Dashboard() {
                             fontSize: "1rem"
                           }}
                         >
-                          {showPassword ? "👁️" : "🙈"}
+                          {showPassword ? "ðŸ‘ï¸" : "ðŸ™ˆ"}
                         </button>
                       </div>
                       {authError && (
                         <p style={{ color: "#f87171", fontSize: "0.8rem", marginTop: "6px", textAlign: "center", fontWeight: "500" }}>
-                          ⚠️ {authError}
+                          âš ï¸ {authError}
                         </p>
                       )}
                     </div>
@@ -4072,7 +4076,7 @@ export default function Dashboard() {
                         style={{ height: "50px", fontSize: "0.85rem", fontWeight: "600", justifyContent: "center", borderRadius: "10px", color: "var(--text-secondary)" }}
                         onClick={() => setAuthPassword((prev) => prev.slice(0, -1))}
                       >
-                        ⌫
+                        âŒ«
                       </button>
                     </div>
 
@@ -4110,18 +4114,19 @@ export default function Dashboard() {
       {toastMessage && (
         toastType === "error" ? (
           <div className={styles.toastError}>
-            <span className={styles.toastErrorIcon}>🚫</span>
+            <span className={styles.toastErrorIcon}>ðŸš«</span>
             <div>
               <div className={styles.toastErrorTitle}>{toastMessage.split("|")[0]}</div>
               <div className={styles.toastErrorBody}>{toastMessage.split("|")[1] || toastMessage.split("|")[0]}</div>
             </div>
           </div>
         ) : toastType === "warning" ? (
-          <div className={styles.toastWarning}>⚠️ {toastMessage}</div>
+          <div className={styles.toastWarning}>âš ï¸ {toastMessage}</div>
         ) : (
-          <div className={styles.toast}>🔔 {toastMessage}</div>
+          <div className={styles.toast}>ðŸ”” {toastMessage}</div>
         )
       )}
     </main>
   );
 }
+
