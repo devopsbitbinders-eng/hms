@@ -133,6 +133,8 @@ model User {
   permissions         Json?    // Array of menu IDs (e.g., ["front-office", "finance"]) for custom access
   attendances         Attendance[]
   leaveRequests       LeaveRequest[]
+  shiftSwapRequestsMade     ShiftSwapRequest[] @relation("ShiftSwapRequester")
+  shiftSwapRequestsReceived ShiftSwapRequest[] @relation("ShiftSwapTarget")
 }
 
 model Notification {
@@ -244,4 +246,20 @@ model LeaveRequest {
   status    String   @default("Pending") // "Pending", "Approved", "Denied"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+model ShiftSwapRequest {
+  id              String   @id @default(uuid())
+  requesterId     String
+  targetUserId    String?  // Optional, if they just want to change shift without swapping
+  proposedShift   String
+  proposedTiming  String?
+  reason          String   @db.Text
+  status          String   @default("Pending") // "Pending", "Approved", "Denied"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  requester       User     @relation("ShiftSwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  targetUser      User?    @relation("ShiftSwapTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
 }

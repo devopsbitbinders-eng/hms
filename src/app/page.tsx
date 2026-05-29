@@ -69,6 +69,11 @@ export default function Dashboard() {
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
   const [allAttendances, setAllAttendances] = useState<any[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [shiftSwapRequests, setShiftSwapRequests] = useState<any[]>([]);
+  const [showShiftSwapModal, setShowShiftSwapModal] = useState(false);
+  const [swapTargetUserId, setSwapTargetUserId] = useState("");
+  const [swapProposedShift, setSwapProposedShift] = useState("Morning");
+  const [swapReason, setSwapReason] = useState("");
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveStartDate, setLeaveStartDate] = useState("");
   const [leaveEndDate, setLeaveEndDate] = useState("");
@@ -482,6 +487,18 @@ export default function Dashboard() {
     }
   }
 
+  async function fetchShiftSwapRequests() {
+    try {
+      const res = await fetch("/api/shift-swap");
+      const data = await res.json();
+      if (!data.error) {
+        setShiftSwapRequests(data.requests || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch shift swap requests:", err);
+    }
+  }
+
   async function fetchLeaveRequests() {
     try {
       const res = await fetch("/api/leave");
@@ -571,6 +588,7 @@ export default function Dashboard() {
         setLeaveEndDate("");
         setLeaveReason("");
         fetchLeaveRequests();
+    fetchShiftSwapRequests();
       } else {
         addToast("Error submitting leave request: " + data.error, "error");
       }
@@ -2201,7 +2219,7 @@ export default function Dashboard() {
                               }}>
                                 {leave.status}
                               </span>
-                              {currentUser?.role === "Super Admin" && leave.status === "Pending" && (
+                              {["Super Admin", "General Manager", "Front Office Manager"].includes(currentUser?.role || "") && leave.status === "Pending" && (
                                 <div style={{ display: "flex", gap: "4px" }}>
                                   <button onClick={() => handleUpdateLeave(leave.id, "Approved")} style={{ background: "#10b981", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Approve</button>
                                   <button onClick={() => handleUpdateLeave(leave.id, "Denied")} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Deny</button>
@@ -4239,7 +4257,85 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      {/* Permissions Modal */}
+      
+      {/* Shift Swap Modal */}
+      {showShiftSwapModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15,23,42,0.85)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <form className="glass-card" style={{ width: "400px", maxWidth: "90vw", padding: "24px", position: "relative" }} onSubmit={async (e) => {
+            e.preventDefault();
+            const res = await fetch("/api/shift-swap", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                requesterId: currentUser?.id,
+                targetUserId: swapTargetUserId || null,
+                proposedShift: swapProposedShift,
+                reason: swapReason
+              })
+            });
+            if (res.ok) {
+              setShowShiftSwapModal(false);
+              setSwapReason("");
+              setSwapTargetUserId("");
+              setSwapProposedShift("Morning");
+              addToast("✅ Shift change requested successfully");
+              fetchShiftSwapRequests();
+            } else {
+              addToast("⚠️ Failed to request shift change", "error");
+            }
+          }}>
+            <button
+              type="button"
+              onClick={() => setShowShiftSwapModal(false)}
+              style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: "1.2rem" }}
+            >
+              ✕
+            </button>
+            <h2 style={{ fontSize: "1.2rem", fontWeight: "600", color: "#fff", marginBottom: "16px" }}>🔄 Request Shift Change / Swap</h2>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}>
+              <div>
+                <label style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Desired Shift</label>
+                <select style={{ ...inputStyle, width: "100%" }} value={swapProposedShift} onChange={(e) => setSwapProposedShift(e.target.value)} required>
+                  <option value="Morning">Morning</option>
+                  <option value="Evening">Evening</option>
+                  <option value="Night">Night</option>
+                </select>
+              </div>
+              
+              <div>
+                <label style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Swap with (Optional)</label>
+                <select style={{ ...inputStyle, width: "100%" }} value={swapTargetUserId} onChange={(e) => setSwapTargetUserId(e.target.value)}>
+                  <option value="">-- No specific person, just change my shift --</option>
+                  {usersList.filter((u: any) => u.id !== currentUser?.id).map((u: any) => (
+                    <option key={u.id} value={u.id}>{u.name} (Currently on {u.assignedShift || "Morning"})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "6px", display: "block" }}>Reason for change</label>
+                <textarea
+                  style={{ ...inputStyle, width: "100%", minHeight: "80px", resize: "vertical" }}
+                  value={swapReason}
+                  onChange={(e) => setSwapReason(e.target.value)}
+                  placeholder="Explain why you need this shift change..."
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              style={{ width: "100%", background: "linear-gradient(135deg,#3b82f6,#2dd4bf)", color: "#fff", border: "none", padding: "12px", borderRadius: "8px", fontSize: "1rem", fontWeight: "600", cursor: "pointer" }}
+            >
+              Submit Request
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Permissions Modal */}
       {editingPermissionsUserId && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15,23,42,0.85)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div className="glass-card" style={{ width: "450px", maxWidth: "90vw", padding: "24px", position: "relative" }}>
