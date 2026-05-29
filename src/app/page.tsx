@@ -2324,18 +2324,41 @@ export default function Dashboard() {
                           </div>
                         ) : (
                           ["Super Admin", "General Manager", "Front Office Manager"].includes(currentUser?.role || "") && (
-                            <button
-                              onClick={() => {
-                                setEditingShiftUserId(user.id);
-                                setEditShiftValue(user.assignedShift || "Morning");
-                                setEditShiftTimingValue(user.shiftTiming || "");
-                              }}
-                              style={{ background: "none", border: "1px solid var(--border-color)", color: "var(--text-secondary)", cursor: "pointer", fontSize: "0.75rem", padding: "4px 10px", borderRadius: "6px", transition: "all 0.2s", whiteSpace: "nowrap" }}
-                              onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--border-focus)"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--border-color)"; }}
-                            >
-                              🕐 Assign Shift
-                            </button>
+                            <>
+                              <button
+                                onClick={() => {
+                                  setEditingShiftUserId(user.id);
+                                  setEditShiftValue(user.assignedShift || "Morning");
+                                  setEditShiftTimingValue(user.shiftTiming || "");
+                                }}
+                                style={{ background: "none", border: "1px solid var(--border-color)", color: "var(--text-secondary)", cursor: "pointer", fontSize: "0.75rem", padding: "4px 10px", borderRadius: "6px", transition: "all 0.2s", whiteSpace: "nowrap" }}
+                                onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--border-focus)"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--border-color)"; }}
+                              >
+                                🕐 Assign Shift
+                              </button>
+                              {currentUser?.role === "Super Admin" && (
+                                <button
+                                  onClick={() => {
+                                    setEditingPermissionsUserId(user.id);
+                                    let defaultPerms = user.permissions || [];
+                                    if (!user.permissions) {
+                                      if (user.role === "Super Admin" || user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "settings"];
+                                      else if (user.role === "Front Office Manager") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "settings"];
+                                      else if (user.role === "Receptionist") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance"];
+                                      else if (user.role === "Finance Executive") defaultPerms = ["front-office", "front-desk", "finance", "attendance"];
+                                      else if (user.role === "Housekeeper" || user.role === "Housekeeping Supervisor") defaultPerms = ["housekeeping", "attendance"];
+                                    }
+                                    setEditPermissionsValue(defaultPerms);
+                                  }}
+                                  style={{ background: "none", border: "1px solid var(--border-color)", color: "var(--text-secondary)", cursor: "pointer", fontSize: "0.75rem", padding: "4px 10px", borderRadius: "6px", transition: "all 0.2s", whiteSpace: "nowrap", marginLeft: "4px" }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--border-focus)"; }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--border-color)"; }}
+                                >
+                                  🔑 Edit Permissions
+                                </button>
+                              )}
+                            </>
                           )
                         )}
                         {currentUser?.role === "Super Admin" && (
