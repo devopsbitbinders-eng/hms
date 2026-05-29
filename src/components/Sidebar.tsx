@@ -29,6 +29,7 @@ export default function Sidebar({
     { id: "finance", label: activePropertyType === "homestay" ? "Bills & Earnings" : "Finance & GST", icon: "💰" },
     { id: "reviews", label: "Reviews", icon: "⭐" },
     { id: "attendance", label: "Attendance", icon: "⏱️" },
+    { id: "staff-management", label: "Staff & Shifts", icon: "👥" },
     { id: "settings", label: "Settings", icon: "⚙️" },
   ];
 
@@ -53,7 +54,7 @@ export default function Sidebar({
       return item.id !== "settings";
     }
     if (role === "Front Office Manager") {
-      return ["front-office", "front-desk", "housekeeping", "reviews", "attendance"].includes(item.id);
+      return ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "staff-management"].includes(item.id);
     }
     if (role === "Receptionist") {
       return ["front-office", "front-desk", "housekeeping", "reviews", "attendance"].includes(item.id);

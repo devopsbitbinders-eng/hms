@@ -2343,9 +2343,9 @@ export default function Dashboard() {
                                     setEditingPermissionsUserId(user.id);
                                     let defaultPerms = user.permissions || [];
                                     if (!user.permissions) {
-                                      if (user.role === "Super Admin") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "settings"];
-                                      else if (user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance"];
-                                      else if (user.role === "Front Office Manager") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance"];
+                                      if (user.role === "Super Admin") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "staff-management", "settings"];
+                                      else if (user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "staff-management"];
+                                      else if (user.role === "Front Office Manager") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "staff-management"];
                                       else if (user.role === "Receptionist") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance"];
                                       else if (user.role === "Finance Executive") defaultPerms = ["front-office", "front-desk", "finance", "attendance"];
                                       else if (user.role === "Housekeeper" || user.role === "Housekeeping Supervisor") defaultPerms = ["housekeeping", "attendance"];
@@ -4252,6 +4252,7 @@ export default function Dashboard() {
                 { id: "finance", label: "💰 Finance & GST" },
                 { id: "reviews", label: "⭐ Reviews" },
                 { id: "attendance", label: "⏱️ Attendance" },
+                { id: "staff-management", label: "👥 Staff & Shifts" },
                 { id: "settings", label: "⚙️ Settings" },
               ].map((perm) => (
                 <label key={perm.id} style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 14px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", borderRadius: "8px", transition: "all 0.2s ease" }}>
