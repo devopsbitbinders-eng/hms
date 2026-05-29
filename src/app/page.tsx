@@ -638,6 +638,7 @@ export default function Dashboard() {
         setLeaveReason("");
         fetchLeaveRequests();
     fetchShiftSwapRequests();
+    fetchShiftSwapRequests();
       } else {
         addToast("Error submitting leave request: " + data.error, "error");
       }
@@ -678,6 +679,7 @@ export default function Dashboard() {
     fetchUsers();
     fetchAttendance();
     fetchLeaveRequests();
+    fetchShiftSwapRequests();
 
     // Poll for permission changes every 5 seconds so revoked managers see UI updates without reload
     const pollInterval = setInterval(() => {
