@@ -42,11 +42,14 @@ export default function Sidebar({
   const filteredMenuItems = menuItems.filter((item) => {
     if (role === "Super Admin") return true;
     if (role === "General Manager") {
-      return item.id !== "settings";
+      // General Manager sees everything except dangerous DB actions (which are hidden inside settings by role check)
+      return true;
+    }
+    if (role === "Front Office Manager") {
+      return ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "settings"].includes(item.id);
     }
     if (
       role === "Receptionist" ||
-      role === "Front Office Manager" ||
       role === "Finance Executive"
     ) {
       return ["front-office", "front-desk", "housekeeping", "reviews", "attendance"].includes(item.id);

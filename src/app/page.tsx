@@ -1580,9 +1580,9 @@ export default function Dashboard() {
               animation: "spin 1s linear infinite"
             }} />
             <div>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "600", color: "#fff", marginBottom: "8px" }}>Connecting to XAMPP...</h2>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "600", color: "#fff", marginBottom: "8px" }}>Loading AetherHMS...</h2>
               <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", lineHeight: "1.5" }}>
-                Initializing live database connection to MySQL on port 3310 and retrieving property room structures.
+                Connecting to the database and loading your property data. Please wait a moment.
               </p>
             </div>
           </div>
