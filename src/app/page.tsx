@@ -2139,8 +2139,8 @@ export default function Dashboard() {
           </section>
         
         ) : activeMenu === "attendance" ? (
-          <section className={styles.dashboardBody}>
-            <div className="glass-card" style={{ padding: "32px", display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
+          <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, minHeight: 0 }}>
+            <div className="glass-card" style={{ padding: "32px", display: "flex", flexDirection: "column", minHeight: "min-content" }}>
               {/* ========== STAFF ATTENDANCE SUB-TAB ========== */}
               
                   <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>⏱️ Today's Staff Attendance</h2>
@@ -4391,7 +4391,7 @@ export default function Dashboard() {
             </p>
             
             
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px", maxHeight: "55vh", overflowY: "auto", paddingRight: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px", maxHeight: "70vh", flexGrow: 1, overflowY: "auto", paddingRight: "8px" }}>
               {[
                 { id: "front-office", label: "🗓️ Front Office (Bookings)" },
                 { id: "front-desk", label: "🛎️ Front Desk (Check-in/out)" },
