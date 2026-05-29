@@ -90,10 +90,40 @@ export default function Dashboard() {
   const [newStaffAvatar, setNewStaffAvatar] = useState("");
   const [newStaffPropertyId, setNewStaffPropertyId] = useState("");
   const [editingShiftUserId, setEditingShiftUserId] = useState<string | null>(null);
+  const [editingPermissionsUserId, setEditingPermissionsUserId] = useState<string | null>(null);
+  const [editPermissionsValue, setEditPermissionsValue] = useState<string[]>([]);
+  const [isUpdatingPermissions, setIsUpdatingPermissions] = useState(false);
   const [editShiftValue, setEditShiftValue] = useState("Morning");
   const [editShiftTimingValue, setEditShiftTimingValue] = useState("");
   const [isUpdatingShift, setIsUpdatingShift] = useState(false);
   
+
+  const handleUpdatePermissions = async (userId: string) => {
+    setIsUpdatingPermissions(true);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          permissions: editPermissionsValue,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Find a way to add toast, here we assume showToast or addToast exists (it's called addToast in this file)
+        if (typeof (window as any).addToast === 'function') (window as any).addToast("✅ Permissions updated successfully");
+        setUsersList(usersList.map(u => u.id === userId ? { ...u, permissions: editPermissionsValue } : u));
+        setEditingPermissionsUserId(null);
+      } else {
+        console.error("Failed to update permissions");
+      }
+    } catch (e) {
+      console.error("Failed to update permissions", e);
+    } finally {
+      setIsUpdatingPermissions(false);
+    }
+  };
+
   const handleUpdateShift = async (userId: string) => {
     setIsUpdatingShift(true);
     try {

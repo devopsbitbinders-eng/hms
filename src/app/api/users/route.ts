@@ -15,6 +15,7 @@ export async function GET() {
         allowRoomManagement: true,
         assignedShift: true,
         shiftTiming: true,
+        permissions: true,
       },
     });
 

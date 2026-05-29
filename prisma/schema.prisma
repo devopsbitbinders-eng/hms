@@ -130,6 +130,7 @@ model User {
   isFirstLogin        Boolean  @default(true) // Used for temporary PIN reset workflow
   assignedShift       String   @default("Morning") // "Morning", "Evening", "Night", "Custom"
   shiftTiming         String?  // e.g., "09:00 AM - 06:00 PM"
+  permissions         Json?    // Array of menu IDs (e.g., ["front-office", "finance"]) for custom access
   attendances         Attendance[]
   leaveRequests       LeaveRequest[]
 }

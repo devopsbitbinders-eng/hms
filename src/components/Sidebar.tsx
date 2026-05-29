@@ -8,6 +8,7 @@ interface SidebarProps {
     name: string;
     role: string;
     avatar: string;
+    permissions?: string[];
   } | null;
   onProfileClick?: () => void;
   activePropertyType?: string;
@@ -40,6 +41,12 @@ export default function Sidebar({
   const avatar = currentUser?.avatar || "AM";
 
   const filteredMenuItems = menuItems.filter((item) => {
+    // If the user has explicitly assigned permissions, use those
+    if (currentUser?.permissions && Array.isArray(currentUser.permissions)) {
+      return currentUser.permissions.includes(item.id);
+    }
+    
+    // Otherwise fallback to default role-based logic
     if (role === "Super Admin") return true;
     if (role === "General Manager") {
       // General Manager sees everything except dangerous DB actions (which are hidden inside settings by role check)
@@ -48,11 +55,11 @@ export default function Sidebar({
     if (role === "Front Office Manager") {
       return ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "settings"].includes(item.id);
     }
-    if (
-      role === "Receptionist" ||
-      role === "Finance Executive"
-    ) {
+    if (role === "Receptionist") {
       return ["front-office", "front-desk", "housekeeping", "reviews", "attendance"].includes(item.id);
+    }
+    if (role === "Finance Executive") {
+      return ["front-office", "front-desk", "finance", "attendance"].includes(item.id);
     }
     if (role === "Housekeeper" || role === "Housekeeping Supervisor") {
       return ["housekeeping", "attendance"].includes(item.id);

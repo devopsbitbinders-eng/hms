@@ -9,7 +9,7 @@ export async function PUT(
     const resolvedParams = await params;
     const id = resolvedParams.id;
     const body = await request.json();
-    const { allowRoomManagement, assignedShift, shiftTiming } = body;
+    const { allowRoomManagement, assignedShift, shiftTiming, permissions } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -22,6 +22,7 @@ export async function PUT(
     if (allowRoomManagement !== undefined) dataToUpdate.allowRoomManagement = allowRoomManagement;
     if (assignedShift !== undefined) dataToUpdate.assignedShift = assignedShift;
     if (shiftTiming !== undefined) dataToUpdate.shiftTiming = shiftTiming;
+    if (permissions !== undefined) dataToUpdate.permissions = permissions;
 
     const updated = await prisma.user.update({
       where: { id },
