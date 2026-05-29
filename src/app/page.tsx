@@ -2275,7 +2275,7 @@ export default function Dashboard() {
             </div>
           </section>
 ) : activeMenu === "staff-management" ? (
-          <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, maxHeight: "100%" }}>
+          <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, minHeight: 0 }}>
             <div className="glass-card" style={{ padding: "48px", maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
               <div>
                 <h1 style={{ fontSize: "1.75rem", fontWeight: "700", marginBottom: "8px" }}>👥 Staff & Shifts Management</h1>
