@@ -65,6 +65,46 @@ export default function Dashboard() {
 
   // Multi-User Staff & Session Authentication states
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const hasPermission = (permId: string) => {
+    if (!currentUser) return false;
+    
+    // Super Admins bypass everything
+    if (currentUser.role === "Super Admin") return true;
+
+    // If they have explicitly defined custom permissions, STRICTLY rely on that array
+    if (currentUser.permissions && Array.isArray(currentUser.permissions)) {
+      // If asking for a sub-permission (e.g. staff-management:add), they MUST explicitly have it in the array
+      // OR they must have the parent permission and it's something that used to be default.
+      // Actually, if we are doing explicit custom permissions, they just need exactly that string in the array.
+      // But to be safe for old users who only have 'staff-management', we might assume 'staff-management' implies all sub-permissions IF the sub-permissions aren't listed in the modal yet. But since we are adding them to the modal, they will check them.
+      return currentUser.permissions.includes(permId);
+    }
+
+    // Default Fallbacks if no custom permissions set yet
+    if (currentUser.role === "General Manager") {
+      // GM has all these defaults
+      const defaults = [
+        "front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", 
+        "attendance:approve-leave", "attendance:approve-swap", "attendance:manual-clock",
+        "staff-management", "staff-management:add", "staff-management:edit-shift"
+      ];
+      return defaults.includes(permId);
+    }
+    
+    if (currentUser.role === "Front Office Manager") {
+      const defaults = [
+        "front-office", "front-desk", "housekeeping", "reviews", "attendance",
+        "attendance:approve-leave", "attendance:approve-swap",
+        "staff-management", "staff-management:edit-shift"
+      ];
+      return defaults.includes(permId);
+    }
+    
+    // Other roles fall back to simple rules
+    return false;
+  };
+
   const [usersList, setUsersList] = useState<any[]>([]);
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
   const [allAttendances, setAllAttendances] = useState<any[]>([]);
@@ -1952,7 +1992,7 @@ export default function Dashboard() {
                     Your PMS database tables are synced and ready for production. You can start entering your actual hotel configurations or load the visual demo data.
                   </p>
                 </div>
-                {currentUser?.role === "Super Admin" ? (
+                {hasPermission("staff-management:add") ? (
                   <div style={{ display: "flex", gap: "16px", marginTop: "8px" }}>
                     <button className="btn-primary" onClick={() => setShowPropertyModal(true)}>
                       🏢 Create Property Branch
@@ -2219,7 +2259,7 @@ export default function Dashboard() {
                               }}>
                                 {leave.status}
                               </span>
-                              {["Super Admin", "General Manager", "Front Office Manager"].includes(currentUser?.role || "") && leave.status === "Pending" && (
+                              {hasPermission("attendance:approve-leave") && leave.status === "Pending" && (
                                 <div style={{ display: "flex", gap: "4px" }}>
                                   <button onClick={() => handleUpdateLeave(leave.id, "Approved")} style={{ background: "#10b981", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Approve</button>
                                   <button onClick={() => handleUpdateLeave(leave.id, "Denied")} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Deny</button>
@@ -2329,9 +2369,9 @@ export default function Dashboard() {
                                     setEditingPermissionsUserId(user.id);
                                     let defaultPerms = user.permissions || [];
                                     if (!user.permissions) {
-                                      if (user.role === "Super Admin") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "staff-management", "settings"];
-                                      else if (user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "staff-management"];
-                                      else if (user.role === "Front Office Manager") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "staff-management"];
+                                      if (user.role === "Super Admin") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "attendance:approve-leave", "attendance:approve-swap", "attendance:manual-clock", "staff-management", "staff-management:add", "staff-management:edit-shift", "staff-management:delete", "settings"];
+                                      else if (user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "attendance:approve-leave", "attendance:approve-swap", "attendance:manual-clock", "staff-management", "staff-management:add", "staff-management:edit-shift"];
+                                      else if (user.role === "Front Office Manager") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "attendance:approve-leave", "attendance:approve-swap", "staff-management", "staff-management:edit-shift"];
                                       else if (user.role === "Receptionist") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance"];
                                       else if (user.role === "Finance Executive") defaultPerms = ["front-office", "front-desk", "finance", "attendance"];
                                       else if (user.role === "Housekeeper" || user.role === "Housekeeping Supervisor") defaultPerms = ["housekeeping", "attendance"];
@@ -4350,6 +4390,7 @@ export default function Dashboard() {
               Select exactly which modules this staff member can access. This overrides their default role permissions.
             </p>
             
+            
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px", maxHeight: "55vh", overflowY: "auto", paddingRight: "8px" }}>
               {[
                 { id: "front-office", label: "🗓️ Front Office (Bookings)" },
@@ -4358,27 +4399,70 @@ export default function Dashboard() {
                 { id: "housekeeping", label: "🧹 Housekeeping & Ops" },
                 { id: "finance", label: "💰 Finance & GST" },
                 { id: "reviews", label: "⭐ Reviews" },
-                { id: "attendance", label: "⏱️ Attendance" },
-                { id: "staff-management", label: "👥 Staff & Shifts" },
+                { 
+                  id: "attendance", label: "⏱️ Attendance", 
+                  subPerms: [
+                    { id: "attendance:approve-leave", label: "Approve/Deny Leave Requests" },
+                    { id: "attendance:approve-swap", label: "Approve/Deny Shift Swaps" },
+                    { id: "attendance:manual-clock", label: "Manually Clock Staff In/Out" }
+                  ]
+                },
+                { 
+                  id: "staff-management", label: "👥 Staff & Shifts",
+                  subPerms: [
+                    { id: "staff-management:add", label: "Register New Staff" },
+                    { id: "staff-management:edit-shift", label: "Assign/Edit Shifts" },
+                    { id: "staff-management:delete", label: "Delete Staff Accounts" }
+                  ]
+                },
                 { id: "settings", label: "⚙️ Settings" },
               ].map((perm) => (
-                <label key={perm.id} style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 14px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", borderRadius: "8px", transition: "all 0.2s ease" }}>
-                  <input
-                    type="checkbox"
-                    checked={editPermissionsValue.includes(perm.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setEditPermissionsValue([...editPermissionsValue, perm.id]);
-                      } else {
-                        setEditPermissionsValue(editPermissionsValue.filter((id) => id !== perm.id));
-                      }
-                    }}
-                    style={{ width: "18px", height: "18px", accentColor: "#6366f1", cursor: "pointer" }}
-                  />
-                  <span style={{ fontSize: "0.95rem", color: "#fff", fontWeight: "500" }}>{perm.label}</span>
-                </label>
+                <div key={perm.id} style={{ display: "flex", flexDirection: "column", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 14px", transition: "all 0.2s ease" }}>
+                    <input
+                      type="checkbox"
+                      checked={editPermissionsValue.includes(perm.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newPerms = [...editPermissionsValue, perm.id];
+                          // If it's a parent, optionally auto-check all children? Let's just check the parent for now.
+                          setEditPermissionsValue(newPerms);
+                        } else {
+                          // Uncheck parent AND all its children
+                          setEditPermissionsValue(editPermissionsValue.filter((id) => id !== perm.id && !id.startsWith(perm.id + ":")));
+                        }
+                      }}
+                      style={{ width: "18px", height: "18px", accentColor: "#6366f1", cursor: "pointer" }}
+                    />
+                    <span style={{ fontSize: "0.95rem", color: "#fff", fontWeight: "500" }}>{perm.label}</span>
+                  </label>
+                  
+                  {/* Render Sub-Permissions if they exist AND parent is checked */}
+                  {perm.subPerms && editPermissionsValue.includes(perm.id) && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px 14px 14px 44px", borderTop: "1px solid rgba(255,255,255,0.05)", backgroundColor: "rgba(0,0,0,0.15)" }}>
+                      {perm.subPerms.map((sub) => (
+                        <label key={sub.id} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={editPermissionsValue.includes(sub.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setEditPermissionsValue([...editPermissionsValue, sub.id]);
+                              } else {
+                                setEditPermissionsValue(editPermissionsValue.filter((id) => id !== sub.id));
+                              }
+                            }}
+                            style={{ width: "15px", height: "15px", accentColor: "#8b5cf6", cursor: "pointer" }}
+                          />
+                          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{sub.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
+
 
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
               <button
