@@ -15,6 +15,8 @@ interface HeaderProps {
   currentUser?: any;
   notifications?: any[];
   onClearNotifications?: () => void;
+  todayAttendance?: any;
+  onClockInOut?: (type: "clockIn" | "clockOut") => void;
 }
 
 // Helper to map DB property names to frontend property keys
@@ -45,6 +47,8 @@ export default function Header({
   currentUser,
   notifications = [],
   onClearNotifications,
+  todayAttendance,
+  onClockInOut,
 }: HeaderProps) {
   const isSuperAdmin = currentUser?.role === "Super Admin";
   const activeProp = properties.find((p) => mapPropertyKey(p.name) === activeProperty);
@@ -107,6 +111,32 @@ export default function Header({
 
       <div className={styles.headerRight}>
         <div style={{ display: "flex", gap: "16px", alignItems: "center", position: "relative" }}>
+          
+          {/* Clock In / Clock Out Button */}
+          {currentUser && onClockInOut && (
+            <div style={{ marginRight: "12px", paddingRight: "16px", borderRight: "1px solid rgba(255,255,255,0.1)" }}>
+              {todayAttendance ? (
+                <button
+                  type="button"
+                  onClick={() => onClockInOut("clockOut")}
+                  className="btn-secondary"
+                  style={{ padding: "6px 12px", fontSize: "0.8rem", color: "#fff", borderColor: "rgba(239, 68, 68, 0.5)", backgroundColor: "rgba(239, 68, 68, 0.1)" }}
+                >
+                  ⏱️ Clock Out
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onClockInOut("clockIn")}
+                  className="btn-primary"
+                  style={{ padding: "6px 12px", fontSize: "0.8rem", backgroundColor: "var(--status-checkedin)", border: "none", color: "#fff" }}
+                >
+                  ⏱️ Clock In
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Glowing Notification Center */}
           {isSuperAdmin && (
             <div style={{ position: "relative" }}>

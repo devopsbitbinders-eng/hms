@@ -1702,6 +1702,8 @@ export default function Dashboard() {
           currentUser={currentUser}
           notifications={notificationsList}
           onClearNotifications={handleClearNotifications}
+          todayAttendance={todayAttendance}
+          onClockInOut={handleClockInOut}
         />
 
         {/* Stats Summary Panel */}
@@ -3644,25 +3646,6 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                    {todayAttendance ? (
-                      <button
-                        type="button"
-                        onClick={() => handleClockInOut("clockOut")}
-                        className="btn-secondary"
-                        style={{ padding: "8px 12px", fontSize: "0.8rem", color: "#fff", borderColor: "rgba(239, 68, 68, 0.5)", backgroundColor: "rgba(239, 68, 68, 0.1)" }}
-                      >
-                        ⏱️ Clock Out
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleClockInOut("clockIn")}
-                        className="btn-primary"
-                        style={{ padding: "8px 12px", fontSize: "0.8rem", backgroundColor: "var(--status-checkedin)", border: "none" }}
-                      >
-                        ⏱️ Clock In
-                      </button>
-                    )}
                     <button
                       type="button"
                     onClick={() => {
