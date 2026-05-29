@@ -68,6 +68,11 @@ export default function Dashboard() {
   const [usersList, setUsersList] = useState<any[]>([]);
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
   const [allAttendances, setAllAttendances] = useState<any[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [leaveStartDate, setLeaveStartDate] = useState("");
+  const [leaveEndDate, setLeaveEndDate] = useState("");
+  const [leaveReason, setLeaveReason] = useState("");
   const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
   const [authenticatingUser, setAuthenticatingUser] = useState<any>(null);
   const [authPassword, setAuthPassword] = useState("");
@@ -416,6 +421,18 @@ export default function Dashboard() {
     }
   }
 
+  async function fetchLeaveRequests() {
+    try {
+      const res = await fetch("/api/leave");
+      const data = await res.json();
+      if (!data.error) {
+        setLeaveRequests(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch leave requests:", err);
+    }
+  }
+
   useEffect(() => {
     if (currentUser && allAttendances.length > 0) {
       const myAtt = allAttendances.find((a: any) => a.userId === currentUser.id && !a.clockOut);
@@ -464,6 +481,49 @@ export default function Dashboard() {
     }
   }
 
+  const handleCreateLeave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id, startDate: leaveStartDate, endDate: leaveEndDate, reason: leaveReason })
+      });
+      const data = await res.json();
+      if (!data.error) {
+        addToast("Leave request submitted successfully.");
+        setShowLeaveModal(false);
+        setLeaveStartDate("");
+        setLeaveEndDate("");
+        setLeaveReason("");
+        fetchLeaveRequests();
+      } else {
+        addToast("Error submitting leave request: " + data.error, "error");
+      }
+    } catch (err) {
+      addToast("Failed to submit leave request", "error");
+    }
+  }
+
+  const handleUpdateLeave = async (id: string, status: string) => {
+    try {
+      const res = await fetch("/api/leave", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status })
+      });
+      const data = await res.json();
+      if (!data.error) {
+        addToast("Leave request " + status.toLowerCase() + ".");
+        fetchLeaveRequests();
+      } else {
+        addToast("Error updating leave request: " + data.error, "error");
+      }
+    } catch (err) {
+      addToast("Failed to update leave request", "error");
+    }
+  }
+
   useEffect(() => {
     const saved = localStorage.getItem("aether_pms_user");
     if (saved) {
@@ -476,6 +536,7 @@ export default function Dashboard() {
     loadData();
     fetchUsers();
     fetchAttendance();
+    fetchLeaveRequests();
 
     // Poll for permission changes every 5 seconds so revoked managers see UI updates without reload
     const pollInterval = setInterval(() => {
@@ -2186,6 +2247,14 @@ export default function Dashboard() {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
                       {usersList.map((user: any) => {
                         const att = allAttendances.find((a: any) => a.userId === user.id);
+                        const todayStr = new Date().toISOString().split("T")[0];
+                        const approvedLeave = leaveRequests.find((l: any) => 
+                          l.userId === user.id && 
+                          l.status === "Approved" && 
+                          new Date(l.startDate).toISOString().split("T")[0] <= todayStr &&
+                          new Date(l.endDate).toISOString().split("T")[0] >= todayStr
+                        );
+
                         return (
                           <div key={user.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
@@ -2201,9 +2270,15 @@ export default function Dashboard() {
                             </div>
                             <div>
                               {!att ? (
-                                <span style={{ padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
-                                  Absent / On Leave
-                                </span>
+                                approvedLeave ? (
+                                  <span style={{ padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600", backgroundColor: "rgba(234, 179, 8, 0.1)", color: "#eab308", border: "1px solid rgba(234, 179, 8, 0.2)" }}>
+                                    On Leave
+                                  </span>
+                                ) : (
+                                  <span style={{ padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
+                                    Absent
+                                  </span>
+                                )
                               ) : (
                                 <span style={{ 
                                   padding: "4px 8px", 
@@ -2247,6 +2322,46 @@ export default function Dashboard() {
                       </div>
                     </div>
                   )}
+                  {/* Leave Management Section */}
+                  <div style={{ marginTop: "32px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                      <h3 style={{ fontSize: "1rem", color: "#fff", fontWeight: "600" }}>📅 Leave Management</h3>
+                      <button onClick={() => setShowLeaveModal(true)} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>➕ Request Leave</button>
+                    </div>
+
+                    {leaveRequests.length === 0 ? (
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", textAlign: "center" }}>No leave requests found.</p>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        {leaveRequests.map((leave: any) => (
+                          <div key={leave.id} style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <strong style={{ fontSize: "0.9rem", color: "#fff" }}>{leave.user?.name || "Unknown"}</strong>
+                              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginLeft: "8px" }}>
+                                {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
+                              </span>
+                              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>"{leave.reason}"</p>
+                            </div>
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                              <span style={{ 
+                                padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600",
+                                backgroundColor: leave.status === "Approved" ? "rgba(16, 185, 129, 0.1)" : leave.status === "Denied" ? "rgba(239, 68, 68, 0.1)" : "rgba(234, 179, 8, 0.1)",
+                                color: leave.status === "Approved" ? "#10b981" : leave.status === "Denied" ? "#ef4444" : "#eab308"
+                              }}>
+                                {leave.status}
+                              </span>
+                              {currentUser?.role === "Super Admin" && leave.status === "Pending" && (
+                                <div style={{ display: "flex", gap: "4px" }}>
+                                  <button onClick={() => handleUpdateLeave(leave.id, "Approved")} style={{ background: "#10b981", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Approve</button>
+                                  <button onClick={() => handleUpdateLeave(leave.id, "Denied")} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Deny</button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -3613,6 +3728,35 @@ export default function Dashboard() {
           activePropertyType={activePropertyType}
           activeProperty={propertiesList.find((p) => mapPropertyKey(p.name) === activeProperty)}
         />
+      )}
+
+      {/* LEAVE REQUEST MODAL */}
+      {showLeaveModal && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "450px" }}>
+            <div className={styles.modalHeader}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>📅 Request Leave</h2>
+              <button className={styles.modalCloseBtn} onClick={() => setShowLeaveModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreateLeave}>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Start Date</label>
+                <input type="date" required value={leaveStartDate} onChange={(e) => setLeaveStartDate(e.target.value)} style={{ ...inputStyle, width: "100%", padding: "12px" }} />
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.9rem" }}>End Date</label>
+                <input type="date" required value={leaveEndDate} onChange={(e) => setLeaveEndDate(e.target.value)} style={{ ...inputStyle, width: "100%", padding: "12px" }} />
+              </div>
+              <div style={{ marginBottom: "24px" }}>
+                <label style={{ display: "block", marginBottom: "8px", color: "var(--text-secondary)", fontSize: "0.9rem" }}>Reason / Remarks</label>
+                <textarea required value={leaveReason} onChange={(e) => setLeaveReason(e.target.value)} placeholder="e.g. Vacation, Sick Leave" style={{ ...inputStyle, width: "100%", padding: "12px", minHeight: "80px" }} />
+              </div>
+              <button type="submit" className="btn-primary" style={{ width: "100%", padding: "14px", fontSize: "1rem" }}>
+                Submit Request
+              </button>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* 🔄 PROFILE SWITCHER & CREDENTIALS KEYPAD MODAL */}

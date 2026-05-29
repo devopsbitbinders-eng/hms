@@ -129,6 +129,7 @@ model User {
   allowRoomManagement Boolean  @default(true)
   isFirstLogin        Boolean  @default(true) // Used for temporary PIN reset workflow
   attendances         Attendance[]
+  leaveRequests       LeaveRequest[]
 }
 
 model Notification {
@@ -224,6 +225,18 @@ model Attendance {
   clockOut  DateTime?
   status    String   @default("Present") // "Present", "Absent", "Half Day"
   markedBy  String?  // e.g., "Self" or "Super Admin"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LeaveRequest {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  reason    String   @db.Text
+  status    String   @default("Pending") // "Pending", "Approved", "Denied"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
