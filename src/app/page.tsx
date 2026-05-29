@@ -89,6 +89,7 @@ export default function Dashboard() {
   const [customStaffRole, setCustomStaffRole] = useState("");
   const [newStaffAvatar, setNewStaffAvatar] = useState("");
   const [newStaffPropertyId, setNewStaffPropertyId] = useState("");
+  const [newStaffShift, setNewStaffShift] = useState("Morning");
 
   // Onboarding Wizard states
   const [onboardingName, setOnboardingName] = useState("");
@@ -1269,6 +1270,7 @@ export default function Dashboard() {
           role: finalRole,
           avatar: newStaffAvatar.toUpperCase().substring(0, 2),
           propertyId: finalRole === "Super Admin" ? null : newStaffPropertyId,
+          assignedShift: newStaffShift,
         }),
       });
       const data = await response.json();
@@ -2288,6 +2290,14 @@ export default function Dashboard() {
                               required 
                             />
                           )}
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Assigned Shift</label>
+                          <select style={{ ...inputStyle, padding: "8px 12px" }} value={newStaffShift} onChange={(e) => setNewStaffShift(e.target.value)}>
+                            <option value="Morning">Morning</option>
+                            <option value="Evening">Evening</option>
+                            <option value="Night">Night</option>
+                          </select>
                         </div>
                         <div>
                           <label style={labelStyle}>Avatar Initials</label>

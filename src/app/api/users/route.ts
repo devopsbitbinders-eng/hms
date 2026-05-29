@@ -13,6 +13,7 @@ export async function GET() {
         password: true, // We return password for simple demo PIN checks inside client components
         propertyId: true,
         allowRoomManagement: true,
+        assignedShift: true,
       },
     });
 
@@ -29,7 +30,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, username, password, role, avatar, propertyId } = body;
+    const { name, username, password, role, avatar, propertyId, assignedShift } = body;
 
     if (!name || !username || !password || !role || !avatar) {
       return NextResponse.json(
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
         avatar,
         propertyId: propertyId || null,
         allowRoomManagement: true, // Managers defaulted to ON
+        assignedShift: assignedShift || "Morning",
       },
     });
 
