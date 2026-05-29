@@ -4418,46 +4418,68 @@ export default function Dashboard() {
                 { id: "settings", label: "⚙️ Settings" },
               ].map((perm) => (
                 <div key={perm.id} style={{ display: "flex", flexDirection: "column", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", borderRadius: "8px", overflow: "hidden" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 14px", transition: "all 0.2s ease" }}>
-                    <input
-                      type="checkbox"
-                      checked={editPermissionsValue.includes(perm.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          const newPerms = [...editPermissionsValue, perm.id];
-                          // If it's a parent, optionally auto-check all children? Let's just check the parent for now.
-                          setEditPermissionsValue(newPerms);
-                        } else {
-                          // Uncheck parent AND all its children
-                          setEditPermissionsValue(editPermissionsValue.filter((id) => id !== perm.id && !id.startsWith(perm.id + ":")));
-                        }
-                      }}
-                      style={{ width: "18px", height: "18px", accentColor: "#6366f1", cursor: "pointer" }}
-                    />
-                    <span style={{ fontSize: "0.95rem", color: "#fff", fontWeight: "500" }}>{perm.label}</span>
-                  </label>
-                  
-                  {/* Render Sub-Permissions if they exist AND parent is checked */}
-                  {perm.subPerms && editPermissionsValue.includes(perm.id) && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px 14px 14px 44px", borderTop: "1px solid rgba(255,255,255,0.05)", backgroundColor: "rgba(0,0,0,0.15)" }}>
-                      {perm.subPerms.map((sub) => (
-                        <label key={sub.id} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-                          <input
-                            type="checkbox"
-                            checked={editPermissionsValue.includes(sub.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setEditPermissionsValue([...editPermissionsValue, sub.id]);
-                              } else {
-                                setEditPermissionsValue(editPermissionsValue.filter((id) => id !== sub.id));
-                              }
-                            }}
-                            style={{ width: "15px", height: "15px", accentColor: "#8b5cf6", cursor: "pointer" }}
-                          />
-                          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{sub.label}</span>
-                        </label>
-                      ))}
-                    </div>
+                  {!perm.subPerms ? (
+                    <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 14px", transition: "all 0.2s ease" }}>
+                      <input
+                        type="checkbox"
+                        checked={editPermissionsValue.includes(perm.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setEditPermissionsValue([...editPermissionsValue, perm.id]);
+                          } else {
+                            setEditPermissionsValue(editPermissionsValue.filter((id) => id !== perm.id && !id.startsWith(perm.id + ":")));
+                          }
+                        }}
+                        style={{ width: "18px", height: "18px", accentColor: "#6366f1", cursor: "pointer" }}
+                      />
+                      <span style={{ fontSize: "0.95rem", color: "#fff", fontWeight: "500" }}>{perm.label}</span>
+                    </label>
+                  ) : (
+                    <details open={editPermissionsValue.includes(perm.id)} style={{ width: "100%" }}>
+                      <summary style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 14px", listStyle: "none", position: "relative", outline: "none" }}>
+                        <input
+                          type="checkbox"
+                          checked={editPermissionsValue.includes(perm.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditPermissionsValue([...editPermissionsValue, perm.id]);
+                            } else {
+                              setEditPermissionsValue(editPermissionsValue.filter((id) => id !== perm.id && !id.startsWith(perm.id + ":")));
+                            }
+                          }}
+                          style={{ width: "18px", height: "18px", accentColor: "#6366f1", cursor: "pointer" }}
+                        />
+                        <span style={{ fontSize: "0.95rem", color: "#fff", fontWeight: "500", flexGrow: 1 }}>{perm.label}</span>
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", paddingRight: "8px" }}>▼</span>
+                        
+                        <style dangerouslySetInnerHTML={{__html: `
+                          summary::-webkit-details-marker { display: none; }
+                          details[open] summary span:last-child { transform: rotate(180deg); }
+                        `}} />
+                      </summary>
+                      
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "12px 14px 16px 44px", borderTop: "1px solid rgba(255,255,255,0.05)", backgroundColor: "rgba(0,0,0,0.15)" }}>
+                        {perm.subPerms.map((sub) => (
+                          <label key={sub.id} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", padding: "4px 0" }}>
+                            <input
+                              type="checkbox"
+                              checked={editPermissionsValue.includes(sub.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  // Auto-check parent if a sub is checked
+                                  const newArr = new Set([...editPermissionsValue, sub.id, perm.id]);
+                                  setEditPermissionsValue(Array.from(newArr));
+                                } else {
+                                  setEditPermissionsValue(editPermissionsValue.filter((id) => id !== sub.id));
+                                }
+                              }}
+                              style={{ width: "16px", height: "16px", accentColor: "#8b5cf6", cursor: "pointer", borderRadius: "4px" }}
+                            />
+                            <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: "500" }}>{sub.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </details>
                   )}
                 </div>
               ))}
