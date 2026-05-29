@@ -1485,7 +1485,7 @@ export default function Dashboard() {
 
     // Receptionist (including Front Office Manager & Finance Executive) has access to front-office, front-desk and housekeeping
     if (role === "Receptionist" || role === "Front Office Manager" || role === "Finance Executive") {
-      return ["front-office", "front-desk", "housekeeping"].includes(menuId);
+      return ["front-office", "front-desk", "housekeeping", "attendance"].includes(menuId);
     }
 
     // Housekeeper (including Housekeeping Supervisor & Housekeeper) has access ONLY to housekeeping
@@ -2005,7 +2005,143 @@ export default function Dashboard() {
               addToast={addToast}
             />
           </section>
-        ) : activeMenu === "settings" ? (
+        
+        ) : activeMenu === "attendance" ? (
+          <section className={styles.dashboardBody}>
+            <div className="glass-card" style={{ padding: "32px", display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
+              {/* ========== STAFF ATTENDANCE SUB-TAB ========== */}
+              
+                  <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>⏱️ Today's Staff Attendance</h2>
+                  
+                  {(currentUser?.role === "Super Admin" ? usersList : usersList.filter(u => u.id === currentUser?.id)).length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "32px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
+                      <p style={{ color: "var(--text-secondary)" }}>No staff members found.</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
+                      {(currentUser?.role === "Super Admin" ? usersList : usersList.filter(u => u.id === currentUser?.id)).map((user: any) => {
+                        const att = allAttendances.find((a: any) => a.userId === user.id);
+                        const todayStr = new Date().toISOString().split("T")[0];
+                        const approvedLeave = leaveRequests.find((l: any) => 
+                          l.userId === user.id && 
+                          l.status === "Approved" && 
+                          new Date(l.startDate).toISOString().split("T")[0] <= todayStr &&
+                          new Date(l.endDate).toISOString().split("T")[0] >= todayStr
+                        );
+
+                        return (
+                          <div key={user.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                              <div className={styles.avatar} style={{ margin: 0, width: "36px", height: "36px", fontSize: "0.9rem", filter: !att ? "grayscale(100%) opacity(0.5)" : "none" }}>{user.avatar}</div>
+                              <div>
+                                <strong style={{ fontSize: "0.9rem", color: !att ? "var(--text-muted)" : "#fff", display: "block" }}>{user.name}</strong>
+                                <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
+                                  {user.role}
+                                  {att && ` • In: ${new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                  {att?.clockOut && ` • Out: ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                  {att?.clockOut && att?.clockIn && ` • Worked: ${Math.round((new Date(att.clockOut).getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
+                                  {att && !att?.clockOut && ` • Working: ${Math.round((new Date().getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              {!att ? (
+                                approvedLeave ? (
+                                  <span style={{ padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600", backgroundColor: "rgba(234, 179, 8, 0.1)", color: "#eab308", border: "1px solid rgba(234, 179, 8, 0.2)" }}>
+                                    On Leave
+                                  </span>
+                                ) : (
+                                  <span style={{ padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
+                                    Absent
+                                  </span>
+                                )
+                              ) : (
+                                <span style={{ 
+                                  padding: "4px 8px", 
+                                  borderRadius: "4px", 
+                                  fontSize: "0.75rem", 
+                                  fontWeight: "600",
+                                  backgroundColor: att.clockOut ? "rgba(107, 114, 128, 0.1)" : "rgba(16, 185, 129, 0.1)",
+                                  color: att.clockOut ? "var(--text-muted)" : "var(--status-checkedin)",
+                                  border: `1px solid ${att.clockOut ? "rgba(107, 114, 128, 0.2)" : "rgba(16, 185, 129, 0.2)"}`
+                                }}>
+                                  {att.clockOut ? "Shift Completed" : "Clocked In"}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {currentUser?.role === "Super Admin" && (
+                    <div style={{ marginTop: "24px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
+                      <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>✅ Mark Staff Attendance Manually</h3>
+                      <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
+                        <div style={{ flex: 1 }}>
+                          <select 
+                            style={{ ...inputStyle, padding: "8px 12px" }} 
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                handleOwnerMarkAttendance(e.target.value);
+                                e.target.value = "";
+                              }
+                            }}
+                          >
+                            <option value="">-- Choose a staff member to clock them in --</option>
+                            {usersList.map((u: any) => (
+                              <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Leave Management Section */}
+                  <div style={{ marginTop: "32px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                      <h3 style={{ fontSize: "1rem", color: "#fff", fontWeight: "600" }}>📅 Leave Management</h3>
+                      <button onClick={() => setShowLeaveModal(true)} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>➕ Request Leave</button>
+                    </div>
+
+                    {(currentUser?.role === "Super Admin" ? leaveRequests : leaveRequests.filter((l: any) => l.userId === currentUser?.id)).length === 0 ? (
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", textAlign: "center" }}>No leave requests found.</p>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        {(currentUser?.role === "Super Admin" ? leaveRequests : leaveRequests.filter((l: any) => l.userId === currentUser?.id)).map((leave: any) => (
+                          <div key={leave.id} style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <strong style={{ fontSize: "0.9rem", color: "#fff" }}>{leave.user?.name || "Unknown"}</strong>
+                              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginLeft: "8px" }}>
+                                {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
+                              </span>
+                              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>"{leave.reason}"</p>
+                            </div>
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                              <span style={{ 
+                                padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600",
+                                backgroundColor: leave.status === "Approved" ? "rgba(16, 185, 129, 0.1)" : leave.status === "Denied" ? "rgba(239, 68, 68, 0.1)" : "rgba(234, 179, 8, 0.1)",
+                                color: leave.status === "Approved" ? "#10b981" : leave.status === "Denied" ? "#ef4444" : "#eab308"
+                              }}>
+                                {leave.status}
+                              </span>
+                              {currentUser?.role === "Super Admin" && leave.status === "Pending" && (
+                                <div style={{ display: "flex", gap: "4px" }}>
+                                  <button onClick={() => handleUpdateLeave(leave.id, "Approved")} style={{ background: "#10b981", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Approve</button>
+                                  <button onClick={() => handleUpdateLeave(leave.id, "Denied")} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Deny</button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                
+            </div>
+          </section>
+) : activeMenu === "settings" ? (
           /* Sleek Settings View with Wipe Database Control */
           <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1 }}>
             <div className="glass-card" style={{ padding: "48px", maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -2020,7 +2156,6 @@ export default function Dashboard() {
               <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", paddingBottom: "0" }}>
                 {([
                   { id: "system", label: "⚙️ System Settings" },
-                  { id: "attendance", label: "⏱️ Attendance" },
                   { id: "permissions", label: "🔑 Staff Permissions Layout" },
                 ] as const).map((tab) => (
                   <button
@@ -2233,139 +2368,6 @@ export default function Dashboard() {
                   </div>
                 )}
               </div>
-              )}
-
-              {/* ========== STAFF ATTENDANCE SUB-TAB ========== */}
-              {settingsSubTab === "attendance" && (
-                <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", marginBottom: "8px" }}>
-                  <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "16px" }}>⏱️ Today's Staff Attendance</h2>
-                  
-                  {usersList.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "32px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
-                      <p style={{ color: "var(--text-secondary)" }}>No staff members found.</p>
-                    </div>
-                  ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
-                      {usersList.map((user: any) => {
-                        const att = allAttendances.find((a: any) => a.userId === user.id);
-                        const todayStr = new Date().toISOString().split("T")[0];
-                        const approvedLeave = leaveRequests.find((l: any) => 
-                          l.userId === user.id && 
-                          l.status === "Approved" && 
-                          new Date(l.startDate).toISOString().split("T")[0] <= todayStr &&
-                          new Date(l.endDate).toISOString().split("T")[0] >= todayStr
-                        );
-
-                        return (
-                          <div key={user.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                              <div className={styles.avatar} style={{ margin: 0, width: "36px", height: "36px", fontSize: "0.9rem", filter: !att ? "grayscale(100%) opacity(0.5)" : "none" }}>{user.avatar}</div>
-                              <div>
-                                <strong style={{ fontSize: "0.9rem", color: !att ? "var(--text-muted)" : "#fff", display: "block" }}>{user.name}</strong>
-                                <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                                  {user.role}
-                                  {att && ` • In: ${new Date(att.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                  {att?.clockOut && ` • Out: ${new Date(att.clockOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                  {att?.clockOut && att?.clockIn && ` • Worked: ${Math.round((new Date(att.clockOut).getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
-                                  {att && !att?.clockOut && ` • Working: ${Math.round((new Date().getTime() - new Date(att.clockIn).getTime()) / (1000 * 60 * 60) * 10) / 10} hrs`}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              {!att ? (
-                                approvedLeave ? (
-                                  <span style={{ padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600", backgroundColor: "rgba(234, 179, 8, 0.1)", color: "#eab308", border: "1px solid rgba(234, 179, 8, 0.2)" }}>
-                                    On Leave
-                                  </span>
-                                ) : (
-                                  <span style={{ padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)" }}>
-                                    Absent
-                                  </span>
-                                )
-                              ) : (
-                                <span style={{ 
-                                  padding: "4px 8px", 
-                                  borderRadius: "4px", 
-                                  fontSize: "0.75rem", 
-                                  fontWeight: "600",
-                                  backgroundColor: att.clockOut ? "rgba(107, 114, 128, 0.1)" : "rgba(16, 185, 129, 0.1)",
-                                  color: att.clockOut ? "var(--text-muted)" : "var(--status-checkedin)",
-                                  border: `1px solid ${att.clockOut ? "rgba(107, 114, 128, 0.2)" : "rgba(16, 185, 129, 0.2)"}`
-                                }}>
-                                  {att.clockOut ? "Shift Completed" : "Clocked In"}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {currentUser?.role === "Super Admin" && (
-                    <div style={{ marginTop: "24px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
-                      <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>✅ Mark Staff Attendance Manually</h3>
-                      <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
-                        <div style={{ flex: 1 }}>
-                          <select 
-                            style={{ ...inputStyle, padding: "8px 12px" }} 
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                handleOwnerMarkAttendance(e.target.value);
-                                e.target.value = "";
-                              }
-                            }}
-                          >
-                            <option value="">-- Choose a staff member to clock them in --</option>
-                            {usersList.map((u: any) => (
-                              <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {/* Leave Management Section */}
-                  <div style={{ marginTop: "32px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                      <h3 style={{ fontSize: "1rem", color: "#fff", fontWeight: "600" }}>📅 Leave Management</h3>
-                      <button onClick={() => setShowLeaveModal(true)} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.8rem" }}>➕ Request Leave</button>
-                    </div>
-
-                    {leaveRequests.length === 0 ? (
-                      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", textAlign: "center" }}>No leave requests found.</p>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {leaveRequests.map((leave: any) => (
-                          <div key={leave.id} style={{ padding: "12px", backgroundColor: "rgba(0,0,0,0.2)", borderRadius: "6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <div>
-                              <strong style={{ fontSize: "0.9rem", color: "#fff" }}>{leave.user?.name || "Unknown"}</strong>
-                              <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginLeft: "8px" }}>
-                                {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
-                              </span>
-                              <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>"{leave.reason}"</p>
-                            </div>
-                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                              <span style={{ 
-                                padding: "4px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: "600",
-                                backgroundColor: leave.status === "Approved" ? "rgba(16, 185, 129, 0.1)" : leave.status === "Denied" ? "rgba(239, 68, 68, 0.1)" : "rgba(234, 179, 8, 0.1)",
-                                color: leave.status === "Approved" ? "#10b981" : leave.status === "Denied" ? "#ef4444" : "#eab308"
-                              }}>
-                                {leave.status}
-                              </span>
-                              {currentUser?.role === "Super Admin" && leave.status === "Pending" && (
-                                <div style={{ display: "flex", gap: "4px" }}>
-                                  <button onClick={() => handleUpdateLeave(leave.id, "Approved")} style={{ background: "#10b981", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Approve</button>
-                                  <button onClick={() => handleUpdateLeave(leave.id, "Denied")} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Deny</button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
               )}
 
               {/* ========== STAFF PERMISSIONS LAYOUT SUB-TAB ========== */}
