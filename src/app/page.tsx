@@ -4228,6 +4228,68 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {/* Permissions Modal */}
+      {editingPermissionsUserId && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15,23,42,0.85)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="glass-card" style={{ width: "450px", maxWidth: "90vw", padding: "24px", position: "relative" }}>
+            <button
+              onClick={() => setEditingPermissionsUserId(null)}
+              style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: "1.2rem" }}
+            >
+              ✕
+            </button>
+            <h2 style={{ fontSize: "1.2rem", fontWeight: "600", color: "#fff", marginBottom: "8px" }}>🔑 Edit Custom Permissions</h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "20px", lineHeight: "1.5" }}>
+              Select exactly which modules this staff member can access. This overrides their default role permissions.
+            </p>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "24px", maxHeight: "55vh", overflowY: "auto", paddingRight: "8px" }}>
+              {[
+                { id: "front-office", label: "🗓️ Front Office (Bookings)" },
+                { id: "front-desk", label: "🛎️ Front Desk (Check-in/out)" },
+                { id: "channel-manager", label: "🌍 Channel Manager" },
+                { id: "housekeeping", label: "🧹 Housekeeping & Ops" },
+                { id: "finance", label: "💰 Finance & GST" },
+                { id: "reviews", label: "⭐ Reviews" },
+                { id: "attendance", label: "⏱️ Attendance" },
+                { id: "settings", label: "⚙️ Settings" },
+              ].map((perm) => (
+                <label key={perm.id} style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", padding: "12px 14px", backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid var(--border-color)", borderRadius: "8px", transition: "all 0.2s ease" }}>
+                  <input
+                    type="checkbox"
+                    checked={editPermissionsValue.includes(perm.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setEditPermissionsValue([...editPermissionsValue, perm.id]);
+                      } else {
+                        setEditPermissionsValue(editPermissionsValue.filter((id) => id !== perm.id));
+                      }
+                    }}
+                    style={{ width: "18px", height: "18px", accentColor: "#6366f1", cursor: "pointer" }}
+                  />
+                  <span style={{ fontSize: "0.95rem", color: "#fff", fontWeight: "500" }}>{perm.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setEditingPermissionsUserId(null)}
+                style={{ background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border-color)", padding: "10px 16px", borderRadius: "8px", fontSize: "0.9rem", fontWeight: "600", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUpdatePermissions(editingPermissionsUserId)}
+                disabled={isUpdatingPermissions}
+                style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", color: "#fff", border: "none", padding: "10px 20px", borderRadius: "8px", fontSize: "0.9rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", boxShadow: "0 4px 12px rgba(99,102,241,0.3)" }}
+              >
+                {isUpdatingPermissions ? "Saving..." : "Save Permissions"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dynamic Toast Notifications */}
       {toastMessage && (
