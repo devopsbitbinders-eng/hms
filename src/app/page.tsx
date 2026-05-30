@@ -2616,6 +2616,7 @@ export default function Dashboard() {
               <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid var(--border-color)", paddingBottom: "0" }}>
                 {([
                   { id: "permissions", label: "🔑 Staff Permissions Layout" },
+                  { id: "integrations", label: "🔌 Payment Integrations" },
                 ] as const).map((tab) => (
                   <button
                     key={tab.id}
