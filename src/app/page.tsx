@@ -587,7 +587,7 @@ export default function Dashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        addToast(type === "clockIn" ? "✅ Successfully Clocked In for the day!" : "✅ Clocked Out successfully.");
+        addToast(type === "clockIn" ? "✅ Successfully Logged In for the day!" : "✅ Logged Out successfully.");
         fetchAttendance();
       } else {
         addToast("⚠️ " + data.error, "error");
@@ -2213,7 +2213,7 @@ export default function Dashboard() {
                                   color: att.clockOut ? "var(--text-muted)" : "var(--status-checkedin)",
                                   border: `1px solid ${att.clockOut ? "rgba(107, 114, 128, 0.2)" : "rgba(16, 185, 129, 0.2)"}`
                                 }}>
-                                  {att.clockOut ? "Shift Completed" : "Clocked In"}
+                                  {att.clockOut ? "Shift Completed" : "Logged In"}
                                 </span>
                               )}
                             </div>
@@ -2237,7 +2237,7 @@ export default function Dashboard() {
                               }
                             }}
                           >
-                            <option value="">-- Choose a staff member to clock them in --</option>
+                            <option value="">-- Choose a staff member to log them in --</option>
                             {usersList.map((u: any) => (
                               <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
                             ))}
@@ -4459,7 +4459,7 @@ export default function Dashboard() {
                   subPerms: [
                     { id: "attendance:approve-leave", label: "Approve/Deny Leave Requests" },
                     { id: "attendance:approve-swap", label: "Approve/Deny Shift Swaps" },
-                    { id: "attendance:manual-clock", label: "Manually Clock Staff In/Out" }
+                    { id: "attendance:manual-clock", label: "Manually Log Staff In/Out" }
                   ]
                 },
                 { 

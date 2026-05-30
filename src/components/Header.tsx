@@ -124,7 +124,7 @@ export default function Header({
                   className="btn-secondary"
                   style={{ padding: "6px 12px", fontSize: "0.8rem", color: "#fff", borderColor: "rgba(239, 68, 68, 0.5)", backgroundColor: "rgba(239, 68, 68, 0.1)" }}
                 >
-                  ⏱️ Clock Out
+                  ⏱️ Log Out
                 </button>
               ) : (
                 <button
@@ -133,7 +133,7 @@ export default function Header({
                   className="btn-primary"
                   style={{ padding: "6px 12px", fontSize: "0.8rem", backgroundColor: "var(--status-checkedin)", border: "none", color: "#fff" }}
                 >
-                  ⏱️ Clock In
+                  ⏱️ Log In
                 </button>
               )}
               {onRequestLeave && (
