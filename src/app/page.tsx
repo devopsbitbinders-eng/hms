@@ -1639,24 +1639,7 @@ export default function Dashboard() {
     // Check if an override is active
     if (tabOverrides[menuId]) return true;
 
-    const role = currentUser.role;
-
-    // General Manager has access to everything EXCEPT settings
-    if (role === "General Manager") {
-      return menuId !== "settings";
-    }
-
-    // Receptionist (including Front Office Manager & Finance Executive) has access to front-office, front-desk and housekeeping
-    if (role === "Receptionist" || role === "Front Office Manager" || role === "Finance Executive") {
-      return ["front-office", "front-desk", "housekeeping", "attendance"].includes(menuId);
-    }
-
-    // Housekeeper (including Housekeeping Supervisor & Housekeeper) has access ONLY to housekeeping
-    if (role === "Housekeeper" || role === "Housekeeping Supervisor") {
-      return menuId === "housekeeping";
-    }
-
-    return true;
+    return hasPermission(menuId);
   };
 
   // Switch properties cleanly
