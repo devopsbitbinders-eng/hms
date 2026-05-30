@@ -165,7 +165,7 @@ export default function FrontDeskOps({
   );
 
   const pastGuests = useMemo(() => {
-    let filtered = currentReservations.filter((r) => r.status === "Checked Out" || r.status === "checked-out");
+    let filtered = currentReservations.filter((r) => r.status === "checked-out");
     if (historySearch) {
       const lower = historySearch.toLowerCase();
       filtered = filtered.filter(r => r.guestName.toLowerCase().includes(lower) || r.id.toLowerCase().includes(lower));
