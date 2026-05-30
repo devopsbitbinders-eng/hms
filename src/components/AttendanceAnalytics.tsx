@@ -127,7 +127,7 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
                   color: timeRange === range.id ? "#fff" : "var(--text-secondary)",
                   border: "none",
                   cursor: "pointer",
-                  fontWeight: timeRange === range ? "600" : "normal",
+                  fontWeight: timeRange === range.id ? "600" : "normal",
                   textTransform: "capitalize"
                 }}
               >
