@@ -405,7 +405,7 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
               onClick={() => {
                  // Fake CSV download
                  const a = document.createElement("a");
-                 a.href = "data:text/csv;charset=utf-8,InvoiceDate,Guest,Taxable,CGST,SGST,Total\n";
+                 a.href = "data:text/csv;charset=utf-8,InvoiceDate,InvoiceNo,GuestName,GuestGSTIN,Address,Taxable,CGST,SGST,IGST,Total\n";
                  a.download = "gst_report.csv";
                  a.click();
               }}
@@ -419,7 +419,10 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase" }}>
                   <th style={{ padding: "12px 16px" }}>Invoice Date</th>
-                  <th style={{ padding: "12px 16px" }}>Guest / Ref</th>
+                  <th style={{ padding: "12px 16px" }}>Invoice No.</th>
+                  <th style={{ padding: "12px 16px" }}>Guest Name</th>
+                  <th style={{ padding: "12px 16px" }}>Guest GSTIN</th>
+                  <th style={{ padding: "12px 16px" }}>Address</th>
                   <th style={{ padding: "12px 16px" }}>Taxable Amount</th>
                   <th style={{ padding: "12px 16px" }}>CGST</th>
                   <th style={{ padding: "12px 16px" }}>SGST</th>
@@ -434,12 +437,20 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
                   // Default to local (CGST/SGST) for tabular summary unless state is known
                   const gst = calculateGST(totalRoomCharge, true, mode);
                   
+                  const guestGst = res.details?.guestGst || "N/A";
+                  const guestAddress = res.details?.address || "N/A";
+                  const invoiceNo = `INV-${res.id.substring(0,6).toUpperCase()}`;
+
                   return (
                     <tr key={res.id} style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                       <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>{res.checkOutTime ? new Date(res.checkOutTime).toLocaleDateString() : "N/A"}</td>
+                      <td style={{ padding: "12px 16px", fontFamily: "monospace", color: "#e2e8f0" }}>{invoiceNo}</td>
                       <td style={{ padding: "12px 16px" }}>
                         <div style={{ fontWeight: "600", color: "#fff" }}>{res.guestName}</div>
-                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>#{res.id.substring(0,6).toUpperCase()}</div>
+                      </td>
+                      <td style={{ padding: "12px 16px", color: "var(--text-secondary)", fontSize: "0.85rem" }}>{guestGst}</td>
+                      <td style={{ padding: "12px 16px", color: "var(--text-secondary)", fontSize: "0.85rem", maxWidth: "150px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={guestAddress}>
+                        {guestAddress}
                       </td>
                       <td style={{ padding: "12px 16px", fontFamily: "monospace" }}>₹{gst.baseAmount.toFixed(2)}</td>
                       <td style={{ padding: "12px 16px", color: "#60a5fa", fontFamily: "monospace" }}>₹{gst.cgst.toFixed(2)}</td>
