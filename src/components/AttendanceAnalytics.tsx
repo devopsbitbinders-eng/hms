@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  LineChart, Line
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
 export default function AttendanceAnalytics({ usersList }: { usersList: any[] }) {
@@ -51,41 +50,67 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
       return true;
     });
 
-    // Group by date
-    const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string, users: Set<string> } } = {};
-
-    filtered.forEach(a => {
-      if (!a.clockIn || !a.clockOut) return;
+    if (selectedUserId === "all") {
+      // Group by Staff Member
+      const groupedByUser: { [key: string]: { totalHours: number, overTime: number, userName: string } } = {};
       
-      const cIn = new Date(a.clockIn);
-      const cOut = new Date(a.clockOut);
-      const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
+      filtered.forEach(a => {
+        if (!a.clockIn || !a.clockOut) return;
+        const cIn = new Date(a.clockIn);
+        const cOut = new Date(a.clockOut);
+        const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
+        
+        const userName = a.user?.name || "Unknown Staff";
+        
+        if (!groupedByUser[userName]) {
+          groupedByUser[userName] = { totalHours: 0, overTime: 0, userName };
+        }
+        
+        groupedByUser[userName].totalHours += hours;
+        
+        if (hours > 8) {
+          groupedByUser[userName].overTime += (hours - 8);
+        }
+      });
+
+      return Object.values(groupedByUser).map(u => ({
+        label: u.userName,
+        totalHours: Number(u.totalHours.toFixed(1)),
+        overTime: Number(u.overTime.toFixed(1))
+      })).sort((a, b) => b.totalHours - a.totalHours);
       
-      const dateStr = timeRange === "yearly" 
-        ? `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}` // Group by month if yearly
-        : cIn.toISOString().split("T")[0]; // Group by day
-
-      if (!groupedByDate[dateStr]) {
-        groupedByDate[dateStr] = { totalHours: 0, overTime: 0, dateStr, users: new Set() };
-      }
-
-      groupedByDate[dateStr].totalHours += hours;
-      groupedByDate[dateStr].users.add(a.userId);
+    } else {
+      // Group by Date for specific staff
+      const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
       
-      // Calculate overtime (> 8 hours is considered overtime)
-      if (hours > 8) {
-        groupedByDate[dateStr].overTime += (hours - 8);
-      }
-    });
+      filtered.forEach(a => {
+        if (!a.clockIn || !a.clockOut) return;
+        const cIn = new Date(a.clockIn);
+        const cOut = new Date(a.clockOut);
+        const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
+        
+        const dateStr = timeRange === "yearly" 
+          ? `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}`
+          : cIn.toISOString().split("T")[0];
 
-    const data = Object.values(groupedByDate).map(d => ({
-      date: d.dateStr,
-      avgHours: selectedUserId === "all" ? Number((d.totalHours / d.users.size).toFixed(1)) : Number(d.totalHours.toFixed(1)),
-      overTime: Number(d.overTime.toFixed(1)),
-      totalHours: Number(d.totalHours.toFixed(1))
-    })).sort((a, b) => a.date.localeCompare(b.date));
+        if (!groupedByDate[dateStr]) {
+          groupedByDate[dateStr] = { totalHours: 0, overTime: 0, dateStr };
+        }
+        
+        groupedByDate[dateStr].totalHours += hours;
+        
+        if (hours > 8) {
+          groupedByDate[dateStr].overTime += (hours - 8);
+        }
+      });
 
-    return data;
+      return Object.values(groupedByDate).map(d => ({
+        label: d.dateStr,
+        totalHours: Number(d.totalHours.toFixed(1)),
+        overTime: Number(d.overTime.toFixed(1))
+      })).sort((a, b) => a.label.localeCompare(b.label));
+    }
+
   }, [attendances, timeRange, selectedUserId]);
 
   if (loading) {
@@ -106,7 +131,7 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
               color: "#fff", padding: "8px 12px", borderRadius: "6px", outline: "none", fontSize: "0.85rem"
             }}
           >
-            <option value="all">All Staff Members (Average)</option>
+            <option value="all">All Staff Members</option>
             {usersList.map(u => (
               <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
             ))}
@@ -144,14 +169,15 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-              <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
+              <XAxis dataKey="label" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}h`} />
               <Tooltip 
                 contentStyle={{ backgroundColor: "#1e1e2d", borderColor: "rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff" }}
                 itemStyle={{ color: "#fff" }}
+                cursor={{ fill: "rgba(255,255,255,0.05)" }}
               />
               <Legend wrapperStyle={{ paddingTop: "20px" }} />
-              <Bar dataKey={selectedUserId === "all" ? "avgHours" : "totalHours"} name={selectedUserId === "all" ? "Avg. Working Hours" : "Working Hours"} fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="totalHours" name="Total Working Hours" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
               <Bar dataKey="overTime" name="Overtime (> 8 hrs)" fill="#ef4444" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -160,15 +186,17 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginTop: "16px" }}>
         <div style={{ padding: "16px", background: "rgba(139, 92, 246, 0.1)", border: "1px solid rgba(139, 92, 246, 0.2)", borderRadius: "8px" }}>
-          <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Total Records</div>
+          <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "4px" }}>
+            {selectedUserId === "all" ? "Total Staff Worked" : "Total Days Worked"}
+          </div>
           <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "#fff" }}>{chartData.length}</div>
         </div>
         <div style={{ padding: "16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "8px" }}>
           <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "4px" }}>
-            {selectedUserId === "all" ? "Avg Hours / Day" : "Avg Hours Worked"}
+            {selectedUserId === "all" ? "Avg Hours / Staff Member" : "Avg Hours / Day"}
           </div>
           <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "#10b981" }}>
-            {chartData.length > 0 ? (chartData.reduce((acc, curr) => acc + (selectedUserId === "all" ? curr.avgHours : curr.totalHours), 0) / chartData.length).toFixed(1) : 0}h
+            {chartData.length > 0 ? (chartData.reduce((acc, curr) => acc + curr.totalHours, 0) / chartData.length).toFixed(1) : 0}h
           </div>
         </div>
         <div style={{ padding: "16px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px" }}>
