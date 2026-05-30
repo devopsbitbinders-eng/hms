@@ -10,7 +10,7 @@ interface FinanceOpsProps {
 }
 
 export default function FinanceOps({ currentReservations, activePropertyId }: FinanceOpsProps) {
-  const [activeTab, setActiveTab] = useState<"invoices" | "formc" | "tally">("invoices");
+  const [activeTab, setActiveTab] = useState<"invoices" | "formc" | "tally" | "summary">("invoices");
 
   // Form C State
   const [downloadingFormC, setDownloadingFormC] = useState(false);
@@ -155,6 +155,7 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
           { id: "invoices", label: "🧾 Native GST Engine" },
           { id: "formc", label: "🛂 Form C Compliance" },
           { id: "tally", label: "📊 Tally ERP Sync" },
+          { id: "summary", label: "📉 Monthly GST Report" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -388,6 +389,79 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
           </div>
         </div>
       )}
+
+      {activeTab === "summary" && (
+        <div className={styles.card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+            <div>
+              <h3 style={{ margin: "0 0 8px 0", color: "#60a5fa" }}>Monthly GST Output Report</h3>
+              <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)", maxWidth: "600px" }}>
+                A complete tabular summary of all checked-out and invoiced reservations for filing GST returns.
+              </p>
+            </div>
+            <button 
+              className="btn-primary" 
+              style={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", whiteSpace: "nowrap" }}
+              onClick={() => {
+                 // Fake CSV download
+                 const a = document.createElement("a");
+                 a.href = "data:text/csv;charset=utf-8,InvoiceDate,Guest,Taxable,CGST,SGST,Total\n";
+                 a.download = "gst_report.csv";
+                 a.click();
+              }}
+            >
+              📥 Export to CSV
+            </button>
+          </div>
+
+          <div style={{ background: "rgba(0,0,0,0.2)", borderRadius: "8px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.9rem" }}>
+              <thead>
+                <tr style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)", fontSize: "0.75rem", textTransform: "uppercase" }}>
+                  <th style={{ padding: "12px 16px" }}>Invoice Date</th>
+                  <th style={{ padding: "12px 16px" }}>Guest / Ref</th>
+                  <th style={{ padding: "12px 16px" }}>Taxable Amount</th>
+                  <th style={{ padding: "12px 16px" }}>CGST</th>
+                  <th style={{ padding: "12px 16px" }}>SGST</th>
+                  <th style={{ padding: "12px 16px" }}>IGST</th>
+                  <th style={{ padding: "12px 16px" }}>Grand Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentReservations.filter(r => r.status === "checked-out").map(res => {
+                  const totalRoomCharge = (res.billingItems || []).filter(b => b.category === "room").reduce((sum, item) => sum + item.amount, 0);
+                  const mode = parseGstMode(res.details);
+                  // Default to local (CGST/SGST) for tabular summary unless state is known
+                  const gst = calculateGST(totalRoomCharge, true, mode);
+                  
+                  return (
+                    <tr key={res.id} style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                      <td style={{ padding: "12px 16px", color: "var(--text-secondary)" }}>{res.checkOutTime ? new Date(res.checkOutTime).toLocaleDateString() : "N/A"}</td>
+                      <td style={{ padding: "12px 16px" }}>
+                        <div style={{ fontWeight: "600", color: "#fff" }}>{res.guestName}</div>
+                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>#{res.id.substring(0,6).toUpperCase()}</div>
+                      </td>
+                      <td style={{ padding: "12px 16px", fontFamily: "monospace" }}>₹{gst.baseAmount.toFixed(2)}</td>
+                      <td style={{ padding: "12px 16px", color: "#60a5fa", fontFamily: "monospace" }}>₹{gst.cgst.toFixed(2)}</td>
+                      <td style={{ padding: "12px 16px", color: "#60a5fa", fontFamily: "monospace" }}>₹{gst.sgst.toFixed(2)}</td>
+                      <td style={{ padding: "12px 16px", color: "#f59e0b", fontFamily: "monospace" }}>₹{gst.igst.toFixed(2)}</td>
+                      <td style={{ padding: "12px 16px", color: "#10b981", fontWeight: "700", fontFamily: "monospace" }}>₹{gst.total.toFixed(2)}</td>
+                    </tr>
+                  )
+                })}
+                {currentReservations.filter(r => r.status === "checked-out").length === 0 && (
+                  <tr>
+                    <td colSpan={7} style={{ padding: "32px", textAlign: "center", color: "var(--text-muted)" }}>
+                      No checked-out reservations to report.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
