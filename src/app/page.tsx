@@ -7,6 +7,7 @@ import Header from "../components/Header";
 import VisualGrid, { Room, Reservation } from "../components/VisualGrid";
 import SplitBillingModal from "@/components/SplitBillingModal";
 import ReviewDashboard from "@/components/ReviewDashboard";
+import AttendanceAnalytics from "@/components/AttendanceAnalytics";
 import ChannelManager from "../components/ChannelManager";
 import HousekeepingOps from "../components/HousekeepingOps";
 import FinanceOps from "../components/FinanceOps";
