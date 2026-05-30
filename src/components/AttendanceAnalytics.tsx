@@ -51,68 +51,44 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
       return true;
     });
 
-    if (selectedUserId === "all") {
-      const groupedByUser: { [key: string]: { totalHours: number, overTime: number, userName: string } } = {};
+    const uniqueStaff = new Set();
+    const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
+    
+    filtered.forEach(a => {
+      if (!a.clockIn || !a.clockOut) return;
+      uniqueStaff.add(a.userId);
+
+      const cIn = new Date(a.clockIn);
+      const cOut = new Date(a.clockOut);
+      const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
       
-      filtered.forEach(a => {
-        if (!a.clockIn || !a.clockOut) return;
-        const cIn = new Date(a.clockIn);
-        const cOut = new Date(a.clockOut);
-        const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
-        
-        const userName = a.user?.name || "Unknown Staff";
-        
-        if (!groupedByUser[userName]) {
-          groupedByUser[userName] = { totalHours: 0, overTime: 0, userName };
-        }
-        
-        groupedByUser[userName].totalHours += hours;
-        
-        if (hours > 8) {
-          groupedByUser[userName].overTime += (hours - 8);
-        }
-      });
+      let dateStr = "";
+      if (timeRange === "yearly") {
+        dateStr = `${cIn.getFullYear()}`;
+      } else if (timeRange === "monthly") {
+        dateStr = `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}`;
+      } else {
+        dateStr = cIn.toISOString().split("T")[0];
+      }
 
-      return Object.values(groupedByUser).map(u => ({
-        label: u.userName,
-        totalHours: Number(u.totalHours.toFixed(1)),
-        overTime: Number(u.overTime.toFixed(1))
-      })).sort((a, b) => b.totalHours - a.totalHours);
-    } else {
-      const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = { totalHours: 0, overTime: 0, dateStr };
+      }
       
-      filtered.forEach(a => {
-        if (!a.clockIn || !a.clockOut) return;
-        const cIn = new Date(a.clockIn);
-        const cOut = new Date(a.clockOut);
-        const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
-        
-        let dateStr = "";
-        if (timeRange === "yearly") {
-          dateStr = `${cIn.getFullYear()}`;
-        } else if (timeRange === "monthly") {
-          dateStr = `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}`;
-        } else {
-          dateStr = cIn.toISOString().split("T")[0];
-        }
+      groupedByDate[dateStr].totalHours += hours;
+      
+      if (hours > 8) {
+        groupedByDate[dateStr].overTime += (hours - 8);
+      }
+    });
 
-        if (!groupedByDate[dateStr]) {
-          groupedByDate[dateStr] = { totalHours: 0, overTime: 0, dateStr };
-        }
-        
-        groupedByDate[dateStr].totalHours += hours;
-        
-        if (hours > 8) {
-          groupedByDate[dateStr].overTime += (hours - 8);
-        }
-      });
+    const finalData = Object.values(groupedByDate).map(d => ({
+      label: d.dateStr,
+      totalHours: Number(d.totalHours.toFixed(1)),
+      overTime: Number(d.overTime.toFixed(1))
+    })).sort((a, b) => a.label.localeCompare(b.label));
 
-      return Object.values(groupedByDate).map(d => ({
-        label: d.dateStr,
-        totalHours: Number(d.totalHours.toFixed(1)),
-        overTime: Number(d.overTime.toFixed(1))
-      })).sort((a, b) => a.label.localeCompare(b.label));
-    }
+    return { chartData: finalData, uniqueStaffCount: uniqueStaff.size };
 
   }, [attendances, timeRange, selectedUserId]);
 
