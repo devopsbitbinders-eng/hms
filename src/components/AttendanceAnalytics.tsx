@@ -51,44 +51,75 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
       return true;
     });
 
-    const uniqueStaff = new Set();
-    const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
-    
-    filtered.forEach(a => {
-      if (!a.clockIn) return;
-      uniqueStaff.add(a.userId);
-
-      const cIn = new Date(a.clockIn);
-      const cOut = a.clockOut ? new Date(a.clockOut) : new Date();
-      const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
+    if (selectedUserId === "all") {
+      const groupedByUser: { [key: string]: { totalHours: number, overTime: number, userName: string } } = {};
       
-      let dateStr = "";
-      if (timeRange === "yearly") {
-        dateStr = `${cIn.getFullYear()}`;
-      } else if (timeRange === "monthly") {
-        dateStr = `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}`;
-      } else {
-        dateStr = cIn.toISOString().split("T")[0];
-      }
+      filtered.forEach(a => {
+        if (!a.clockIn) return;
+        const cIn = new Date(a.clockIn);
+        const cOut = a.clockOut ? new Date(a.clockOut) : new Date();
+        const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
+        
+        const userName = a.user?.name || "Unknown Staff";
+        
+        if (!groupedByUser[userName]) {
+          groupedByUser[userName] = { totalHours: 0, overTime: 0, userName };
+        }
+        
+        groupedByUser[userName].totalHours += hours;
+        
+        if (hours > 8) {
+          groupedByUser[userName].overTime += (hours - 8);
+        }
+      });
 
-      if (!groupedByDate[dateStr]) {
-        groupedByDate[dateStr] = { totalHours: 0, overTime: 0, dateStr };
-      }
+      const finalData = Object.values(groupedByUser).map(u => ({
+        label: u.userName,
+        totalHours: Number(u.totalHours.toFixed(1)),
+        overTime: Number(u.overTime.toFixed(1))
+      })).sort((a, b) => b.totalHours - a.totalHours);
+
+      return { chartData: finalData, uniqueStaffCount: finalData.length };
+    } else {
+      const uniqueStaff = new Set();
+      const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
       
-      groupedByDate[dateStr].totalHours += hours;
-      
-      if (hours > 8) {
-        groupedByDate[dateStr].overTime += (hours - 8);
-      }
-    });
+      filtered.forEach(a => {
+        if (!a.clockIn) return;
+        uniqueStaff.add(a.userId);
 
-    const finalData = Object.values(groupedByDate).map(d => ({
-      label: d.dateStr,
-      totalHours: Number(d.totalHours.toFixed(1)),
-      overTime: Number(d.overTime.toFixed(1))
-    })).sort((a, b) => a.label.localeCompare(b.label));
+        const cIn = new Date(a.clockIn);
+        const cOut = a.clockOut ? new Date(a.clockOut) : new Date();
+        const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
+        
+        let dateStr = "";
+        if (timeRange === "yearly") {
+          dateStr = `${cIn.getFullYear()}`;
+        } else if (timeRange === "monthly") {
+          dateStr = `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}`;
+        } else {
+          dateStr = cIn.toISOString().split("T")[0];
+        }
 
-    return { chartData: finalData, uniqueStaffCount: uniqueStaff.size };
+        if (!groupedByDate[dateStr]) {
+          groupedByDate[dateStr] = { totalHours: 0, overTime: 0, dateStr };
+        }
+        
+        groupedByDate[dateStr].totalHours += hours;
+        
+        if (hours > 8) {
+          groupedByDate[dateStr].overTime += (hours - 8);
+        }
+      });
+
+      const finalData = Object.values(groupedByDate).map(d => ({
+        label: d.dateStr,
+        totalHours: Number(d.totalHours.toFixed(1)),
+        overTime: Number(d.overTime.toFixed(1))
+      })).sort((a, b) => a.label.localeCompare(b.label));
+
+      return { chartData: finalData, uniqueStaffCount: uniqueStaff.size };
+    }
 
   }, [attendances, timeRange, selectedUserId]);
 
