@@ -827,7 +827,7 @@ export default function FrontDeskOps({
               <button className={styles.modalCloseBtn} onClick={() => setCheckoutRes(null)}>✕</button>
             </div>
 
-            <div style={{ padding: "24px" }}>
+            <div style={{ padding: "24px", maxHeight: "75vh", overflowY: "auto" }}>
               {/* Bill Summary */}
               {(() => {
                 const bill = computeBill(checkoutRes);
@@ -1008,7 +1008,7 @@ export default function FrontDeskOps({
               <button className={styles.modalCloseBtn} onClick={() => setFolioRes(null)}>✕</button>
             </div>
 
-            <div style={{ padding: "24px" }}>
+            <div style={{ padding: "24px", maxHeight: "75vh", overflowY: "auto" }}>
               {/* Current Charges */}
               <div style={{ marginBottom: "20px" }}>
                 <div style={{ fontSize: "0.82rem", fontWeight: "600", color: "var(--text-secondary)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Current Charges</div>
