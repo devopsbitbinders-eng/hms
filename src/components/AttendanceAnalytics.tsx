@@ -34,12 +34,13 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
     const now = new Date();
     let startDate = new Date();
     
+    // Determine lookback window based on timeRange
     if (timeRange === "weekly") {
-      startDate.setDate(now.getDate() - 7);
+      startDate.setDate(now.getDate() - 30); // Look back 30 days for Daily view
     } else if (timeRange === "monthly") {
-      startDate.setMonth(now.getMonth() - 1);
+      startDate.setFullYear(now.getFullYear() - 1); // Look back 1 year for Monthly view
     } else {
-      startDate.setFullYear(now.getFullYear() - 1);
+      startDate.setFullYear(now.getFullYear() - 5); // Look back 5 years for Yearly view
     }
 
     // Filter by date range and selected user
@@ -50,66 +51,43 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
       return true;
     });
 
-    if (selectedUserId === "all") {
-      // Group by Staff Member
-      const groupedByUser: { [key: string]: { totalHours: number, overTime: number, userName: string } } = {};
+    // We will group by TIME interval regardless of staff, OR if "All Staff" we could group by Staff.
+    // Given the user specifically requested monthly to show by month, they want time-series.
+    const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
+    
+    filtered.forEach(a => {
+      if (!a.clockIn || !a.clockOut) return;
+      const cIn = new Date(a.clockIn);
+      const cOut = new Date(a.clockOut);
+      const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
       
-      filtered.forEach(a => {
-        if (!a.clockIn || !a.clockOut) return;
-        const cIn = new Date(a.clockIn);
-        const cOut = new Date(a.clockOut);
-        const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
-        
-        const userName = a.user?.name || "Unknown Staff";
-        
-        if (!groupedByUser[userName]) {
-          groupedByUser[userName] = { totalHours: 0, overTime: 0, userName };
-        }
-        
-        groupedByUser[userName].totalHours += hours;
-        
-        if (hours > 8) {
-          groupedByUser[userName].overTime += (hours - 8);
-        }
-      });
+      let dateStr = "";
+      if (timeRange === "yearly") {
+        dateStr = `${cIn.getFullYear()}`; // Group by Year
+      } else if (timeRange === "monthly") {
+        // Group by Month (e.g. "2026-05")
+        dateStr = `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}`;
+      } else {
+        // Group by Day (e.g. "2026-05-23")
+        dateStr = cIn.toISOString().split("T")[0];
+      }
 
-      return Object.values(groupedByUser).map(u => ({
-        label: u.userName,
-        totalHours: Number(u.totalHours.toFixed(1)),
-        overTime: Number(u.overTime.toFixed(1))
-      })).sort((a, b) => b.totalHours - a.totalHours);
+      if (!groupedByDate[dateStr]) {
+        groupedByDate[dateStr] = { totalHours: 0, overTime: 0, dateStr };
+      }
       
-    } else {
-      // Group by Date for specific staff
-      const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
+      groupedByDate[dateStr].totalHours += hours;
       
-      filtered.forEach(a => {
-        if (!a.clockIn || !a.clockOut) return;
-        const cIn = new Date(a.clockIn);
-        const cOut = new Date(a.clockOut);
-        const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
-        
-        const dateStr = timeRange === "yearly" 
-          ? `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}`
-          : cIn.toISOString().split("T")[0];
+      if (hours > 8) {
+        groupedByDate[dateStr].overTime += (hours - 8);
+      }
+    });
 
-        if (!groupedByDate[dateStr]) {
-          groupedByDate[dateStr] = { totalHours: 0, overTime: 0, dateStr };
-        }
-        
-        groupedByDate[dateStr].totalHours += hours;
-        
-        if (hours > 8) {
-          groupedByDate[dateStr].overTime += (hours - 8);
-        }
-      });
-
-      return Object.values(groupedByDate).map(d => ({
-        label: d.dateStr,
-        totalHours: Number(d.totalHours.toFixed(1)),
-        overTime: Number(d.overTime.toFixed(1))
-      })).sort((a, b) => a.label.localeCompare(b.label));
-    }
+    return Object.values(groupedByDate).map(d => ({
+      label: d.dateStr,
+      totalHours: Number(d.totalHours.toFixed(1)),
+      overTime: Number(d.overTime.toFixed(1))
+    })).sort((a, b) => a.label.localeCompare(b.label));
 
   }, [attendances, timeRange, selectedUserId]);
 
@@ -138,15 +116,15 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
           </select>
 
           <div style={{ display: "flex", background: "rgba(0,0,0,0.3)", borderRadius: "6px", border: "1px solid var(--border-color)", overflow: "hidden" }}>
-            {(["weekly", "monthly", "yearly"] as const).map(range => (
+            {[ {id: "weekly", label: "Daily (Last 30 Days)"}, {id: "monthly", label: "Monthly (Last 12 Months)"}, {id: "yearly", label: "Yearly (All Time)"} ].map(range => (
               <button
-                key={range}
-                onClick={() => setTimeRange(range)}
+                key={range.id}
+                onClick={() => setTimeRange(range.id as any)}
                 style={{
                   padding: "8px 16px",
                   fontSize: "0.85rem",
-                  background: timeRange === range ? "var(--primary-color)" : "transparent",
-                  color: timeRange === range ? "#fff" : "var(--text-secondary)",
+                  background: timeRange === range.id ? "var(--primary-color)" : "transparent",
+                  color: timeRange === range.id ? "#fff" : "var(--text-secondary)",
                   border: "none",
                   cursor: "pointer",
                   fontWeight: timeRange === range ? "600" : "normal",
