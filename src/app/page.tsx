@@ -2819,10 +2819,10 @@ export default function Dashboard() {
                       <div>
                         <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "6px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Provider Name</label>
                         <select style={inputStyle} defaultValue="razorpay">
-                          <option value="paytm" style={optionStyle}>Paytm Smart POS</option>
-                          <option value="razorpay" style={optionStyle}>Razorpay POS</option>
-                          <option value="pinelabs" style={optionStyle}>PineLabs Terminal</option>
-                          <option value="hdfc" style={optionStyle}>HDFC SmartHub</option>
+                          <option value="paytm" style={{ backgroundColor: "#1e1e2d", color: "#fff" }}>Paytm Smart POS</option>
+                          <option value="razorpay" style={{ backgroundColor: "#1e1e2d", color: "#fff" }}>Razorpay POS</option>
+                          <option value="pinelabs" style={{ backgroundColor: "#1e1e2d", color: "#fff" }}>PineLabs Terminal</option>
+                          <option value="hdfc" style={{ backgroundColor: "#1e1e2d", color: "#fff" }}>HDFC SmartHub</option>
                         </select>
                       </div>
                       <div>
