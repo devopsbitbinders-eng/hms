@@ -131,7 +131,7 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
                   textTransform: "capitalize"
                 }}
               >
-                {range}
+                {range.label}
               </button>
             ))}
           </div>
