@@ -28,8 +28,8 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
     fetchAllAttendances();
   }, []);
 
-  const { chartData, uniqueStaffCount } = useMemo(() => {
-    if (!attendances.length) return { chartData: [], uniqueStaffCount: 0 };
+  const { chartData, uniqueStaffCount, staffNames } = useMemo(() => {
+    if (!attendances.length) return { chartData: [], uniqueStaffCount: 0, staffNames: [] };
 
     const now = new Date();
     let startDate = new Date();
