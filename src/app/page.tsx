@@ -647,6 +647,26 @@ export default function Dashboard() {
     }
   }
 
+  const handleUpdateShiftSwap = async (id: string, status: string) => {
+    try {
+      const res = await fetch("/api/shift-swap", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status })
+      });
+      const data = await res.json();
+      if (!data.error) {
+        addToast("Shift swap request " + status.toLowerCase() + ".");
+        fetchShiftSwapRequests();
+        if (status === "Approved") loadData();
+      } else {
+        addToast("Error updating shift swap request: " + data.error, "error");
+      }
+    } catch (err) {
+      addToast("Failed to update shift swap request", "error");
+    }
+  }
+
   const handleUpdateLeave = async (id: string, status: string) => {
     try {
       const res = await fetch("/api/leave", {
@@ -2311,14 +2331,8 @@ export default function Dashboard() {
                               </span>
                               {hasPermission("attendance:approve-swap") && req.status === "Pending" && (
                                 <div style={{ display: "flex", gap: "4px" }}>
-                                  <button onClick={async () => {
-                                    const res = await fetch(`/api/shift-swap?id=${req.id}&status=Approved`, { method: 'PUT' });
-                                    if(res.ok) { addToast("Approved shift swap"); fetchShiftSwapRequests(); loadData(); }
-                                  }} style={{ background: "#10b981", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Approve</button>
-                                  <button onClick={async () => {
-                                    const res = await fetch(`/api/shift-swap?id=${req.id}&status=Denied`, { method: 'PUT' });
-                                    if(res.ok) { addToast("Denied shift swap"); fetchShiftSwapRequests(); }
-                                  }} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Deny</button>
+                                  <button onClick={() => handleUpdateShiftSwap(req.id, "Approved")} style={{ background: "#10b981", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Approve</button>
+                                  <button onClick={() => handleUpdateShiftSwap(req.id, "Denied")} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.75rem" }}>Deny</button>
                                 </div>
                               )}
                             </div>
