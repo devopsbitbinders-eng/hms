@@ -2325,6 +2325,9 @@ export default function Dashboard() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* ========== ANALYTICS DASHBOARD ========== */}
+                  <AttendanceAnalytics usersList={usersList} />
           </section>
 ) : activeMenu === "staff-management" ? (
           <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, minHeight: 0 }}>
