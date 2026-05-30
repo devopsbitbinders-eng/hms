@@ -55,11 +55,11 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
     const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
     
     filtered.forEach(a => {
-      if (!a.clockIn || !a.clockOut) return;
+      if (!a.clockIn) return;
       uniqueStaff.add(a.userId);
 
       const cIn = new Date(a.clockIn);
-      const cOut = new Date(a.clockOut);
+      const cOut = a.clockOut ? new Date(a.clockOut) : new Date();
       const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
       
       let dateStr = "";
