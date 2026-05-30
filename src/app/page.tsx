@@ -2442,7 +2442,7 @@ export default function Dashboard() {
                             </>
                           )
                         )}
-                        {currentUser?.role === "Super Admin" && (
+                        {(currentUser?.role === "Super Admin" || hasPermission("staff-management:delete")) && (
                           <button
                             type="button"
                             onClick={() => handleDeleteStaff(user.id, user.name)}

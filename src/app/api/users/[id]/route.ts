@@ -64,9 +64,20 @@ export async function DELETE(
       );
     }
 
+    const userToDelete = await prisma.user.findUnique({ where: { id } });
     await prisma.user.delete({
       where: { id },
     });
+    
+    if (userToDelete) {
+      await prisma.notification.create({
+        data: {
+          message: `Staff member ${userToDelete.name} was removed from the system.`,
+          staffName: "System",
+          propertyName: "Aether HMS"
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,
