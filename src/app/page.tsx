@@ -2816,7 +2816,7 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
                       <div>
                         <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "6px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Provider Name</label>
                         <select style={inputStyle} defaultValue="razorpay">
@@ -2830,6 +2830,16 @@ export default function Dashboard() {
                         <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "6px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Webhook Secret</label>
                         <input type="password" style={inputStyle} defaultValue="whsec_12345678" placeholder="whsec_..." />
                       </div>
+                    </div>
+
+                    <div style={{ marginBottom: "24px", background: "rgba(59, 130, 246, 0.05)", padding: "16px", borderRadius: "8px", border: "1px dashed rgba(59, 130, 246, 0.3)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                        <label style={{ fontSize: "0.75rem", color: "#60a5fa", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em" }}>Your HMS Webhook URL (Copy this to Provider Dashboard)</label>
+                        <button style={{ background: "none", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "4px", fontWeight: "600" }} onClick={() => { navigator.clipboard.writeText("https://hms.yourhotel.com/api/webhooks/pos-payment"); addToast("Webhook URL copied to clipboard!", "success"); }}>
+                          📋 Copy
+                        </button>
+                      </div>
+                      <input type="text" readOnly style={{ ...inputStyle, marginBottom: 0, fontFamily: "monospace", color: "#fff", background: "rgba(0,0,0,0.3)" }} value="https://hms.yourhotel.com/api/webhooks/pos-payment" />
                     </div>
 
                     <div style={{ display: "flex", gap: "12px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "20px" }}>
