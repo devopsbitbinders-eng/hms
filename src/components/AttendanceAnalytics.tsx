@@ -52,34 +52,48 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
     });
 
     if (selectedUserId === "all") {
-      const groupedByUser: { [key: string]: { totalHours: number, overTime: number, userName: string } } = {};
+      const staffNamesSet = new Set<string>();
+      const groupedByDate: { [key: string]: any } = {};
       
       filtered.forEach(a => {
         if (!a.clockIn) return;
+        const userName = a.user?.name || "Unknown Staff";
+        staffNamesSet.add(userName);
+
         const cIn = new Date(a.clockIn);
         const cOut = a.clockOut ? new Date(a.clockOut) : new Date();
         const hours = (cOut.getTime() - cIn.getTime()) / (1000 * 60 * 60);
         
-        const userName = a.user?.name || "Unknown Staff";
-        
-        if (!groupedByUser[userName]) {
-          groupedByUser[userName] = { totalHours: 0, overTime: 0, userName };
+        let dateStr = "";
+        if (timeRange === "yearly") {
+          dateStr = `${cIn.getFullYear()}`;
+        } else if (timeRange === "monthly") {
+          dateStr = `${cIn.getFullYear()}-${String(cIn.getMonth() + 1).padStart(2, '0')}`;
+        } else {
+          dateStr = cIn.toISOString().split("T")[0];
+        }
+
+        if (!groupedByDate[dateStr]) {
+          groupedByDate[dateStr] = { dateStr, totalHours: 0, overTime: 0 };
         }
         
-        groupedByUser[userName].totalHours += hours;
+        groupedByDate[dateStr][userName] = (groupedByDate[dateStr][userName] || 0) + hours;
+        groupedByDate[dateStr].totalHours += hours;
         
         if (hours > 8) {
-          groupedByUser[userName].overTime += (hours - 8);
+          groupedByDate[dateStr].overTime += (hours - 8);
         }
       });
 
-      const finalData = Object.values(groupedByUser).map(u => ({
-        label: u.userName,
-        totalHours: Number(u.totalHours.toFixed(1)),
-        overTime: Number(u.overTime.toFixed(1))
-      })).sort((a, b) => b.totalHours - a.totalHours);
+      const finalData = Object.values(groupedByDate).map(d => {
+        const item: any = { label: d.dateStr, totalHours: Number(d.totalHours.toFixed(1)), overTime: Number(d.overTime.toFixed(1)) };
+        staffNamesSet.forEach(name => {
+          if (d[name]) item[name] = Number(d[name].toFixed(1));
+        });
+        return item;
+      }).sort((a, b) => a.label.localeCompare(b.label));
 
-      return { chartData: finalData, uniqueStaffCount: finalData.length };
+      return { chartData: finalData, uniqueStaffCount: staffNamesSet.size, staffNames: Array.from(staffNamesSet) };
     } else {
       const uniqueStaff = new Set();
       const groupedByDate: { [key: string]: { totalHours: number, overTime: number, dateStr: string } } = {};
@@ -118,7 +132,7 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
         overTime: Number(d.overTime.toFixed(1))
       })).sort((a, b) => a.label.localeCompare(b.label));
 
-      return { chartData: finalData, uniqueStaffCount: uniqueStaff.size };
+      return { chartData: finalData, uniqueStaffCount: uniqueStaff.size, staffNames: [] };
     }
 
   }, [attendances, timeRange, selectedUserId]);
@@ -187,7 +201,15 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
                 cursor={{ fill: "rgba(255,255,255,0.05)" }}
               />
               <Legend wrapperStyle={{ paddingTop: "20px" }} />
-              <Bar dataKey="totalHours" name="Total Working Hours" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              {selectedUserId === "all" ? (
+                <>
+                  {staffNames.map((name, i) => (
+                    <Bar key={name} dataKey={name} stackId="a" fill={['#8b5cf6', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#6366f1', '#14b8a6'][i % 7]} />
+                  ))}
+                </>
+              ) : (
+                <Bar dataKey="totalHours" name="Total Working Hours" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              )}
               <Bar dataKey="overTime" name="Overtime (> 8 hrs)" fill="#ef4444" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -199,14 +221,18 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
           <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "4px" }}>
             {selectedUserId === "all" ? "Total Staff Worked" : "Total Days Worked"}
           </div>
-          <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "#fff" }}>{chartData.length}</div>
+          <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "#fff" }}>
+            {selectedUserId === "all" ? uniqueStaffCount : chartData.length}
+          </div>
         </div>
         <div style={{ padding: "16px", background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "8px" }}>
           <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "4px" }}>
             {selectedUserId === "all" ? "Avg Hours / Staff Member" : "Avg Hours / Day"}
           </div>
           <div style={{ fontSize: "1.5rem", fontWeight: "700", color: "#10b981" }}>
-            {chartData.length > 0 ? (chartData.reduce((acc, curr) => acc + curr.totalHours, 0) / chartData.length).toFixed(1) : 0}h
+            {selectedUserId === "all" 
+              ? (uniqueStaffCount > 0 ? (chartData.reduce((acc, curr) => acc + curr.totalHours, 0) / uniqueStaffCount).toFixed(1) : 0)
+              : (chartData.length > 0 ? (chartData.reduce((acc, curr) => acc + curr.totalHours, 0) / chartData.length).toFixed(1) : 0)}h
           </div>
         </div>
         <div style={{ padding: "16px", background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px" }}>
