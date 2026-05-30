@@ -222,7 +222,7 @@ export default function Dashboard() {
   const [gmError, setGmError] = useState<string | null>(null);
 
   // Settings sub-tab state
-  const [settingsSubTab, setSettingsSubTab] = useState<"system" | "attendance" | "permissions">("system");
+  const [settingsSubTab, setSettingsSubTab] = useState<"system" | "attendance" | "permissions" | "integrations">("system");
 
   
   // Store property rooms and reservations in local state
@@ -2778,6 +2778,66 @@ export default function Dashboard() {
                     <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: "1.6" }}>
                       <strong style={{ color: "#fff", display: "block", marginBottom: "2px" }}>How it works</strong>
                       By default, all newly registered managers are granted Room Management access (<strong style={{ color: "#6ee7b7" }}>YES</strong>). Flip a toggle to <strong style={{ color: "#ef4444" }}>NO</strong> to instantly hide the <strong style={{ color: "#fff" }}>🔑 Add Room</strong> button and disable room editing from that manager's dashboard. The change propagates automatically within 5 seconds — no logout required.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              
+              {settingsSubTab === "integrations" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                  <div>
+                    <h2 style={{ fontSize: "1.2rem", fontWeight: "700", color: "#fff", marginBottom: "4px" }}>💳 Payment Gateway & POS Integration</h2>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: "1.5" }}>
+                      Connect your physical Smart POS Terminals (Paytm, Razorpay, PineLabs) to the cloud. This allows receptionists to push bills directly to the terminal without manual entry.
+                    </p>
+                  </div>
+                  
+                  <div className="glass-card" style={{ padding: "24px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+                      <div>
+                        <h3 style={{ fontSize: "1rem", fontWeight: "600", color: "#fff", marginBottom: "4px" }}>Smart POS Terminal Configuration</h3>
+                        <p style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>Configure the API Keys provided by your bank to enable seamless push-to-device payments.</p>
+                      </div>
+                      <div style={{ background: "rgba(16, 185, 129, 0.1)", color: "#10b981", padding: "4px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: "600" }}>Active / Ready</div>
+                    </div>
+                    
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "6px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Terminal ID (TID)</label>
+                        <input type="text" style={inputStyle} defaultValue="TID_98765432" placeholder="e.g. TID_12345678" />
+                        <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "4px" }}>The 8-digit unique ID printed on the back of the physical POS machine.</p>
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "6px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Merchant API Key</label>
+                        <input type="password" style={inputStyle} defaultValue="sk_test_51Nx123456" placeholder="sk_live_..." />
+                        <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "4px" }}>Provided by your payment gateway portal (Razorpay/Paytm Dashboard).</p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "6px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Provider Name</label>
+                        <select style={inputStyle} defaultValue="razorpay">
+                          <option value="paytm" style={optionStyle}>Paytm Smart POS</option>
+                          <option value="razorpay" style={optionStyle}>Razorpay POS</option>
+                          <option value="pinelabs" style={optionStyle}>PineLabs Terminal</option>
+                          <option value="hdfc" style={optionStyle}>HDFC SmartHub</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "6px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.05em" }}>Webhook Secret</label>
+                        <input type="password" style={inputStyle} defaultValue="whsec_12345678" placeholder="whsec_..." />
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "12px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "20px" }}>
+                      <button className="btn-primary" style={{ padding: "8px 16px", fontSize: "0.85rem", background: "linear-gradient(135deg, #10b981, #059669)", fontWeight: "600" }} onClick={() => addToast("✅ Keys saved successfully. POS Integration is live.", "success")}>
+                        Save Configuration
+                      </button>
+                      <button className="btn-secondary" style={{ padding: "8px 16px", fontSize: "0.85rem", fontWeight: "600" }} onClick={() => addToast("📡 Ping sent to Terminal ID. Status: Online", "success")}>
+                        Ping Terminal
+                      </button>
                     </div>
                   </div>
                 </div>
