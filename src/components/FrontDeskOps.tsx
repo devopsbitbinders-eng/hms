@@ -112,7 +112,8 @@ export default function FrontDeskOps({
   refreshData,
   activeProperty,
 }: FrontDeskOpsProps) {
-  const [activeTab, setActiveTab] = useState<"arrivals" | "inhouse" | "departures">("arrivals");
+  const [activeTab, setActiveTab] = useState<"arrivals" | "inhouse" | "departures" | "history">("arrivals");
+  const [historySearch, setHistorySearch] = useState("");
   const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const [folioRes, setFolioRes] = useState<Reservation | null>(null);
   const [checkoutPayment, setCheckoutPayment] = useState("Cash");
@@ -162,6 +163,19 @@ export default function FrontDeskOps({
       ),
     [currentReservations, todayIndex]
   );
+
+  const pastGuests = useMemo(() => {
+    let filtered = currentReservations.filter((r) => r.status === "Checked Out" || r.status === "checked-out");
+    if (historySearch) {
+      const lower = historySearch.toLowerCase();
+      filtered = filtered.filter(r => r.guestName.toLowerCase().includes(lower) || r.id.toLowerCase().includes(lower));
+    }
+    return filtered.sort((a,b) => {
+      const dateA = a.checkOutTime ? new Date(a.checkOutTime).getTime() : 0;
+      const dateB = b.checkOutTime ? new Date(b.checkOutTime).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [currentReservations, historySearch]);
 
   const getRoomForRes = (res: Reservation): Room | undefined =>
     currentRooms.find((r) => r.id === res.roomId);
@@ -654,12 +668,13 @@ export default function FrontDeskOps({
     { id: "arrivals" as const, label: "🛬 Arriving Today", count: arrivingToday.length, color: "#6366f1" },
     { id: "inhouse" as const, label: "🏠 In-House", count: inHouseGuests.length, color: "#10b981" },
     { id: "departures" as const, label: "🛫 Departing Today", count: departingToday.length, color: "#f59e0b" },
+    { id: "history" as const, label: "📜 Check-Out History", count: pastGuests.length, color: "#6b7280" },
   ];
 
   const displayList =
     activeTab === "arrivals" ? arrivingToday :
     activeTab === "inhouse" ? inHouseGuests :
-    departingToday;
+    activeTab === "departures" ? departingToday : pastGuests;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -674,7 +689,7 @@ export default function FrontDeskOps({
       </div>
 
       {/* Summary Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
         {tabs.map((tab) => (
           <div
             key={tab.id}
@@ -701,18 +716,30 @@ export default function FrontDeskOps({
           <h3 style={{ fontSize: "1rem", fontWeight: "600" }}>
             {tabs.find((t) => t.id === activeTab)?.label} — {indexToDate(todayIndex)}
           </h3>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{displayList.length} guest{displayList.length !== 1 ? "s" : ""}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {activeTab === "history" && (
+              <input 
+                type="text" 
+                placeholder="Search by name..." 
+                value={historySearch}
+                onChange={e => setHistorySearch(e.target.value)}
+                style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid var(--border-color)", background: "rgba(0,0,0,0.2)", color: "#fff", fontSize: "0.8rem" }}
+              />
+            )}
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{displayList.length} guest{displayList.length !== 1 ? "s" : ""}</span>
+          </div>
         </div>
 
         {displayList.length === 0 ? (
           <div style={{ padding: "48px", textAlign: "center", color: "var(--text-muted)" }}>
             <div style={{ fontSize: "2.5rem", marginBottom: "12px" }}>
-              {activeTab === "arrivals" ? "🛬" : activeTab === "inhouse" ? "🏠" : "🛫"}
+              {activeTab === "arrivals" ? "🛬" : activeTab === "inhouse" ? "🏠" : activeTab === "departures" ? "🛫" : "📜"}
             </div>
             <p style={{ fontSize: "0.9rem" }}>
               {activeTab === "arrivals" && "No check-ins scheduled for today."}
               {activeTab === "inhouse" && "No guests currently in-house."}
               {activeTab === "departures" && "No check-outs due today."}
+              {activeTab === "history" && "No check-out history available."}
             </p>
           </div>
         ) : (
@@ -760,6 +787,19 @@ export default function FrontDeskOps({
                     <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "2px" }}>
                       {indexToDate(res.startIndex)} → {indexToDate(res.startIndex + res.duration)} · {res.duration} Night{res.duration !== 1 ? "s" : ""}
                     </div>
+
+                      {activeTab === "history" && (
+                        <div style={{ marginTop: "6px", display: "flex", gap: "12px" }}>
+                          <span style={{ fontSize: "0.75rem", color: "#10b981", background: "rgba(16, 185, 129, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>Checked out on {res.checkOutTime ? new Date(res.checkOutTime).toLocaleDateString() : indexToDate(res.startIndex + res.duration)}</span>
+                          {res.paymentMethod && <span style={{ fontSize: "0.75rem", color: "#6366f1", background: "rgba(99, 102, 241, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>Paid via {res.paymentMethod}</span>}
+                        </div>
+                      )}
+                      {activeTab === "history" && res.details && res.details.includes("Checkout Note:") && (
+                        <div style={{ fontSize: "0.75rem", color: "#f59e0b", marginTop: "4px", fontStyle: "italic" }}>
+                          {res.details.split("Checkout Note: ")[1] || "Checkout Note logged"}
+                        </div>
+                      )}
+
                   </div>
 
                   {/* Bill Total */}
@@ -796,6 +836,15 @@ export default function FrontDeskOps({
                           🏁 Check Out
                         </button>
                       </>
+                    )}
+                    {activeTab === "history" && (
+                      <button
+                        className="btn-secondary"
+                        style={{ padding: "8px 16px", fontSize: "0.8rem", whiteSpace: "nowrap" }}
+                        onClick={() => generateReceiptPDF(res, room, PROPERTY_STATE)}
+                      >
+                        📄 View Receipt
+                      </button>
                     )}
                     {activeTab === "departures" && (
                       <button
