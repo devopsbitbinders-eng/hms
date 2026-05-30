@@ -119,6 +119,10 @@ export default function FrontDeskOps({
   const [checkoutNote, setCheckoutNote] = useState("");
   const [checkoutGuestState, setCheckoutGuestState] = useState(PROPERTY_STATE);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [isPaymentVerified, setIsPaymentVerified] = useState(false);
+  const [isPosModalOpen, setIsPosModalOpen] = useState(false);
+  const [posState, setPosState] = useState<"idle" | "waking" | "ready" | "paid">("idle");
 
   // Folio Add Charge state
   const [folioChargeName, setFolioChargeName] = useState("");
@@ -913,8 +917,29 @@ export default function FrontDeskOps({
                 <option style={optionStyle}>Credit Card</option>
                 <option style={optionStyle}>Debit Card</option>
                 <option style={optionStyle}>Corporate Account</option>
+                <option style={optionStyle}>Smart POS (Wireless)</option>
                 <option style={optionStyle}>Bank Transfer</option>
               </select>
+
+              
+              {checkoutPayment === "Smart POS (Wireless)" && checkoutRes && (
+                <div style={{ backgroundColor: "rgba(0,210,97,0.1)", border: "1px solid rgba(0,210,97,0.3)", borderRadius: "8px", padding: "16px", marginBottom: "16px", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.85rem", color: "#fff", marginBottom: "12px", fontWeight: "600" }}>
+                    Total to collect: {formatCurrency(computeBill(checkoutRes).total)}
+                  </div>
+                  {posState === "paid" ? (
+                    <div style={{ color: "#10b981", fontWeight: "700", fontSize: "1rem" }}>✅ Payment Received via POS</div>
+                  ) : (
+                    <button
+                      className="btn-primary"
+                      style={{ padding: "10px 20px", fontSize: "0.9rem", width: "100%", justifyContent: "center", background: "linear-gradient(135deg, #00d261, #059669)", fontWeight: "700" }}
+                      onClick={() => { setIsPosModalOpen(true); setPosState("waking"); setTimeout(() => setPosState("ready"), 2000); }}
+                    >
+                      📱 Send to POS Machine
+                    </button>
+                  )}
+                </div>
+              )}
 
               {checkoutPayment === "Corporate Account" && checkoutRes && (
                 <div style={{ backgroundColor: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "12px", marginBottom: "16px" }}>
@@ -961,7 +986,7 @@ export default function FrontDeskOps({
                   className="btn-primary"
                   style={{ flexGrow: 2, justifyContent: "center", background: "linear-gradient(135deg, #f59e0b, #d97706)", fontWeight: "700" }}
                   onClick={handleCheckout}
-                  disabled={isProcessingCheckout}
+                  disabled={isProcessingCheckout || (checkoutPayment === "Smart POS (Wireless)" && posState !== "paid")}
                 >
                   {isProcessingCheckout ? "⏳ Processing..." : "🏁 Confirm Checkout & Print Receipt"}
                 </button>
@@ -1059,6 +1084,54 @@ export default function FrontDeskOps({
           </div>
         </div>
       )}
+
+      {/* ── SMART POS MODAL ─────────────────────────────── */}
+      {isPosModalOpen && checkoutRes && (
+        <div className={styles.modalOverlay} style={{ zIndex: 1000 }}>
+          <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "400px", padding: "0", overflow: "hidden", textAlign: "center" }}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-color)", background: "linear-gradient(135deg, rgba(0,210,97,0.15), transparent)" }}>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: "700", color: "#fff" }}>Smart POS Terminal</h2>
+              <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginTop: "2px" }}>Awaiting Payment...</p>
+            </div>
+            <div style={{ padding: "30px 24px" }}>
+              {posState === "waking" && (
+                <div>
+                  <div style={{ fontSize: "2rem", marginBottom: "16px", animation: "pulse 1.5s infinite" }}>📡</div>
+                  <div style={{ fontSize: "0.95rem", color: "#fff", fontWeight: "600" }}>Waking up POS Machine...</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "8px" }}>Sending {formatCurrency(computeBill(checkoutRes).total)} request</div>
+                </div>
+              )}
+              {posState === "ready" && (
+                <div>
+                  <div style={{ background: "#fff", padding: "16px", borderRadius: "12px", display: "inline-block", marginBottom: "20px" }}>
+                    <div style={{ width: "160px", height: "160px", background: "url('https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=hotel@upi&pn=Hotel&am=100') center/cover" }}></div>
+                  </div>
+                  <div style={{ fontSize: "0.95rem", color: "#fff", fontWeight: "600", marginBottom: "8px" }}>Terminal is Ready</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "24px" }}>Guest is scanning the Dynamic QR...</div>
+                  <button 
+                    className="btn-primary" 
+                    style={{ background: "#3b82f6", width: "100%", justifyContent: "center" }}
+                    onClick={() => {
+                      setPosState("paid");
+                      setTimeout(() => setIsPosModalOpen(false), 1500);
+                    }}
+                  >
+                    Simulate Guest Payment (Demo)
+                  </button>
+                </div>
+              )}
+              {posState === "paid" && (
+                <div>
+                  <div style={{ fontSize: "3rem", marginBottom: "16px", color: "#10b981" }}>✅</div>
+                  <div style={{ fontSize: "1.1rem", color: "#10b981", fontWeight: "700" }}>Payment Successful!</div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "8px" }}>Redirecting...</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
