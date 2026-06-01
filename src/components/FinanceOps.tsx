@@ -436,9 +436,13 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
                   const mode = parseGstMode(res.details);
                   // Default to local (CGST/SGST) for tabular summary unless state is known
                   const gst = calculateGST(totalRoomCharge, true, mode);
+                  let detailsObj: any = {};
+                  try {
+                    detailsObj = res.details ? (typeof res.details === 'string' ? JSON.parse(res.details) : res.details) : {};
+                  } catch(e) {}
                   
-                  const guestGst = res.details?.guestGst || "N/A";
-                  const guestAddress = res.details?.address || "N/A";
+                  const guestGst = detailsObj.guestGst || "N/A";
+                  const guestAddress = detailsObj.address || "N/A";
                   const invoiceNo = `INV-${res.id.substring(0,6).toUpperCase()}`;
 
                   return (

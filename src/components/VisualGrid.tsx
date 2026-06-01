@@ -60,6 +60,7 @@ export interface Reservation {
 
 export interface Room {
   id?: string; // Database ID mapping
+  propertyId?: string;
   number: string;
   name: string;
   type: string;
