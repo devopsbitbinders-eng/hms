@@ -256,6 +256,14 @@ export default function InvoicePage() {
                   <td>{totalAmount}</td>
                 </tr>
                 <tr>
+                  <td>Occupants</td>
+                  <td>{reservation.numAdults || 1} Adult(s){reservation.numChildren ? `, ${reservation.numChildren} Child(ren)` : ""}</td>
+                </tr>
+                <tr>
+                  <td>Meal Plan</td>
+                  <td>{reservation.details?.match(/Meal Plan:\s*([^\n\[]+)/)?.[1]?.trim() || "Room Only"}</td>
+                </tr>
+                <tr>
                   <td>Payment Reference</td>
                   <td>{reservation.paymentMethod || "Direct"}</td>
                 </tr>
