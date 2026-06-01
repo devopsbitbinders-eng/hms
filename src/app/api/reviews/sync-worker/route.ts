@@ -16,6 +16,7 @@ async function fetchTripAdvisorReviews(propertyId: string, url: string) {
 
     browser = await puppeteer.launch({
       headless: true, // Use headless to prevent display crashes on Railway
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -165,6 +166,7 @@ async function fetchBookingComReviews(propertyId: string, url: string) {
 
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -379,6 +381,7 @@ async function fetchAgodaReviews(propertyId: string, url: string) {
 
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: [
         '--no-sandbox', '--disable-setuid-sandbox',
         '--disable-blink-features=AutomationControlled',
@@ -543,6 +546,7 @@ async function fetchMakeMyTripReviews(propertyId: string, url: string) {
 
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled']
     });
 
@@ -716,6 +720,7 @@ async function fetchOyoReviews(propertyId: string, url: string) {
 
     browser = await puppeteer.launch({
       headless: true, // Use headless for Railway compatibility
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
