@@ -24,6 +24,7 @@ type Order = {
     roomId: string;
     room?: { name: string; id: string; number: string };
     guestName: string;
+    details?: string;
   };
 };
 
@@ -110,6 +111,23 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
     const allItems = roomOrders.flatMap(o => o.items);
     const orderIds = roomOrders.map(o => o.id.slice(0, 5).toUpperCase()).join(", ");
 
+    const isInclusive = currentOrder.reservation?.details?.includes("[GST:inclusive]");
+    const baseSum = allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0);
+    
+    let subtotal = 0;
+    let gst = 0;
+    let finalTotal = 0;
+
+    if (isInclusive) {
+      subtotal = baseSum / 1.05;
+      gst = baseSum - subtotal;
+      finalTotal = baseSum;
+    } else {
+      subtotal = baseSum;
+      gst = baseSum * 0.05;
+      finalTotal = subtotal + gst;
+    }
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -161,15 +179,15 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
   </table>
   <div class="total-row" style="border-top: 1px dashed #000; margin-top: 10px; padding-top: 5px;">
     <span style="font-size: 13px;">Subtotal:</span>
-    <span style="font-size: 13px;">₹${allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0).toFixed(2)}</span>
+    <span style="font-size: 13px;">₹${subtotal.toFixed(2)}</span>
   </div>
   <div class="total-row" style="margin-top: 2px;">
     <span style="font-size: 13px;">GST (5%):</span>
-    <span style="font-size: 13px;">₹${(allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0) * 0.05).toFixed(2)}</span>
+    <span style="font-size: 13px;">₹${gst.toFixed(2)}</span>
   </div>
   <div class="total-row" style="border-top: 1px solid #000; margin-top: 5px; padding-top: 5px; font-weight: bold; font-size: 16px;">
     <span>Total Charge:</span>
-    <span>₹${(allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0) * 1.05).toFixed(2)}</span>
+    <span>₹${finalTotal.toFixed(2)}</span>
   </div>
   <div class="footer">
     <div><strong>Guest Signature:</strong></div>
