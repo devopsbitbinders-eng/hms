@@ -37,12 +37,18 @@ type MenuItem = {
 export default function KitchenDashboard({ currentUser }: { currentUser?: any }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [activeReservations, setActiveReservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"KDS" | "MENU">("KDS");
+  const [activeTab, setActiveTab] = useState<"KDS" | "MENU" | "NEW_ORDER">("KDS");
   
   const [newItemName, setNewItemName] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  // New order state
+  const [selectedResId, setSelectedResId] = useState("");
+  const [newOrderItems, setNewOrderItems] = useState<{ [itemId: string]: number }>({});
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const checkPerm = (permId: string) => {
     if (!currentUser) return false;
@@ -73,6 +79,12 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
       const resMenu = await fetch("/api/kitchen/menu");
       const dataMenu = await resMenu.json();
       if (dataMenu.success) setMenuItems(dataMenu.menuItems);
+
+      const resRes = await fetch("/api/reservations");
+      const dataRes = await resRes.json();
+      if (dataRes.success && dataRes.reservations) {
+        setActiveReservations(dataRes.reservations.filter((r: any) => r.status === "checked-in"));
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -233,6 +245,44 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
     }
   };
 
+  const submitNewOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedResId) return alert("Please select a room/guest first.");
+    const itemsToOrder = Object.entries(newOrderItems).filter(([_, qty]) => qty > 0);
+    if (itemsToOrder.length === 0) return alert("Please add at least one item.");
+
+    setIsSubmittingOrder(true);
+    let total = 0;
+    const itemsPayload = itemsToOrder.map(([itemId, qty]) => {
+      const item = menuItems.find(m => m.id === itemId);
+      total += (item?.price || 0) * qty;
+      return { menuItemId: itemId, quantity: qty, price: item?.price || 0, notes: "" };
+    });
+
+    try {
+      const res = await fetch("/api/kitchen/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId: selectedResId, items: itemsPayload, totalAmount: total }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Order successfully created!");
+        setSelectedResId("");
+        setNewOrderItems({});
+        setActiveTab("KDS");
+        fetchData();
+      } else {
+        alert("Error creating order: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit order");
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
+
   if (loading) return <div style={{ padding: "2rem", textAlign: "center", color: "#fff" }}>Loading Kitchen Dashboard...</div>;
 
   return (
@@ -247,6 +297,12 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
             className={`${styles.tabBtn} ${activeTab === "KDS" ? styles.tabBtnActive : ""}`}
           >
             Active Orders
+          </button>
+          <button
+            onClick={() => setActiveTab("NEW_ORDER")}
+            className={`${styles.tabBtn} ${activeTab === "NEW_ORDER" ? styles.tabBtnActive : ""}`}
+          >
+            + Create Order
           </button>
           <button
             onClick={() => setActiveTab("MENU")}
@@ -409,6 +465,70 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {activeTab === "NEW_ORDER" && (
+          <div style={{ padding: "1.5rem", maxWidth: "800px", margin: "0 auto", backgroundColor: "#0f172a", borderRadius: "0.5rem" }}>
+            <h2 style={{ color: "#fff", marginBottom: "1.5rem" }}>Create New Kitchen Order</h2>
+            <form onSubmit={submitNewOrder}>
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{ display: "block", color: "#cbd5e1", marginBottom: "0.5rem", fontWeight: "bold" }}>Select Guest / Room</label>
+                <select 
+                  value={selectedResId} 
+                  onChange={(e) => setSelectedResId(e.target.value)}
+                  style={{ width: "100%", padding: "0.75rem", borderRadius: "0.25rem", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff" }}
+                  required
+                >
+                  <option value="">-- Select Active Room --</option>
+                  {activeReservations.map(res => (
+                    <option key={res.id} value={res.id}>
+                      Room {res.room?.number || "N/A"} - {res.guestName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: "1.5rem" }}>
+                <label style={{ display: "block", color: "#cbd5e1", marginBottom: "1rem", fontWeight: "bold" }}>Menu Items</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  {menuItems.filter(m => m.isAvailable).map(item => {
+                    const qty = newOrderItems[item.id] || 0;
+                    return (
+                      <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#1e293b", padding: "1rem", borderRadius: "0.5rem", border: "1px solid #334155" }}>
+                        <div>
+                          <div style={{ color: "#f8fafc", fontWeight: "bold" }}>{item.name}</div>
+                          <div style={{ color: "#94a3b8", fontSize: "0.875rem" }}>₹{item.price.toFixed(2)}</div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <button type="button" onClick={() => setNewOrderItems(prev => ({ ...prev, [item.id]: Math.max(0, qty - 1) }))} style={{ width: "28px", height: "28px", borderRadius: "14px", border: "none", backgroundColor: "#334155", color: "#fff", cursor: "pointer", fontWeight: "bold" }}>-</button>
+                          <span style={{ color: "#fff", minWidth: "1rem", textAlign: "center" }}>{qty}</span>
+                          <button type="button" onClick={() => setNewOrderItems(prev => ({ ...prev, [item.id]: qty + 1 }))} style={{ width: "28px", height: "28px", borderRadius: "14px", border: "none", backgroundColor: "#3b82f6", color: "#fff", cursor: "pointer", fontWeight: "bold" }}>+</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "2rem", borderTop: "1px solid #334155", paddingTop: "1.5rem" }}>
+                <div style={{ marginRight: "auto", alignSelf: "center", color: "#fff", fontSize: "1.125rem" }}>
+                  Total: <strong style={{ color: "#10b981" }}>₹{
+                    Object.entries(newOrderItems).reduce((acc, [id, qty]) => {
+                      const item = menuItems.find(m => m.id === id);
+                      return acc + ((item?.price || 0) * qty);
+                    }, 0).toFixed(2)
+                  }</strong>
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={isSubmittingOrder || !selectedResId || Object.values(newOrderItems).every(q => q === 0)}
+                  style={{ padding: "0.75rem 1.5rem", backgroundColor: "#10b981", color: "#fff", border: "none", borderRadius: "0.25rem", fontWeight: "bold", fontSize: "1rem", cursor: (isSubmittingOrder || !selectedResId || Object.values(newOrderItems).every(q => q === 0)) ? "not-allowed" : "pointer" }}
+                >
+                  {isSubmittingOrder ? "Submitting..." : "Submit Order"}
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </main>
