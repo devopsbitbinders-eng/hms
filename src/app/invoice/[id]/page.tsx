@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 export default function InvoicePage() {
   const { id } = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const invoiceType = searchParams.get('type'); // "A" or "B"
   const [reservation, setReservation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,6 +32,15 @@ export default function InvoicePage() {
   if (loading) return <div style={{ padding: "40px", textAlign: "center" }}>Loading Invoice...</div>;
   if (!reservation) return <div style={{ padding: "40px", textAlign: "center", color: "red" }}>Reservation not found.</div>;
 
+  // Filter items if invoiceType is provided (for split billing)
+  const items = invoiceType 
+    ? (reservation.billingItems?.filter((item: any) => 
+        invoiceType === "B" 
+          ? item.invoiceGroup === "B" 
+          : (item.invoiceGroup === "A" || !item.invoiceGroup)
+      ) || [])
+    : (reservation.billingItems || []);
+
   // Formatting helpers
   const bookingDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
   
@@ -42,7 +53,7 @@ export default function InvoicePage() {
   const checkOutStr = checkOutDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
   
   // Totals calculation
-  const totalAmount = reservation.billingItems?.reduce((sum: number, item: any) => sum + item.amount, 0) || 0;
+  const totalAmount = items.reduce((sum: number, item: any) => sum + item.amount, 0) || 0;
   
   // Calculate pseudo GST (Assuming 12% total, so 6% SGST, 6% CGST for reverse calculation - or 18% depending on amount)
   const gstRate = totalAmount > 7500 ? 0.18 : 0.12;
@@ -52,7 +63,7 @@ export default function InvoicePage() {
   const cgst = totalGst - sgst;
 
   // Extract meal plan from billing items if present
-  const roomTariffItem = reservation.billingItems?.find((i: any) => i.name.includes("Room Tariff"));
+  const roomTariffItem = items.find((i: any) => i.name.includes("Room Tariff"));
   let mealPlan = "Room Only";
   if (roomTariffItem) {
     if (roomTariffItem.name.includes("CP")) mealPlan = "Room + Breakfast";
@@ -112,8 +123,8 @@ export default function InvoicePage() {
             <span>The Amore Hills</span>
           </div>
           <div className="booking-meta">
-            <div style={{ fontWeight: "bold", fontSize: "12px", marginBottom: "4px" }}>
-              {reservation.status === 'confirmed' || reservation.status === 'checked-in' ? 'Booking Confirmed' : 'Booking Cancelled'}
+            <div style={{ fontWeight: "bold", fontSize: "12px", marginBottom: "4px", color: invoiceType ? '#4f46e5' : 'inherit' }}>
+              {invoiceType ? `TAX INVOICE ${invoiceType}` : (reservation.status === 'confirmed' || reservation.status === 'checked-in' ? 'Booking Confirmed' : 'Booking Cancelled')}
             </div>
             <div>Booking Date - {bookingDate}</div>
             <div>Booking ID - FDR{reservation.id.substring(0, 15).toUpperCase()}</div>
