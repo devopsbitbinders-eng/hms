@@ -44,20 +44,21 @@ export default function InvoicePage() {
     : (reservation.billingItems || []);
 
   let originalFoodItems: any[] = [];
+  const foodItems = items.filter((i: any) => i.category === "food");
   if (summarizeFood) {
-    const foodItems = items.filter((i: any) => i.category === "food");
     originalFoodItems = [...foodItems];
-    if (foodItems.length > 0) {
-      items = items.filter((i: any) => i.category !== "food");
-      const totalFood = foodItems.reduce((acc: number, curr: any) => acc + curr.amount, 0);
-      items.push({
-        id: "summary-food",
-        name: "Room Service Food & Beverage",
-        amount: totalFood,
-        category: "food",
-        invoiceGroup: invoiceType || "A"
-      });
-    }
+  }
+  
+  if (foodItems.length > 0) {
+    items = items.filter((i: any) => i.category !== "food");
+    const totalFood = foodItems.reduce((acc: number, curr: any) => acc + curr.amount, 0);
+    items.push({
+      id: "summary-food",
+      name: "Room Service Food & Beverage",
+      amount: totalFood,
+      category: "food",
+      invoiceGroup: invoiceType || "A"
+    });
   }
 
   // Formatting helpers
@@ -327,22 +328,36 @@ export default function InvoicePage() {
                 </tr>
                 <tr>
                   <th style={{ width: "5%" }}>SR No</th>
-                  <th style={{ width: "45%" }}>Item Description</th>
-                  <th style={{ width: "20%" }}>Category</th>
-                  <th style={{ width: "15%" }}>Amount</th>
-                  <th style={{ width: "15%" }}>Total (Incl GST)</th>
+                  <th style={{ width: "35%" }}>Item Description</th>
+                  <th style={{ width: "15%" }}>Category</th>
+                  <th style={{ width: "10%", textAlign: "center" }}>Qty</th>
+                  <th style={{ width: "10%", textAlign: "right" }}>Price</th>
+                  <th style={{ width: "10%", textAlign: "right" }}>Amount</th>
+                  <th style={{ width: "15%", textAlign: "right" }}>Total (Incl GST)</th>
                 </tr>
               </thead>
               <tbody>
                 {originalFoodItems.map((fItem, idx) => {
+                  let fName = fItem.name;
+                  let qty = 1;
+                  let unitPrice = fItem.amount;
+                  if (fItem.name.includes(" | Qty: ")) {
+                     const parts = fItem.name.split(" | ");
+                     fName = parts[0];
+                     qty = parseInt(parts[1].replace("Qty: ", "")) || 1;
+                     unitPrice = parseFloat(parts[2].replace("Unit: ", "")) || fItem.amount;
+                  }
+                  
                   const t = calculateGST(fItem);
                   return (
                     <tr key={fItem.id || idx}>
                       <td>{idx + 1}</td>
-                      <td>{fItem.name}</td>
+                      <td>{fName}</td>
                       <td>{fItem.category.toUpperCase()}</td>
-                      <td>{t.baseAmount.toFixed(2)}</td>
-                      <td>{t.total.toFixed(2)}</td>
+                      <td style={{ textAlign: "center" }}>{qty}</td>
+                      <td style={{ textAlign: "right" }}>{formatCurrency(unitPrice)}</td>
+                      <td style={{ textAlign: "right" }}>{t.baseAmount.toFixed(2)}</td>
+                      <td style={{ textAlign: "right" }}>{t.total.toFixed(2)}</td>
                     </tr>
                   );
                 })}

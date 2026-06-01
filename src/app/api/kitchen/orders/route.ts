@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       if (menuItem) {
         await prisma.billingItem.create({
           data: {
-            name: `${menuItem.name} (Room Service)`,
+            name: `${menuItem.name} (Room Service) | Qty: ${item.quantity} | Unit: ${item.price}`,
             amount: item.price * item.quantity,
             category: "food",
             reservationId: reservationId,
