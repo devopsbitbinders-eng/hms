@@ -336,36 +336,25 @@ export default function InvoicePage() {
                 </tr>
                 <tr>
                   <th style={{ width: "5%" }}>SR No</th>
-                  <th style={{ width: "35%" }}>Item Description</th>
-                  <th style={{ width: "15%" }}>Category</th>
-                  <th style={{ width: "10%", textAlign: "center" }}>Qty</th>
-                  <th style={{ width: "10%", textAlign: "right" }}>Price</th>
-                  <th style={{ width: "10%", textAlign: "right" }}>Amount</th>
-                  <th style={{ width: "15%", textAlign: "right" }}>Total (Incl GST)</th>
+                  <th style={{ width: "45%" }}>Description</th>
+                  <th style={{ width: "20%" }}>Category</th>
+                  <th style={{ width: "15%" }}>Amount</th>
+                  <th style={{ width: "15%" }}>GST</th>
                 </tr>
               </thead>
               <tbody>
                 {originalFoodItems.map((fItem, idx) => {
-                  let fName = fItem.name;
-                  let qty = 1;
-                  let unitPrice = fItem.amount;
-                  if (fItem.name.includes(" | Qty: ")) {
-                     const parts = fItem.name.split(" | ");
-                     fName = parts[0];
-                     qty = parseInt(parts[1].replace("Qty: ", "")) || 1;
-                     unitPrice = parseFloat(parts[2].replace("Unit: ", "")) || fItem.amount;
-                  }
-                  
                   const t = calculateGST(fItem);
+                  const gstText = t.total - t.baseAmount > 0 ? (t.total - t.baseAmount).toFixed(2) : "0.00";
+                  const displayName = fItem.name.split(" | Qty:")[0];
+                  
                   return (
                     <tr key={fItem.id || idx}>
                       <td>{idx + 1}</td>
-                      <td>{fName}</td>
+                      <td>{displayName}</td>
                       <td>{fItem.category.toUpperCase()}</td>
-                      <td style={{ textAlign: "center" }}>{qty}</td>
-                      <td style={{ textAlign: "right" }}>{unitPrice.toFixed(2)}</td>
-                      <td style={{ textAlign: "right" }}>{t.baseAmount.toFixed(2)}</td>
-                      <td style={{ textAlign: "right" }}>{t.total.toFixed(2)}</td>
+                      <td>{t.baseAmount.toFixed(2)}</td>
+                      <td>{gstText}</td>
                     </tr>
                   );
                 })}

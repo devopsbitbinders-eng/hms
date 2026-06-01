@@ -90,6 +90,7 @@ export default function SplitBillingModal({
   
   // Selection checkmarks state
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [summarizeKitchen, setSummarizeKitchen] = useState(false);
 
   const parseGstMode = (detailsStr?: string | null): "exclusive" | "inclusive" => {
     if (detailsStr && detailsStr.includes("[GST:inclusive]")) return "inclusive";
@@ -305,7 +306,7 @@ export default function SplitBillingModal({
   };
 
   const handleExportPDF = (invoiceType: "A" | "B") => {
-    window.open(`/invoice/${reservation.id}?type=${invoiceType}`, "_blank");
+    window.open(`/invoice/${reservation.id}?type=${invoiceType}${summarizeKitchen ? '&summarizeFood=true' : ''}`, "_blank");
     addToast(`📄 Invoice ${invoiceType} ready for PDF export / printing.`);
   };
 
@@ -991,10 +992,18 @@ export default function SplitBillingModal({
           >
             🗑️ Cancel & Delete Booking
           </button>
-          <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <label style={{ color: "#fff", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+              <input 
+                type="checkbox" 
+                checked={summarizeKitchen} 
+                onChange={(e) => setSummarizeKitchen(e.target.checked)} 
+              />
+              Summarize Kitchen Bill
+            </label>
             <button 
               className="btn-primary" 
-              onClick={() => window.open(`/invoice/${reservation.id}`, '_blank')}
+              onClick={() => window.open(`/invoice/${reservation.id}${summarizeKitchen ? '?summarizeFood=true' : ''}`, '_blank')}
             >
               🖨️ Print Voucher
             </button>
