@@ -778,6 +778,8 @@ export default function Dashboard() {
           duration: updatedRes.duration,
           isGroup: updatedRes.isGroup,
           groupName: updatedRes.groupName,
+          checkInTime: updatedRes.checkInTime,
+          checkOutTime: updatedRes.checkOutTime,
         }),
       });
 
@@ -1167,7 +1169,7 @@ export default function Dashboard() {
           proceedingTo: newResProceedingTo,
 
           // Stay & Occupants Metadata
-          checkInTime: newResCheckInTime,
+          checkInTime: newResStatus === "checked-in" ? new Date().toISOString() : newResCheckInTime,
           checkOutTime: newResCheckOutTime,
           numAdults: newResNumAdults,
           numChildren: newResNumChildren,

@@ -269,14 +269,15 @@ export default function FrontDeskOps({
   // Handle Check-In (confirm → checked-in)
   const handleCheckIn = async (res: Reservation) => {
     try {
+      const now = new Date().toISOString();
       const response = await fetch(`/api/reservations/${res.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "checked-in" }),
+        body: JSON.stringify({ status: "checked-in", checkInTime: now }),
       });
       const data = await response.json();
       if (data.success) {
-        onUpdateReservation({ ...res, status: "checked-in" });
+        onUpdateReservation({ ...res, status: "checked-in", checkInTime: now });
         addToast(`✅ ${res.guestName} checked in successfully!`, "success");
         await refreshData();
       } else {

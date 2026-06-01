@@ -477,6 +477,9 @@ export default function SplitBillingModal({
                   onChange={(e) => {
                     const newStatus = e.target.value as any;
                     const updated = { ...reservation, status: newStatus };
+                    if (newStatus === "checked-in" && !reservation.checkInTime) {
+                      updated.checkInTime = new Date().toISOString();
+                    }
                     onUpdateReservation(updated);
                     
                     if (newStatus === "checked-out") {
