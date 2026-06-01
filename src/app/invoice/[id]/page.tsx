@@ -283,7 +283,7 @@ export default function InvoicePage() {
             <tbody>
               {items.map((item: any, idx: number) => {
                 const t = calculateGST(item);
-                const gstText = t.total - t.baseAmount > 0 ? \`\${(t.total - t.baseAmount).toFixed(2)}\` : "0.00";
+                const gstText = t.total - t.baseAmount > 0 ? (t.total - t.baseAmount).toFixed(2) : "0.00";
                 return (
                   <tr key={item.id || idx}>
                     <td>{idx + 1}</td>
