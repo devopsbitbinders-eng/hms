@@ -6,8 +6,9 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import VisualGrid, { Room, Reservation } from "../components/VisualGrid";
 import SplitBillingModal from "@/components/SplitBillingModal";
-import ReviewDashboard from "@/components/ReviewDashboard";
-import AttendanceAnalytics from "@/components/AttendanceAnalytics";
+import ReviewDashboard from "../components/ReviewDashboard";
+import AttendanceAnalytics from "../components/AttendanceAnalytics";
+import KitchenDashboard from "./kitchen/page";
 import ChannelManager from "../components/ChannelManager";
 import HousekeepingOps from "../components/HousekeepingOps";
 import FinanceOps from "../components/FinanceOps";
@@ -2205,6 +2206,10 @@ export default function Dashboard() {
               />
             </section>
           )
+        ) : activeMenu === "kitchen" ? (
+          <div style={{ height: "100%", width: "100%", overflow: "hidden" }}>
+            <KitchenDashboard />
+          </div>
         ) : activeMenu === "front-desk" ? (
           <section style={{ padding: "32px", overflowY: "auto", flexGrow: 1 }}>
             <FrontDeskOps

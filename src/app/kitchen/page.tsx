@@ -38,6 +38,10 @@ export default function KitchenDashboard() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"KDS" | "MENU">("KDS");
+  
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemPrice, setNewItemPrice] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -97,6 +101,29 @@ export default function KitchenDashboard() {
     } catch (err) {
       console.error("Failed to toggle menu item", err);
       fetchData();
+    }
+  };
+
+  const handleAddItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItemName || !newItemPrice) return;
+    setIsAdding(true);
+    try {
+      const res = await fetch("/api/kitchen/menu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newItemName, price: parseFloat(newItemPrice), description: "" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMenuItems([...menuItems, data.menuItem].sort((a, b) => a.name.localeCompare(b.name)));
+        setNewItemName("");
+        setNewItemPrice("");
+      }
+    } catch (err) {
+      console.error("Failed to add item", err);
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -183,9 +210,48 @@ export default function KitchenDashboard() {
         {activeTab === "MENU" && (
           <div className={styles.menuContainer}>
             <div className={styles.menuHeader}>
-              <h2 className={styles.menuTitle}>Menu Availability</h2>
-              <span className={styles.menuSub}>Toggle items to hide them from the guest menu.</span>
+              <div>
+                <h2 className={styles.menuTitle}>Menu Availability</h2>
+                <span className={styles.menuSub}>Add items or toggle them to hide from guest menu.</span>
+              </div>
             </div>
+            
+            <div style={{ padding: "1rem", backgroundColor: "#0f172a", borderBottom: "1px solid #334155" }}>
+              <form onSubmit={handleAddItem} style={{ display: "flex", gap: "1rem", alignItems: "flex-end" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem", fontWeight: "bold" }}>Item Name</label>
+                  <input 
+                    type="text" 
+                    value={newItemName} 
+                    onChange={e => setNewItemName(e.target.value)} 
+                    placeholder="e.g. Masala Dosa" 
+                    style={{ width: "100%", padding: "0.5rem", borderRadius: "0.25rem", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff" }} 
+                    required 
+                  />
+                </div>
+                <div style={{ width: "150px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem", fontWeight: "bold" }}>Price (₹)</label>
+                  <input 
+                    type="number" 
+                    value={newItemPrice} 
+                    onChange={e => setNewItemPrice(e.target.value)} 
+                    placeholder="e.g. 150" 
+                    style={{ width: "100%", padding: "0.5rem", borderRadius: "0.25rem", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff" }} 
+                    required 
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={isAdding}
+                  style={{ padding: "0.5rem 1rem", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "0.25rem", fontWeight: "bold", cursor: isAdding ? "not-allowed" : "pointer" }}
+                >
+                  {isAdding ? "Adding..." : "+ Add Item"}
+                </button>
+              </form>
+            </div>
+
             <div>
               <table className={styles.menuTable}>
                 <thead>
@@ -218,7 +284,7 @@ export default function KitchenDashboard() {
                   ))}
                   {menuItems.length === 0 && (
                     <tr>
-                      <td colSpan={4} style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>No menu items found. Add some from the admin dashboard!</td>
+                      <td colSpan={4} style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>No menu items found. Use the form above to add some!</td>
                     </tr>
                   )}
                 </tbody>

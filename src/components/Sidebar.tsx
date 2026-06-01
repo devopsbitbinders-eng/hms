@@ -83,13 +83,7 @@ export default function Sidebar({
               className={`${styles.menuItem} ${
                 activeMenu === item.id ? styles.menuItemActive : ""
               }`}
-              onClick={() => {
-                if (item.id === "kitchen") {
-                  window.open("/kitchen", "_blank");
-                } else {
-                  setActiveMenu(item.id);
-                }
-              }}
+              onClick={() => setActiveMenu(item.id)}
             >
               <span>{item.icon}</span>
               <span>{item.label}</span>
