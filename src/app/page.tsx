@@ -278,6 +278,7 @@ export default function Dashboard() {
   const [newResGuestGstNumber, setNewResGuestGstNumber] = useState("");
   // For flexible bookings in daily mode: an optional preferred check-in time slot
   const [newResCheckInTime, setNewResCheckInTime] = useState("");
+  const [newResMealPlan, setNewResMealPlan] = useState("EP (Room Only)");
 
   // Multi-step Wizard & Guest profile state hooks
   const [newResStep, setNewResStep] = useState(1);
@@ -1080,8 +1081,8 @@ export default function Dashboard() {
           duration: newResDuration,
           status: newResStatus,
           details: newResCheckInTime
-            ? `${newResDetails ? newResDetails + "\n" : ""}Flexible Check-in: ${newResCheckInTime}\n[GST:${newResGstMode}]`.trim()
-            : `${newResDetails ? newResDetails + "\n" : ""}[GST:${newResGstMode}]`.trim(),
+            ? `${newResDetails ? newResDetails + "\n" : ""}Flexible Check-in: ${newResCheckInTime}\nMeal Plan: ${newResMealPlan}\n[GST:${newResGstMode}]`.trim()
+            : `${newResDetails ? newResDetails + "\n" : ""}Meal Plan: ${newResMealPlan}\n[GST:${newResGstMode}]`.trim(),
           isGroup: newResIsGroup,
           groupName: newResIsGroup ? newResGroupName : "",
           bookingType: timeScale,
@@ -3917,7 +3918,17 @@ export default function Dashboard() {
                   </div>
 
                   {/* GST Billing Mode Preference */}
-                  <div style={{ 
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                    <div>
+                      <label style={labelStyle}>🍽️ Meal Plan</label>
+                      <select style={inputStyle} value={newResMealPlan} onChange={(e) => setNewResMealPlan(e.target.value)}>
+                        <option value="EP (Room Only)">EP (Room Only)</option>
+                        <option value="CP (Room + Breakfast)">CP (Room + Breakfast)</option>
+                        <option value="MAP (Room + Breakfast + 1 Meal)">MAP (Room + Breakfast + 1 Meal)</option>
+                        <option value="AP (Room + All Meals)">AP (Room + All Meals)</option>
+                      </select>
+                    </div>
+                    <div style={{
                     marginBottom: "20px", 
                     padding: "16px", 
                     backgroundColor: "rgba(255,255,255,0.02)", 

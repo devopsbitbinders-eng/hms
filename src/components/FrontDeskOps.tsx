@@ -901,6 +901,13 @@ export default function FrontDeskOps({
                           🔄 Change Room
                         </button>
                         <button
+                          className="btn-secondary"
+                          style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.4)", color: "#c084fc" }}
+                          onClick={() => { setRoomChangeRes(res); setChangeToRoomId(""); setChangeReason("Room Upgrade - "); }}
+                        >
+                          ⏫ Upgrade Room
+                        </button>
+                        <button
                           className="btn-primary"
                           style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
                           onClick={() => setCheckoutRes(res)}
