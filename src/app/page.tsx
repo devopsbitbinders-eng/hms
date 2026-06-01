@@ -288,23 +288,6 @@ export default function Dashboard() {
   const [newResCheckInTime, setNewResCheckInTime] = useState("");
   const [newResMealPlan, setNewResMealPlan] = useState("EP (Room Only)");
 
-  useEffect(() => {
-    if (!newResRoomId) return;
-    const room = currentRooms.find(r => r.id === newResRoomId);
-    if (!room) return;
-
-    let targetPrice = room.basePrice || 0;
-    if (newResMealPlan.startsWith("EP")) targetPrice = room.priceEP || room.basePrice || 0;
-    else if (newResMealPlan.startsWith("CP")) targetPrice = room.priceCP || room.basePrice || 0;
-    else if (newResMealPlan.startsWith("MAP")) targetPrice = room.priceMAP || room.basePrice || 0;
-    else if (newResMealPlan.startsWith("AP")) targetPrice = room.priceAP || room.basePrice || 0;
-
-    setNewResBillingItems(prev => {
-      const filtered = prev.filter(item => item.name !== "Room Tariff" && item.name !== "Room Rate");
-      return [{ name: "Room Tariff", amount: targetPrice * newResDuration, category: "room" }, ...filtered];
-    });
-  }, [newResRoomId, newResMealPlan, newResDuration, currentRooms]);
-
   // Multi-step Wizard & Guest profile state hooks
   const [newResStep, setNewResStep] = useState(1);
   const [newResPhone, setNewResPhone] = useState("");
@@ -1683,6 +1666,23 @@ export default function Dashboard() {
 
   // Switch properties cleanly
   const currentRooms = propertyRooms[activeProperty] || [];
+
+  useEffect(() => {
+    if (!newResRoomId) return;
+    const room = currentRooms.find((r: any) => r.id === newResRoomId) as any;
+    if (!room) return;
+
+    let targetPrice = room.basePrice || 0;
+    if (newResMealPlan.startsWith("EP")) targetPrice = room.priceEP || room.basePrice || 0;
+    else if (newResMealPlan.startsWith("CP")) targetPrice = room.priceCP || room.basePrice || 0;
+    else if (newResMealPlan.startsWith("MAP")) targetPrice = room.priceMAP || room.basePrice || 0;
+    else if (newResMealPlan.startsWith("AP")) targetPrice = room.priceAP || room.basePrice || 0;
+
+    setNewResBillingItems(prev => {
+      const filtered = prev.filter(item => item.name !== "Room Tariff" && item.name !== "Room Rate");
+      return [{ name: "Room Tariff", amount: targetPrice * newResDuration, category: "room" }, ...filtered];
+    });
+  }, [newResRoomId, newResMealPlan, newResDuration, currentRooms]);
   const currentReservations = allReservations[activeProperty] || [];
   const currentProperty = propertiesList.find((p) => mapPropertyKey(p.name) === activeProperty);
   const activePropertyType = currentProperty?.type || "Premium Hotel";
