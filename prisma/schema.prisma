@@ -50,6 +50,10 @@ model Room {
   hkAssignedTo  String?       // ID of Housekeeper
   hkLastUpdated String?
   basePrice     Float         @default(0.0)
+  priceEP       Float         @default(0.0)
+  priceCP       Float         @default(0.0)
+  priceMAP      Float         @default(0.0)
+  priceAP       Float         @default(0.0)
 }
 
 model Reservation {

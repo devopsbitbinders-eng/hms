@@ -9,7 +9,7 @@ export async function PUT(
     const resolvedParams = await params;
     const id = resolvedParams.id;
     const body = await request.json();
-    const { number, name, type, basePrice } = body;
+    const { number, name, type, basePrice, priceEP, priceCP, priceMAP, priceAP } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -32,7 +32,11 @@ export async function PUT(
         number,
         name,
         type,
-        ...(basePrice !== undefined && { basePrice: parseFloat(basePrice.toString()) })
+        ...(basePrice !== undefined && { basePrice: parseFloat(basePrice.toString()) }),
+        ...(priceEP !== undefined && { priceEP: parseFloat(priceEP.toString()) }),
+        ...(priceCP !== undefined && { priceCP: parseFloat(priceCP.toString()) }),
+        ...(priceMAP !== undefined && { priceMAP: parseFloat(priceMAP.toString()) }),
+        ...(priceAP !== undefined && { priceAP: parseFloat(priceAP.toString()) })
       },
     });
 

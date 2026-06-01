@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     
     const rooms = await prisma.room.findMany({
       where: { propertyId },
-      select: { id: true, number: true, name: true, type: true, basePrice: true, cleanStatus: true, hkAssignedTo: true, hkLastUpdated: true }
+      select: { id: true, number: true, name: true, type: true, basePrice: true, priceEP: true, priceCP: true, priceMAP: true, priceAP: true, cleanStatus: true, hkAssignedTo: true, hkLastUpdated: true }
     });
     
     return NextResponse.json(rooms);
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { number, name, type, propertyId, staffName, propertyName, basePrice } = body;
+    const { number, name, type, propertyId, staffName, propertyName, basePrice, priceEP, priceCP, priceMAP, priceAP } = body;
 
     if (!number || !name || !type || !propertyId) {
       return NextResponse.json(
@@ -37,6 +37,10 @@ export async function POST(request: Request) {
         type,
         propertyId,
         basePrice: basePrice ? parseFloat(basePrice.toString()) : 0.0,
+        priceEP: priceEP ? parseFloat(priceEP.toString()) : 0.0,
+        priceCP: priceCP ? parseFloat(priceCP.toString()) : 0.0,
+        priceMAP: priceMAP ? parseFloat(priceMAP.toString()) : 0.0,
+        priceAP: priceAP ? parseFloat(priceAP.toString()) : 0.0,
       },
     });
 

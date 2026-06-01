@@ -254,11 +254,19 @@ export default function Dashboard() {
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomType, setNewRoomType] = useState("Standard Room");
   const [newRoomPrice, setNewRoomPrice] = useState("");
+  const [newRoomPriceEP, setNewRoomPriceEP] = useState("");
+  const [newRoomPriceCP, setNewRoomPriceCP] = useState("");
+  const [newRoomPriceMAP, setNewRoomPriceMAP] = useState("");
+  const [newRoomPriceAP, setNewRoomPriceAP] = useState("");
 
   const [editRoomNumber, setEditRoomNumber] = useState("");
   const [editRoomName, setEditRoomName] = useState("");
   const [editRoomType, setEditRoomType] = useState("Standard Room");
   const [editRoomPrice, setEditRoomPrice] = useState("");
+  const [editRoomPriceEP, setEditRoomPriceEP] = useState("");
+  const [editRoomPriceCP, setEditRoomPriceCP] = useState("");
+  const [editRoomPriceMAP, setEditRoomPriceMAP] = useState("");
+  const [editRoomPriceAP, setEditRoomPriceAP] = useState("");
 
   // Booking Form Inputs
   const [newResGuestName, setNewResGuestName] = useState("");
@@ -279,6 +287,23 @@ export default function Dashboard() {
   // For flexible bookings in daily mode: an optional preferred check-in time slot
   const [newResCheckInTime, setNewResCheckInTime] = useState("");
   const [newResMealPlan, setNewResMealPlan] = useState("EP (Room Only)");
+
+  useEffect(() => {
+    if (!newResRoomId) return;
+    const room = currentRooms.find(r => r.id === newResRoomId);
+    if (!room) return;
+
+    let targetPrice = room.basePrice || 0;
+    if (newResMealPlan.startsWith("EP")) targetPrice = room.priceEP || room.basePrice || 0;
+    else if (newResMealPlan.startsWith("CP")) targetPrice = room.priceCP || room.basePrice || 0;
+    else if (newResMealPlan.startsWith("MAP")) targetPrice = room.priceMAP || room.basePrice || 0;
+    else if (newResMealPlan.startsWith("AP")) targetPrice = room.priceAP || room.basePrice || 0;
+
+    setNewResBillingItems(prev => {
+      const filtered = prev.filter(item => item.name !== "Room Tariff" && item.name !== "Room Rate");
+      return [{ name: "Room Tariff", amount: targetPrice * newResDuration, category: "room" }, ...filtered];
+    });
+  }, [newResRoomId, newResMealPlan, newResDuration, currentRooms]);
 
   // Multi-step Wizard & Guest profile state hooks
   const [newResStep, setNewResStep] = useState(1);
@@ -854,6 +879,10 @@ export default function Dashboard() {
           staffName: currentUser ? `${currentUser.name} (${currentUser.role})` : "System",
           propertyName: activePropDetails.name,
           basePrice: newRoomPrice ? parseFloat(newRoomPrice) : 0,
+          priceEP: newRoomPriceEP ? parseFloat(newRoomPriceEP) : 0,
+          priceCP: newRoomPriceCP ? parseFloat(newRoomPriceCP) : 0,
+          priceMAP: newRoomPriceMAP ? parseFloat(newRoomPriceMAP) : 0,
+          priceAP: newRoomPriceAP ? parseFloat(newRoomPriceAP) : 0,
         }),
       });
       const data = await response.json();
@@ -863,6 +892,10 @@ export default function Dashboard() {
         setNewRoomNumber("");
         setNewRoomName("");
         setNewRoomPrice("");
+        setNewRoomPriceEP("");
+        setNewRoomPriceCP("");
+        setNewRoomPriceMAP("");
+        setNewRoomPriceAP("");
         await loadData();
       } else {
         throw new Error(data.error || "Failed to create room.");
@@ -890,6 +923,10 @@ export default function Dashboard() {
           name: editRoomName,
           type: editRoomType,
           basePrice: editRoomPrice ? parseFloat(editRoomPrice) : 0,
+          priceEP: editRoomPriceEP ? parseFloat(editRoomPriceEP) : 0,
+          priceCP: editRoomPriceCP ? parseFloat(editRoomPriceCP) : 0,
+          priceMAP: editRoomPriceMAP ? parseFloat(editRoomPriceMAP) : 0,
+          priceAP: editRoomPriceAP ? parseFloat(editRoomPriceAP) : 0,
         }),
       });
       const data = await response.json();
@@ -2127,6 +2164,10 @@ export default function Dashboard() {
                   setEditRoomName(room.name);
                   setEditRoomType(room.type);
                   setEditRoomPrice(room.basePrice?.toString() || "0");
+                  setEditRoomPriceEP(room.priceEP?.toString() || "0");
+                  setEditRoomPriceCP(room.priceCP?.toString() || "0");
+                  setEditRoomPriceMAP(room.priceMAP?.toString() || "0");
+                  setEditRoomPriceAP(room.priceAP?.toString() || "0");
                   setShowEditRoomModal(true);
                 }}
                 onAddBookingAtCell={handleAddBookingAtCell}
@@ -3105,8 +3146,27 @@ export default function Dashboard() {
                 <option value="Co-working Desk">Co-working Desk</option>
               </select>
 
-              <label style={labelStyle}>Room Base Price (₹)</label>
+              <label style={labelStyle}>Room Base Price (₹) [Fallback]</label>
               <input style={inputStyle} type="number" placeholder="e.g. 2500" value={newRoomPrice} onChange={(e) => setNewRoomPrice(e.target.value)} required />
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "12px" }}>
+                <div>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>EP Price (₹)</label>
+                  <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 2000" value={newRoomPriceEP} onChange={(e) => setNewRoomPriceEP(e.target.value)} />
+                </div>
+                <div>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>CP Price (₹)</label>
+                  <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 2500" value={newRoomPriceCP} onChange={(e) => setNewRoomPriceCP(e.target.value)} />
+                </div>
+                <div>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>MAP Price (₹)</label>
+                  <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 3200" value={newRoomPriceMAP} onChange={(e) => setNewRoomPriceMAP(e.target.value)} />
+                </div>
+                <div>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>AP Price (₹)</label>
+                  <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 4000" value={newRoomPriceAP} onChange={(e) => setNewRoomPriceAP(e.target.value)} />
+                </div>
+              </div>
 
               <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
                 <button className="btn-secondary" type="button" onClick={() => setShowRoomModal(false)}>Cancel</button>
@@ -3145,8 +3205,27 @@ export default function Dashboard() {
                 <option value="Co-working Desk">Co-working Desk</option>
               </select>
 
-              <label style={labelStyle}>Room Base Price (₹)</label>
+              <label style={labelStyle}>Room Base Price (₹) [Fallback]</label>
               <input style={inputStyle} type="number" placeholder="e.g. 2500" value={editRoomPrice} onChange={(e) => setEditRoomPrice(e.target.value)} required />
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "12px" }}>
+                <div>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>EP Price (₹)</label>
+                  <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 2000" value={editRoomPriceEP} onChange={(e) => setEditRoomPriceEP(e.target.value)} />
+                </div>
+                <div>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>CP Price (₹)</label>
+                  <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 2500" value={editRoomPriceCP} onChange={(e) => setEditRoomPriceCP(e.target.value)} />
+                </div>
+                <div>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>MAP Price (₹)</label>
+                  <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 3200" value={editRoomPriceMAP} onChange={(e) => setEditRoomPriceMAP(e.target.value)} />
+                </div>
+                <div>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>AP Price (₹)</label>
+                  <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 4000" value={editRoomPriceAP} onChange={(e) => setEditRoomPriceAP(e.target.value)} />
+                </div>
+              </div>
 
               {/* Maintenance Toggle restricted to Super Admins & General Managers */}
               {(currentUser?.role === "Super Admin" || currentUser?.role === "General Manager") && (
