@@ -49,14 +49,33 @@ export async function POST(request: Request) {
             notes: item.notes || ""
           }))
         }
-      },
+      }
+    });
+
+    // Automatically add food charges to the guest folio
+    for (const item of items) {
+      const menuItem = await prisma.kitchenMenuItem.findUnique({ where: { id: item.menuItemId } });
+      if (menuItem) {
+        await prisma.billingItem.create({
+          data: {
+            name: `${menuItem.name} (Room Service)`,
+            amount: item.price * item.quantity,
+            category: "food",
+            reservationId: reservationId,
+          }
+        });
+      }
+    }
+
+    const newOrderWithIncludes = await prisma.kitchenOrder.findUnique({
+      where: { id: newOrder.id },
       include: {
         items: { include: { menuItem: true } },
         reservation: true
       }
     });
 
-    return NextResponse.json({ success: true, order: newOrder });
+    return NextResponse.json({ success: true, order: newOrderWithIncludes });
   } catch (error) {
     console.error("Failed to create order:", error);
     return NextResponse.json({ error: "Failed to place order" }, { status: 500 });

@@ -124,6 +124,7 @@ export default function FrontDeskOps({
   const [isPaymentVerified, setIsPaymentVerified] = useState(false);
   const [isPosModalOpen, setIsPosModalOpen] = useState(false);
   const [posState, setPosState] = useState<"idle" | "waking" | "ready" | "paid">("idle");
+  const [summarizeFood, setSummarizeFood] = useState(false);
 
   // Folio Add Charge state
   const [folioChargeName, setFolioChargeName] = useState("");
@@ -205,12 +206,29 @@ export default function FrontDeskOps({
     currentRooms.find((r) => r.id === res.roomId);
 
   // ── SECTION 170 CGST-COMPLIANT BILL COMPUTATION ──────────────────────────
-  const computeBill = (res: Reservation) => {
+  const computeBill = (res: Reservation, summarizeFoodItem: boolean = false) => {
     const isInclusive = res.details?.includes("[GST:inclusive]") ?? false;
     let subtotal = 0, totalCgst = 0, totalSgst = 0, totalRoundingAdj = 0, grandTotal = 0;
     let tariff = 0, maxRate = 0;
 
-    res.billingItems.forEach((item) => {
+    let itemsToProcess = [...res.billingItems];
+    if (summarizeFoodItem) {
+      const foodItems = itemsToProcess.filter(i => i.category === "food");
+      if (foodItems.length > 0) {
+        itemsToProcess = itemsToProcess.filter(i => i.category !== "food");
+        const totalFood = foodItems.reduce((acc, curr) => acc + curr.amount, 0);
+        itemsToProcess.push({
+          id: "summary-food",
+          name: "Room Service Food & Beverage",
+          amount: totalFood,
+          category: "food",
+          invoiceGroup: "A",
+          reservationId: res.id
+        });
+      }
+    }
+
+    itemsToProcess.forEach((item) => {
       const rate = getGstRate(item.category, item.amount);
       if (item.category === "room") tariff = item.amount;
       if (rate > maxRate) maxRate = rate;
@@ -246,7 +264,7 @@ export default function FrontDeskOps({
     const roundedRoundingAdj = Math.round(totalRoundingAdj * 100) / 100;
     const roundedTotal       = Math.round(grandTotal * 100) / 100;
 
-    return { subtotal: roundedSubtotal, tariff, gstRate: maxRate, gstAmt: roundedTotalGst, cgst: roundedCgst, sgst: roundedSgst, roundingAdj: roundedRoundingAdj, total: roundedTotal };
+    return { subtotal: roundedSubtotal, tariff, gstRate: maxRate, gstAmt: roundedTotalGst, cgst: roundedCgst, sgst: roundedSgst, roundingAdj: roundedRoundingAdj, total: roundedTotal, itemsToProcess };
   };
 
   // Handle Check-In (confirm → checked-in)
@@ -330,12 +348,13 @@ export default function FrontDeskOps({
       addToast(`🏁 ${checkoutRes.guestName} checked out! Room marked Dirty for housekeeping.`, "success");
 
       // 3. Generate receipt PDF
-      generateReceiptPDF(checkoutRes, room, checkoutGuestState);
+      generateReceiptPDF(checkoutRes, room, checkoutGuestState, summarizeFood);
 
       setCheckoutRes(null);
       setCheckoutNote("");
       setCheckoutPayment("Cash");
       setCheckoutGuestState(PROPERTY_STATE);
+      setSummarizeFood(false);
       await refreshData();
     } catch (err: any) {
       addToast(`Checkout Failed|${err.message}`, "error");
@@ -396,8 +415,8 @@ export default function FrontDeskOps({
   };
 
   // ── CA-COMPLIANT RECEIPT PDF ───────────────────────────────────────
-  const generateReceiptPDF = (res: Reservation, room?: Room, guestState: string = PROPERTY_STATE) => {
-    const bill = computeBill(res);
+  const generateReceiptPDF = (res: Reservation, room?: Room, guestState: string = PROPERTY_STATE, summarizeFoodItem: boolean = false) => {
+    const bill = computeBill(res, summarizeFoodItem);
     const now = new Date();
     
     // Intra/Inter State Logic based on Corporate GSTIN
@@ -418,7 +437,7 @@ export default function FrontDeskOps({
 
     // Build item rows with SAC/HSN codes
     const isInclusive = res.details?.includes("[GST:inclusive]") ?? false;
-    const itemRows = res.billingItems.map((item) => {
+    const itemRows = bill.itemsToProcess.map((item) => {
       const sac = getSacCode(item.category, item.name);
       const itemGstRate = getGstRate(item.category, item.amount);
       const itemHalf = (itemGstRate * 50).toFixed(1).replace(/\.0$/, '');
@@ -1163,7 +1182,7 @@ export default function FrontDeskOps({
             <div style={{ padding: "24px", maxHeight: "75vh", overflowY: "auto" }}>
               {/* Bill Summary */}
               {(() => {
-                const bill = computeBill(checkoutRes);
+                const bill = computeBill(checkoutRes, summarizeFood);
                 const isCorp = checkoutRes.billingType === "corporate";
                 const isIntrastateUI = isCorp && checkoutRes.guestGstNumber && checkoutRes.guestGstNumber.length >= 2 
                   ? checkoutRes.guestGstNumber.substring(0, 2) === PROPERTY_STATE_CODE 
@@ -1172,10 +1191,20 @@ export default function FrontDeskOps({
                 const halfRate = (bill.gstRate * 50).toFixed(1).replace(/\.0$/, '');
                 const fullRate = (bill.gstRate * 100).toFixed(1).replace(/\.0$/, '');
 
+                const hasFood = checkoutRes.billingItems.some(i => i.category === "food");
+
                 return (
                   <div style={{ background: "rgba(0,0,0,0.3)", borderRadius: "10px", padding: "16px", marginBottom: "20px" }}>
-                    <div style={{ fontWeight: "600", fontSize: "0.85rem", marginBottom: "12px", color: "#fff" }}>📋 Final Bill Summary</div>
-                    {checkoutRes.billingItems.map((item) => {
+                    <div style={{ fontWeight: "600", fontSize: "0.85rem", marginBottom: "12px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span>📋 Final Bill Summary</span>
+                      {hasFood && (
+                        <label style={{ fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "6px" }}>
+                          <input type="checkbox" checked={summarizeFood} onChange={(e) => setSummarizeFood(e.target.checked)} />
+                          Summarize Kitchen Food
+                        </label>
+                      )}
+                    </div>
+                    {bill.itemsToProcess.map((item) => {
                       const isInclusive = checkoutRes.details?.includes("[GST:inclusive]") ?? false;
                       const rate = getGstRate(item.category, item.amount);
                       const baseAmount = isInclusive ? item.amount / (1 + rate) : item.amount;
