@@ -67,6 +67,66 @@ export default function KitchenDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const generateKOT = (order: Order) => {
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Room Service Slip - ${order.id.slice(0, 5)}</title>
+  <style>
+    body { font-family: monospace; width: 300px; margin: 0; padding: 20px; color: #000; }
+    h2 { text-align: center; margin-bottom: 5px; font-size: 18px; }
+    .meta { border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; border-bottom: 1px dashed #000; padding-bottom: 5px; }
+    td { padding: 5px 0; }
+    .notes { font-size: 12px; font-style: italic; }
+    .footer { margin-top: 20px; border-top: 1px dashed #000; padding-top: 20px; }
+    .sig-line { margin-top: 40px; border-bottom: 1px solid #000; width: 100%; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body onload="window.print()">
+  <h2>AETHER HMS</h2>
+  <div style="text-align: center; font-size: 14px; margin-bottom: 10px;">KITCHEN ORDER TICKET</div>
+  <div class="meta">
+    <div><strong>Room:</strong> ${order.reservation?.roomId?.slice(0, 4) || "N/A"}</div>
+    <div><strong>Guest:</strong> ${order.reservation?.guestName || "N/A"}</div>
+    <div><strong>Order #:</strong> ${order.id.slice(0, 5).toUpperCase()}</div>
+    <div><strong>Time:</strong> ${new Date().toLocaleTimeString()}</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 15%">Qty</th>
+        <th>Item</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${order.items.map(i => `
+        <tr>
+          <td style="font-weight: bold;">${i.quantity}x</td>
+          <td>
+            ${i.menuItem.name}
+            ${i.notes ? `<div class="notes">Note: ${i.notes}</div>` : ''}
+          </td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+  <div class="footer">
+    <div><strong>Guest Signature:</strong></div>
+    <div class="sig-line"></div>
+    <div style="text-align: center; font-size: 12px; margin-top: 15px;">Please sign to charge to room folio</div>
+  </div>
+</body>
+</html>`;
+    const win = window.open("", "_blank", "width=400,height=600");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  };
+
   const updateOrderStatus = async (id: string, newStatus: string) => {
     // Optimistic UI update
     setOrders((prev) =>
@@ -190,9 +250,14 @@ export default function KitchenDashboard() {
                             </button>
                           )}
                           {status === "READY" && (
-                            <button onClick={() => updateOrderStatus(order.id, "SERVED")} className={`${styles.actionBtn} ${styles.btnServe}`}>
-                              Serve Order
-                            </button>
+                            <>
+                              <button onClick={() => generateKOT(order)} style={{ background: "#4f46e5", color: "white", padding: "0.375rem 0.75rem", borderRadius: "0.25rem", border: "none", cursor: "pointer", marginRight: "0.5rem", fontSize: "0.875rem", fontWeight: "600" }}>
+                                🖨️ Print Slip
+                              </button>
+                              <button onClick={() => updateOrderStatus(order.id, "SERVED")} className={`${styles.actionBtn} ${styles.btnServe}`}>
+                                Serve Order
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>
