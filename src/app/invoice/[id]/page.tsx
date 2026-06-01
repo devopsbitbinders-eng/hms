@@ -385,8 +385,8 @@ export default function InvoicePage() {
             Currency: Rupee
           </div>
           <div style={{ color: "#ef4444", fontWeight: "bold", textAlign: "right" }}>
-            Check In Time: 12:00 Hrs<br />
-            Check Out Time: 10:00 Hrs
+            Check In Time: {reservation.checkInTime ? (reservation.checkInTime.includes("T") ? new Date(reservation.checkInTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }) + ' Hrs' : reservation.checkInTime) : "12:00 Hrs"}<br />
+            Check Out Time: {reservation.checkOutTime ? (reservation.checkOutTime.includes("T") ? new Date(reservation.checkOutTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }) + ' Hrs' : reservation.checkOutTime) : "10:00 Hrs"}
           </div>
         </div>
 
