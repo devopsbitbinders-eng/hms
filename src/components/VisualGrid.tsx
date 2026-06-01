@@ -204,6 +204,11 @@ export default function VisualGrid({
       
       let updatedDetails = res.details;
       if (targetRoomIdx !== res.roomIndex) {
+        const oldPrice = rooms[res.roomIndex].basePrice || 0;
+        const newPrice = rooms[targetRoomIdx].basePrice || 0;
+        const isUpgrade = newPrice > oldPrice;
+        const actionStr = isUpgrade ? "Upgraded" : "Swapped";
+
         const reason = window.prompt(`Please provide a reason for moving ${res.guestName} to Room ${newRoomNum}:`);
         if (!reason) {
           addToast("Room change cancelled: Reason is required.");
@@ -229,7 +234,7 @@ export default function VisualGrid({
           })
         }).catch(err => console.error("Failed to log room change:", err));
 
-        updatedDetails = `${updatedDetails || ""}\n\n[Swapped from Room ${oldRoomNum} to ${newRoomNum}: ${reason}]`.trim();
+        updatedDetails = `${updatedDetails || ""}\n\n[${actionStr} from Room ${oldRoomNum} to ${newRoomNum}: ${reason}]`.trim();
         addToast(`🔄 Moved reservation for ${res.guestName} from Room ${oldRoomNum} to Room ${newRoomNum}`);
       } else {
         addToast(`📅 Date updated for ${res.guestName}`);
@@ -473,6 +478,9 @@ export default function VisualGrid({
                 {res.guestName}
                 {res.details && res.details.includes("[Swapped") && (
                   <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(236,72,153,0.3)", color: "#fbcfe8", padding: "2px 6px", borderRadius: "10px" }}>🔄 Swapped</span>
+                )}
+                {res.details && res.details.includes("[Upgraded") && (
+                  <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(16,185,129,0.3)", color: "#a7f3d0", padding: "2px 6px", borderRadius: "10px" }}>⭐ Upgraded</span>
                 )}
                 {res.isGroup && <span style={{ fontSize: "0.6rem", display: "block", color: "var(--text-secondary)" }}>🏢 Group: {res.groupName}</span>}
               </div>
