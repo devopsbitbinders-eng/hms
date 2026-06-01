@@ -355,7 +355,7 @@ export default function InvoicePage() {
                       <td>{fName}</td>
                       <td>{fItem.category.toUpperCase()}</td>
                       <td style={{ textAlign: "center" }}>{qty}</td>
-                      <td style={{ textAlign: "right" }}>{formatCurrency(unitPrice)}</td>
+                      <td style={{ textAlign: "right" }}>{unitPrice.toFixed(2)}</td>
                       <td style={{ textAlign: "right" }}>{t.baseAmount.toFixed(2)}</td>
                       <td style={{ textAlign: "right" }}>{t.total.toFixed(2)}</td>
                     </tr>
