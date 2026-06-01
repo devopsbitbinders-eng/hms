@@ -397,7 +397,12 @@ export default function Dashboard() {
             number: room.number,
             name: room.name,
             type: room.type,
-            basePrice: room.basePrice, propertyId: property.id,
+            basePrice: room.basePrice,
+            priceEP: room.priceEP,
+            priceCP: room.priceCP,
+            priceMAP: room.priceMAP,
+            priceAP: room.priceAP,
+            propertyId: property.id,
           }));
 
           reservationsMap[propKey] = property.rooms.flatMap((room: any, roomIndex: number) =>
