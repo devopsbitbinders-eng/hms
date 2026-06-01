@@ -169,8 +169,13 @@ export default function VisualGrid({
     const res = reservations.find((r) => r.id === id);
 
     if (res) {
+      let finalTargetColIdx = targetColIdx;
+      if (res.status === "checked-in" && targetColIdx !== res.startIndex) {
+        finalTargetColIdx = res.startIndex;
+      }
+
       // Validate bounds (prevent booking falling out of calendar scale bounds)
-      if (targetColIdx + res.duration > colCount) {
+      if (finalTargetColIdx + res.duration > colCount) {
         addToast("⚠️ Cannot shift: Reservation extends past visible calendar bounds.");
         return;
       }
@@ -180,7 +185,7 @@ export default function VisualGrid({
         (other) =>
           other.id !== id &&
           other.roomIndex === targetRoomIdx &&
-          Math.max(other.startIndex, targetColIdx) < Math.min(other.startIndex + other.duration, targetColIdx + res.duration)
+          Math.max(other.startIndex, finalTargetColIdx) < Math.min(other.startIndex + other.duration, finalTargetColIdx + res.duration)
       );
 
       if (overlap) {
@@ -193,7 +198,7 @@ export default function VisualGrid({
         (new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) /
           (1000 * 60 * 60 * 24)
       );
-      if (targetColIdx < todayIndex && targetColIdx !== res.startIndex) {
+      if (finalTargetColIdx < todayIndex && finalTargetColIdx !== res.startIndex) {
         addToast("⚠️ Past Date Restriction: You cannot move a booking to a past date.");
         return;
       }
@@ -237,14 +242,16 @@ export default function VisualGrid({
         updatedDetails = `${updatedDetails || ""}\n\n[${actionStr} from Room ${oldRoomNum} to ${newRoomNum}: ${reason}]`.trim();
         addToast(`🔄 Moved reservation for ${res.guestName} from Room ${oldRoomNum} to Room ${newRoomNum}`);
       } else {
-        addToast(`📅 Date updated for ${res.guestName}`);
+        if (finalTargetColIdx !== res.startIndex) {
+          addToast(`📅 Date updated for ${res.guestName}`);
+        }
       }
 
       const updated = {
         ...res,
         roomId: rooms[targetRoomIdx].id, // Map the target database roomId
         roomIndex: targetRoomIdx,
-        startIndex: targetColIdx,
+        startIndex: finalTargetColIdx,
         details: updatedDetails
       };
 
