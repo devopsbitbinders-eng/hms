@@ -1,6 +1,39 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
+
+    const reservation = await prisma.reservation.findUnique({
+      where: { id },
+      include: {
+        room: { include: { property: true } },
+        billingItems: true,
+      }
+    });
+
+    if (!reservation) {
+      return NextResponse.json(
+        { success: false, error: "Reservation not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, reservation });
+  } catch (error: any) {
+    console.error("Failed to fetch reservation:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to fetch reservation" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
