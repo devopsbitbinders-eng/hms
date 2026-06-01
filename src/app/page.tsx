@@ -263,8 +263,8 @@ export default function Dashboard() {
   // Booking Form Inputs
   const [newResGuestName, setNewResGuestName] = useState("");
   const [newResRoomId, setNewResRoomId] = useState("");
-  const [newResStartIndex, setNewResStartIndex] = useState(0);
-  const [newResDate, setNewResDate] = useState("2026-05-20"); // Arrival date picker — base date is May 20 2026
+  const [newResStartIndex, setNewResStartIndex] = useState(() => Math.floor((new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) / 86400000));
+  const [newResDate, setNewResDate] = useState(() => new Date().toISOString().split("T")[0]); // Arrival date picker
   const [newResDuration, setNewResDuration] = useState(2);
   const [newResStatus, setNewResStatus] = useState<"checked-in" | "confirmed" | "pending" | "maintenance">("confirmed");
   const [newResDetails, setNewResDetails] = useState("");
@@ -1218,8 +1218,8 @@ export default function Dashboard() {
         setNewResIsGroup(false);
         setNewResGroupName("");
         setNewResCheckInTime("");
-        setNewResDate("2026-05-20");
-        setNewResStartIndex(0);
+        setNewResDate(new Date().toISOString().split("T")[0]);
+        setNewResStartIndex(Math.floor((new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) / 86400000));
         setNewResPhone("");
         setNewResEmail("");
         setNewResDob("");
@@ -3214,8 +3214,8 @@ export default function Dashboard() {
               <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>📅 New Guest Booking</h2>
               <button className={styles.modalCloseBtn} onClick={() => { 
                 setShowBookingModal(false); 
-                setNewResDate("2026-05-20"); 
-                setNewResStartIndex(0); 
+                setNewResDate(new Date().toISOString().split("T")[0]); 
+                setNewResStartIndex(Math.floor((new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) / 86400000)); 
                 setNewResCheckInTime(""); 
                 setNewResStep(1); 
               }}>✕</button>
@@ -3493,8 +3493,8 @@ export default function Dashboard() {
                   <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
                     <button className="btn-secondary" type="button" onClick={() => { 
                       setShowBookingModal(false); 
-                      setNewResDate("2026-05-20"); 
-                      setNewResStartIndex(0); 
+                      setNewResDate(new Date().toISOString().split("T")[0]); 
+                      setNewResStartIndex(Math.floor((new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) / 86400000)); 
                       setNewResCheckInTime(""); 
                       setNewResStep(1); 
                     }}>Cancel</button>
@@ -3502,7 +3502,15 @@ export default function Dashboard() {
                       if (!newResRoomId) {
                         addToast("Room Selection|Please assign a room before proceeding.", "error");
                       } else {
-                        setNewResStep(2);
+                        const todayIdx = Math.floor(
+                          (new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) /
+                            (1000 * 60 * 60 * 24)
+                        );
+                        if (newResStartIndex < todayIdx) {
+                          addToast("Past Date Restriction|Cannot create a booking starting in the past. Please select today or a future date.", "error");
+                        } else {
+                          setNewResStep(2);
+                        }
                       }
                     }}>Next Step ➔</button>
                   </div>
