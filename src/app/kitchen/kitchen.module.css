@@ -1,5 +1,5 @@
 .container {
-  min-height: 100vh;
+  height: 100%;
   background-color: #0f172a;
   display: flex;
   flex-direction: column;
@@ -52,14 +52,17 @@
 .main {
   flex: 1;
   padding: 1.5rem;
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .kdsGrid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
   gap: 1.5rem;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 @media (min-width: 768px) {
@@ -76,6 +79,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   border: 1px solid #334155;
+  min-height: 0;
 }
 
 .colHeader {
