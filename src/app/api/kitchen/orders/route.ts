@@ -52,14 +52,23 @@ export async function POST(request: Request) {
       }
     });
 
+    const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
+    const isInclusive = reservation?.details?.includes("[GST:inclusive]") ?? false;
+
     // Automatically add food charges to the guest folio
     for (const item of items) {
       const menuItem = await prisma.menuItem.findUnique({ where: { id: item.menuItemId } });
       if (menuItem) {
+        let finalAmount = item.price * item.quantity;
+        // If the folio is inclusive, we must pre-add the 5% GST so the back-calculation results in the correct final charge that matches the kitchen slip.
+        if (isInclusive) {
+           finalAmount = finalAmount * 1.05;
+        }
+
         await prisma.billingItem.create({
           data: {
             name: `${menuItem.name} (Room Service) | Qty: ${item.quantity} | Unit: ${item.price}`,
-            amount: item.price * item.quantity,
+            amount: finalAmount,
             category: "food",
             reservationId: reservationId,
           }
