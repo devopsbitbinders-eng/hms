@@ -71,6 +71,7 @@ export interface Room {
 interface VisualGridProps {
   rooms: Room[];
   reservations: Reservation[];
+  activePropertyId?: string;
   onUpdateReservation: (updated: Reservation) => void;
   onSelectReservation: (res: Reservation) => void;
   timeScale: "daily" | "hourly";
@@ -83,6 +84,7 @@ interface VisualGridProps {
 export default function VisualGrid({
   rooms,
   reservations,
+  activePropertyId,
   onUpdateReservation,
   onSelectReservation,
   timeScale,
@@ -98,6 +100,8 @@ export default function VisualGrid({
     ((currentUser?.role === "General Manager" || currentUser?.role === "Front Office Manager") &&
       currentUser?.allowRoomManagement !== false);
 
+  const [dateOffset, setDateOffset] = React.useState(0);
+
 
   // Constants based on scale
   const colCount = timeScale === "daily" ? 14 : 12;
@@ -106,6 +110,7 @@ export default function VisualGrid({
   const getDailyHeaders = () => {
     const headers = [];
     const startDate = new Date(2026, 4, 20); // May 20, 2026
+    startDate.setDate(startDate.getDate() + (timeScale === "daily" ? dateOffset : 0));
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     for (let i = 0; i < 14; i++) {
       const d = new Date(startDate);
@@ -183,13 +188,13 @@ export default function VisualGrid({
         return;
       }
 
-      // Prevent past date drags
+      // Prevent past date drags (unless keeping the same date for a room change)
       const todayIndex = Math.floor(
         (new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) /
           (1000 * 60 * 60 * 24)
       );
-      if (targetColIdx < todayIndex && res.startIndex >= todayIndex) {
-        addToast("⚠️ Past Date Restriction: You cannot move a booking to start in the past.");
+      if (targetColIdx < todayIndex && targetColIdx !== res.startIndex) {
+        addToast("⚠️ Past Date Restriction: You cannot move a booking to a past date.");
         return;
       }
 
@@ -220,7 +225,7 @@ export default function VisualGrid({
             toRoomName: rooms[targetRoomIdx].name,
             reason: reason,
             changedBy: currentUser ? `${currentUser.name} (${currentUser.role})` : "Grid Drag",
-            propertyId: rooms[targetRoomIdx].propertyId || rooms[0]?.propertyId || "unknown"
+            propertyId: activePropertyId || rooms[targetRoomIdx].propertyId || "unknown"
           })
         }).catch(err => console.error("Failed to log room change:", err));
 
@@ -275,7 +280,16 @@ export default function VisualGrid({
     <div className={styles.gridScrollContainer}>
       <div className={timeScale === "daily" ? styles.gridCanvas : styles.hourlyGridCanvas}>
         {/* Top-left corner cell */}
-        <div className={styles.gridCornerHeader}>Rooms & Spaces</div>
+        <div className={styles.gridCornerHeader} style={{ display: "flex", flexDirection: "column", gap: "4px", justifyContent: "center", alignItems: "flex-start" }}>
+          <span>Rooms & Spaces</span>
+          {timeScale === "daily" && (
+            <div style={{ display: "flex", gap: "4px" }}>
+              <button style={{ padding: "2px 8px", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "4px", cursor: "pointer", color: "var(--text-primary)" }} onClick={() => setDateOffset(prev => prev - 7)}>⬅️</button>
+              <button style={{ padding: "2px 8px", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "4px", cursor: "pointer", color: "var(--text-primary)" }} onClick={() => setDateOffset(Math.floor((new Date().setHours(0,0,0,0) - new Date("2026-05-20").setHours(0,0,0,0)) / 86400000))}>Today</button>
+              <button style={{ padding: "2px 8px", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "4px", cursor: "pointer", color: "var(--text-primary)" }} onClick={() => setDateOffset(prev => prev + 7)}>➡️</button>
+            </div>
+          )}
+        </div>
 
         {/* Date / Time Headers */}
         {timeScale === "daily"
@@ -348,7 +362,8 @@ export default function VisualGrid({
 
             {/* Backing Grid Cells for drop target & hover effects */}
             {Array.from({ length: colCount }).map((_, colIdx) => {
-              const isOver = dragOverCell?.roomIdx === roomIdx && dragOverCell?.colIdx === colIdx;
+              const actualColIdx = colIdx + (timeScale === "daily" ? dateOffset : 0);
+              const isOver = dragOverCell?.roomIdx === roomIdx && dragOverCell?.colIdx === actualColIdx;
               return (
                 <div
                   key={colIdx}
@@ -356,12 +371,12 @@ export default function VisualGrid({
                   style={{ gridRow: roomIdx + 2, gridColumn: colIdx + 2, cursor: "pointer" }}
                   onClick={() => {
                     if (onAddBookingAtCell) {
-                      onAddBookingAtCell(roomIdx, colIdx);
+                      onAddBookingAtCell(roomIdx, actualColIdx);
                     }
                   }}
-                  onDragOver={(e) => handleDragOver(e, roomIdx, colIdx)}
+                  onDragOver={(e) => handleDragOver(e, roomIdx, actualColIdx)}
                   onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, roomIdx, colIdx)}
+                  onDrop={(e) => handleDrop(e, roomIdx, actualColIdx)}
                 />
               );
             })}
@@ -378,19 +393,19 @@ export default function VisualGrid({
           })
           .map((res) => {
           // Map reservations to a continuous timeline (Morning = .0, Afternoon = .5)
-          let visualStart = res.duration === 0 ? res.startIndex : res.startIndex + 0.5;
-          let visualEnd = res.duration === 0 ? res.startIndex + 0.5 : res.startIndex + res.duration + 0.5;
+          let visualStart = (res.duration === 0 ? res.startIndex : res.startIndex + 0.5) - (timeScale === "daily" ? dateOffset : 0);
+          let visualEnd = (res.duration === 0 ? res.startIndex + 0.5 : res.startIndex + res.duration + 0.5) - (timeScale === "daily" ? dateOffset : 0);
 
           if (res.status === "checked-out" && res.checkOutTime && timeScale === "daily") {
             const checkOutDate = new Date(res.checkOutTime);
             const base = new Date("2026-05-20T00:00:00");
             const diffDays = Math.floor((new Date(checkOutDate).setHours(0,0,0,0) - base.getTime()) / 86400000);
-            visualEnd = diffDays + 0.5;
+            visualEnd = (diffDays + 0.5) - dateOffset;
             if (visualEnd <= visualStart) visualEnd = visualStart + 0.5;
           }
 
           // Out of bounds check
-          if (visualStart >= colCount) return null;
+          if (visualStart >= colCount || visualEnd <= 0) return null;
 
           // Calculate actual overlaps in continuous time
           const overlapIndex = reservations.filter(r => {
