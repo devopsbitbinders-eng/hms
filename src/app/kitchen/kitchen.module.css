@@ -1,0 +1,295 @@
+.container {
+  min-height: 100vh;
+  background-color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #f8fafc;
+}
+
+.header {
+  background-color: #1e293b;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tabBtn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background-color: #334155;
+  color: #cbd5e1;
+  transition: all 0.2s;
+}
+
+.tabBtn:hover {
+  background-color: #475569;
+}
+
+.tabBtnActive {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.main {
+  flex: 1;
+  padding: 1.5rem;
+  overflow: auto;
+}
+
+.kdsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  height: 100%;
+}
+
+@media (min-width: 768px) {
+  .kdsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.column {
+  background-color: #1e293b;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+.colHeader {
+  background-color: #334155;
+  padding: 0.75rem 1rem;
+  font-weight: bold;
+  color: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #475569;
+}
+
+.badge {
+  background-color: #0f172a;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.colBody {
+  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.orderCard {
+  background-color: #0f172a;
+  border-left: 4px solid #3b82f6;
+  border-radius: 0.25rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.roomName {
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: #e2e8f0;
+}
+
+.orderId {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.guestName {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  margin-bottom: 0.75rem;
+}
+
+.itemList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #f1f5f9;
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.itemQty {
+  font-weight: bold;
+  color: #60a5fa;
+  margin-right: 0.5rem;
+}
+
+.itemNote {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.actionRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.actionBtn {
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: white;
+}
+
+.btnStart { background-color: #2563eb; }
+.btnStart:hover { background-color: #1d4ed8; }
+
+.btnReady { background-color: #f59e0b; }
+.btnReady:hover { background-color: #d97706; }
+
+.btnServe { background-color: #10b981; }
+.btnServe:hover { background-color: #059669; }
+
+.emptyText {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.875rem;
+  margin-top: 2.5rem;
+}
+
+.menuContainer {
+  background-color: #1e293b;
+  border-radius: 0.5rem;
+  border: 1px solid #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.menuHeader {
+  padding: 1rem;
+  background-color: #0f172a;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menuTitle {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #f8fafc;
+}
+
+.menuSub {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.menuTable {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+
+.menuTable th {
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  background-color: #334155;
+  border-bottom: 1px solid #475569;
+}
+
+.menuTable td {
+  padding: 0.75rem;
+  font-weight: 500;
+  color: #f1f5f9;
+  border-bottom: 1px solid #334155;
+}
+
+.menuTable tr:hover {
+  background-color: #1e293b;
+}
+
+.statusBadge {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  font-weight: bold;
+}
+
+.statusAvail {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.statusOut {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.toggleBtn {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggleAvail {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+.toggleAvail:hover { background-color: rgba(239, 68, 68, 0.2); }
+
+.toggleOut {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+.toggleOut:hover { background-color: rgba(16, 185, 129, 0.2); }

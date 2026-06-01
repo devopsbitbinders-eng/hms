@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-// Uncomment and install socket.io-client if you're using real websockets
+import styles from "./kitchen.module.css";
 // import io from "socket.io-client"; 
 
 type OrderItem = {
@@ -100,70 +100,70 @@ export default function KitchenDashboard() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading Kitchen Dashboard...</div>;
+  if (loading) return <div style={{ padding: "2rem", textAlign: "center", color: "#fff" }}>Loading Kitchen Dashboard...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-slate-900 text-white p-4 flex justify-between items-center shadow">
-        <h1 className="text-xl font-bold flex items-center gap-2">
+    <div className={styles.container}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>
           🍳 Kitchen Display System
         </h1>
-        <div className="flex gap-2">
+        <div className={styles.tabs}>
           <button
             onClick={() => setActiveTab("KDS")}
-            className={`px-4 py-2 rounded font-semibold ${activeTab === "KDS" ? "bg-blue-600" : "bg-slate-800 hover:bg-slate-700"}`}
+            className={`${styles.tabBtn} ${activeTab === "KDS" ? styles.tabBtnActive : ""}`}
           >
             Active Orders
           </button>
           <button
             onClick={() => setActiveTab("MENU")}
-            className={`px-4 py-2 rounded font-semibold ${activeTab === "MENU" ? "bg-blue-600" : "bg-slate-800 hover:bg-slate-700"}`}
+            className={`${styles.tabBtn} ${activeTab === "MENU" ? styles.tabBtnActive : ""}`}
           >
             Menu Management
           </button>
         </div>
       </header>
 
-      <main className="flex-1 p-6 overflow-auto">
+      <main className={styles.main}>
         {activeTab === "KDS" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+          <div className={styles.kdsGrid}>
             {["NEW", "COOKING", "READY"].map((status) => {
               const columnOrders = orders.filter((o) => o.status === status);
               return (
-                <div key={status} className="bg-slate-200 rounded-lg shadow flex flex-col">
-                  <div className="bg-slate-300 p-3 rounded-t-lg border-b border-slate-400 font-bold text-slate-800 flex justify-between">
+                <div key={status} className={styles.column}>
+                  <div className={styles.colHeader}>
                     <span>{status}</span>
-                    <span className="bg-slate-800 text-white text-xs px-2 py-1 rounded-full">{columnOrders.length}</span>
+                    <span className={styles.badge}>{columnOrders.length}</span>
                   </div>
-                  <div className="p-3 flex-1 overflow-y-auto flex flex-col gap-3">
+                  <div className={styles.colBody}>
                     {columnOrders.map((order) => (
-                      <div key={order.id} className="bg-white border-l-4 border-blue-500 rounded shadow-sm p-3 relative">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="text-sm font-bold">Room {order.reservation?.roomId?.slice(0,4) || "N/A"}</div>
-                          <div className="text-xs text-gray-500">#{order.id.slice(0, 5).toUpperCase()}</div>
+                      <div key={order.id} className={styles.orderCard}>
+                        <div className={styles.orderHeader}>
+                          <div className={styles.roomName}>Room {order.reservation?.roomId?.slice(0,4) || "N/A"}</div>
+                          <div className={styles.orderId}>#{order.id.slice(0, 5).toUpperCase()}</div>
                         </div>
-                        <div className="text-xs text-gray-600 mb-3">{order.reservation?.guestName}</div>
-                        <ul className="space-y-1 mb-4 text-sm font-medium">
+                        <div className={styles.guestName}>{order.reservation?.guestName}</div>
+                        <ul className={styles.itemList}>
                           {order.items.map((item) => (
-                            <li key={item.id} className="flex justify-between border-b pb-1">
-                              <span><span className="font-bold text-blue-600">{item.quantity}x</span> {item.menuItem.name}</span>
-                              {item.notes && <span className="text-red-500 text-xs mt-1 ml-2">Note: {item.notes}</span>}
+                            <li key={item.id} className={styles.itemRow}>
+                              <span><span className={styles.itemQty}>{item.quantity}x</span> {item.menuItem.name}</span>
+                              {item.notes && <span className={styles.itemNote}>Note: {item.notes}</span>}
                             </li>
                           ))}
                         </ul>
-                        <div className="flex justify-end gap-2">
+                        <div className={styles.actionRow}>
                           {status === "NEW" && (
-                            <button onClick={() => updateOrderStatus(order.id, "COOKING")} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-semibold transition">
+                            <button onClick={() => updateOrderStatus(order.id, "COOKING")} className={`${styles.actionBtn} ${styles.btnStart}`}>
                               Start Cooking
                             </button>
                           )}
                           {status === "COOKING" && (
-                            <button onClick={() => updateOrderStatus(order.id, "READY")} className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-sm font-semibold transition">
+                            <button onClick={() => updateOrderStatus(order.id, "READY")} className={`${styles.actionBtn} ${styles.btnReady}`}>
                               Mark Ready
                             </button>
                           )}
                           {status === "READY" && (
-                            <button onClick={() => updateOrderStatus(order.id, "SERVED")} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-semibold transition">
+                            <button onClick={() => updateOrderStatus(order.id, "SERVED")} className={`${styles.actionBtn} ${styles.btnServe}`}>
                               Serve Order
                             </button>
                           )}
@@ -171,7 +171,7 @@ export default function KitchenDashboard() {
                       </div>
                     ))}
                     {columnOrders.length === 0 && (
-                      <div className="text-center text-slate-500 text-sm mt-10">No orders in {status}</div>
+                      <div className={styles.emptyText}>No orders in {status}</div>
                     )}
                   </div>
                 </div>
@@ -181,35 +181,35 @@ export default function KitchenDashboard() {
         )}
 
         {activeTab === "MENU" && (
-          <div className="bg-white rounded-lg shadow border border-gray-200">
-            <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
-              <h2 className="text-lg font-bold text-gray-800">Menu Availability</h2>
-              <span className="text-sm text-gray-500">Toggle items to hide them from the guest menu.</span>
+          <div className={styles.menuContainer}>
+            <div className={styles.menuHeader}>
+              <h2 className={styles.menuTitle}>Menu Availability</h2>
+              <span className={styles.menuSub}>Toggle items to hide them from the guest menu.</span>
             </div>
-            <div className="p-0">
-              <table className="w-full text-left border-collapse">
+            <div>
+              <table className={styles.menuTable}>
                 <thead>
-                  <tr className="bg-gray-100 border-b">
-                    <th className="p-3 text-sm font-semibold text-gray-600">Item Name</th>
-                    <th className="p-3 text-sm font-semibold text-gray-600">Price</th>
-                    <th className="p-3 text-sm font-semibold text-gray-600 w-32 text-center">Status</th>
-                    <th className="p-3 text-sm font-semibold text-gray-600 w-32 text-center">Action</th>
+                  <tr>
+                    <th>Item Name</th>
+                    <th>Price</th>
+                    <th style={{ textAlign: "center" }}>Status</th>
+                    <th style={{ textAlign: "center" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {menuItems.map((item) => (
-                    <tr key={item.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3 font-medium text-gray-800">{item.name}</td>
-                      <td className="p-3 text-gray-600">₹{item.price.toFixed(2)}</td>
-                      <td className="p-3 text-center">
-                        <span className={`px-2 py-1 text-xs rounded-full font-bold ${item.isAvailable ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <tr key={item.id}>
+                      <td>{item.name}</td>
+                      <td>₹{item.price.toFixed(2)}</td>
+                      <td style={{ textAlign: "center" }}>
+                        <span className={`${styles.statusBadge} ${item.isAvailable ? styles.statusAvail : styles.statusOut}`}>
                           {item.isAvailable ? "Available" : "Out of Stock"}
                         </span>
                       </td>
-                      <td className="p-3 text-center">
+                      <td style={{ textAlign: "center" }}>
                         <button
                           onClick={() => toggleAvailability(item.id, item.isAvailable)}
-                          className={`px-3 py-1.5 rounded text-xs font-bold transition ${item.isAvailable ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                          className={`${styles.toggleBtn} ${item.isAvailable ? styles.toggleAvail : styles.toggleOut}`}
                         >
                           {item.isAvailable ? "Mark Out of Stock" : "Mark Available"}
                         </button>
@@ -218,7 +218,7 @@ export default function KitchenDashboard() {
                   ))}
                   {menuItems.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="p-6 text-center text-gray-500">No menu items found. Add some from the admin dashboard!</td>
+                      <td colSpan={4} style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>No menu items found. Add some from the admin dashboard!</td>
                     </tr>
                   )}
                 </tbody>
