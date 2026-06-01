@@ -1238,9 +1238,17 @@ export default function SplitBillingModal({
           >
             🗑️ Cancel & Delete Booking
           </button>
-          <button className="btn-secondary" onClick={onClose}>
-            Back to Front Office Grid
-          </button>
+          <div style={{ display: "flex", gap: "12px" }}>
+            <button 
+              className="btn-primary" 
+              onClick={() => window.open(`/invoice/${reservation.id}`, '_blank')}
+            >
+              🖨️ Print Voucher
+            </button>
+            <button className="btn-secondary" onClick={onClose}>
+              Back to Front Office Grid
+            </button>
+          </div>
         </div>
       </div>
     </div>
