@@ -20,7 +20,8 @@ type Order = {
   items: OrderItem[];
   reservationId: string;
   reservation: {
-    room: { name: string; id: string };
+    roomId: string;
+    room?: { name: string; id: string };
     guestName: string;
   };
 };
