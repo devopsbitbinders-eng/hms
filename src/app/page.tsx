@@ -1710,8 +1710,8 @@ export default function Dashboard() {
     else if (newResMealPlan.startsWith("AP")) targetPrice = room.priceAP || room.basePrice || 0;
 
     setNewResBillingItems(prev => {
-      const filtered = prev.filter(item => item.name !== "Room Tariff" && item.name !== "Room Rate");
-      return [{ name: "Room Tariff", amount: targetPrice * newResDuration, category: "room" }, ...filtered];
+      const filtered = prev.filter(item => !item.name.startsWith("Room Tariff") && item.name !== "Room Rate");
+      return [{ name: `Room Tariff (${newResDuration} Nights @ ₹${targetPrice}/nt)`, amount: targetPrice * newResDuration, category: "room" }, ...filtered];
     });
   }, [newResRoomId, newResMealPlan, newResDuration, currentRooms]);
   const currentReservations = allReservations[activeProperty] || [];
