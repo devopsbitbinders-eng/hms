@@ -67,11 +67,20 @@ export default function KitchenDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const generateKOT = (order: Order) => {
+  const generateKOT = (currentOrder: Order) => {
+    // Find all READY orders for the same room
+    const roomOrders = orders.filter(
+      o => o.status === "READY" && 
+      o.reservationId === currentOrder.reservationId
+    );
+
+    const allItems = roomOrders.flatMap(o => o.items);
+    const orderIds = roomOrders.map(o => o.id.slice(0, 5).toUpperCase()).join(", ");
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
-  <title>Room Service Slip - ${order.id.slice(0, 5)}</title>
+  <title>Room Service Slip - Room ${currentOrder.reservation?.roomId?.slice(0, 4) || "N/A"}</title>
   <style>
     body { font-family: monospace; width: 300px; margin: 0; padding: 20px; color: #000; }
     h2 { text-align: center; margin-bottom: 5px; font-size: 18px; }
@@ -87,11 +96,11 @@ export default function KitchenDashboard() {
 </head>
 <body onload="window.print()">
   <h2>AETHER HMS</h2>
-  <div style="text-align: center; font-size: 14px; margin-bottom: 10px;">KITCHEN ORDER TICKET</div>
+  <div style="text-align: center; font-size: 14px; margin-bottom: 10px;">KITCHEN ORDER TICKET (COMBINED)</div>
   <div class="meta">
-    <div><strong>Room:</strong> ${order.reservation?.roomId?.slice(0, 4) || "N/A"}</div>
-    <div><strong>Guest:</strong> ${order.reservation?.guestName || "N/A"}</div>
-    <div><strong>Order #:</strong> ${order.id.slice(0, 5).toUpperCase()}</div>
+    <div><strong>Room:</strong> ${currentOrder.reservation?.roomId?.slice(0, 4) || "N/A"}</div>
+    <div><strong>Guest:</strong> ${currentOrder.reservation?.guestName || "N/A"}</div>
+    <div><strong>Orders:</strong> #${orderIds}</div>
     <div><strong>Time:</strong> ${new Date().toLocaleTimeString()}</div>
   </div>
   <table>
@@ -102,7 +111,7 @@ export default function KitchenDashboard() {
       </tr>
     </thead>
     <tbody>
-      ${order.items.map(i => `
+      ${allItems.map(i => `
         <tr>
           <td style="font-weight: bold;">${i.quantity}x</td>
           <td>
