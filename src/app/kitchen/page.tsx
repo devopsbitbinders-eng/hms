@@ -44,10 +44,26 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
   const [newItemPrice, setNewItemPrice] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
-  // Check permissions
-  const hasManagePerm = currentUser?.role === "Super Admin" || currentUser?.role === "General Manager" || (currentUser?.permissions || []).includes("kitchen:manage");
-  const hasAddPerm = currentUser?.role === "Super Admin" || currentUser?.role === "General Manager" || (currentUser?.permissions || []).includes("kitchen:add");
+  const checkPerm = (permId: string) => {
+    if (!currentUser) return false;
+    if (currentUser.role === "Super Admin") return true;
+    if (currentUser.permissions && Array.isArray(currentUser.permissions)) {
+      if (currentUser.permissions.includes(permId)) return true;
+      if (permId.includes(":")) {
+        const parentId = permId.split(":")[0];
+        if (currentUser.permissions.includes(parentId)) {
+          const hasAnySub = currentUser.permissions.some((p: string) => p.startsWith(parentId + ":"));
+          if (!hasAnySub) return true;
+        }
+      }
+      return false;
+    }
+    if (currentUser.role === "General Manager") return true;
+    return false;
+  };
 
+  const hasManagePerm = checkPerm("kitchen:manage");
+  const hasAddPerm = checkPerm("kitchen:add");
   const fetchData = async () => {
     try {
       const resOrders = await fetch("/api/kitchen/orders");
