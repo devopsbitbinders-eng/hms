@@ -150,8 +150,10 @@ export default function FrontDeskOps({
   };
 
   React.useEffect(() => {
-    fetchRoomChanges();
-  }, [activePropertyId]);
+    if (activeTab === "roomchanges") {
+      fetchRoomChanges();
+    }
+  }, [activePropertyId, activeTab]);
 
   const todayIndex = Math.floor(
     (new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) /

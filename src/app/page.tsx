@@ -388,7 +388,7 @@ export default function Dashboard() {
             number: room.number,
             name: room.name,
             type: room.type,
-            basePrice: room.basePrice,
+            basePrice: room.basePrice, propertyId: property.id,
           }));
 
           reservationsMap[propKey] = property.rooms.flatMap((room: any, roomIndex: number) =>
@@ -4423,7 +4423,8 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      
+
+      
       {/* Shift Swap Modal */}
       {showShiftSwapModal && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15,23,42,0.85)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
