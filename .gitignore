@@ -39,3 +39,30 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# debug / scratch / test files
+scratch/
+artifacts/
+*.debug.html
+debug_*.js
+test_*.js
+check_*.js
+migrate_*.js
+scratch_*.js
+update_*.js
+use_*.js
+clear_*.js
+delete_*.js
+booking_debug.*
+booking_first_card.*
+booking_graphql.*
+goibibo_buttons.*
+oyo_body.*
+ta_debug.*
+demo.html
+full_index.html
+server.log
+error_dump.html
+traceback.html
+*.db
+counts_output.txt

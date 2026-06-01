@@ -249,6 +249,22 @@ model LeaveRequest {
 }
 
 
+model RoomChange {
+  id             String   @id @default(uuid())
+  reservationId  String
+  guestName      String
+  fromRoomId     String
+  toRoomId       String
+  fromRoomNumber String
+  toRoomNumber   String
+  fromRoomName   String   @default("")
+  toRoomName     String   @default("")
+  reason         String   @db.Text
+  changedBy      String   @default("Front Desk")
+  propertyId     String
+  changedAt      DateTime @default(now())
+}
+
 model ShiftSwapRequest {
   id              String   @id @default(uuid())
   requesterId     String

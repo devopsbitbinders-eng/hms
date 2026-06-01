@@ -112,7 +112,7 @@ export default function FrontDeskOps({
   refreshData,
   activeProperty,
 }: FrontDeskOpsProps) {
-  const [activeTab, setActiveTab] = useState<"arrivals" | "inhouse" | "departures" | "history">("arrivals");
+  const [activeTab, setActiveTab] = useState<"arrivals" | "inhouse" | "departures" | "history" | "roomchanges">("arrivals");
   const [historySearch, setHistorySearch] = useState("");
   const [checkoutRes, setCheckoutRes] = useState<Reservation | null>(null);
   const [folioRes, setFolioRes] = useState<Reservation | null>(null);
@@ -130,6 +130,28 @@ export default function FrontDeskOps({
   const [folioChargeAmount, setFolioChargeAmount] = useState("");
   const [folioChargeCategory, setFolioChargeCategory] = useState("service");
   const [isAddingCharge, setIsAddingCharge] = useState(false);
+
+  // Room Change state
+  const [roomChangeRes, setRoomChangeRes] = useState<Reservation | null>(null);
+  const [changeToRoomId, setChangeToRoomId] = useState("");
+  const [changeReason, setChangeReason] = useState("");
+  const [isProcessingChange, setIsProcessingChange] = useState(false);
+  const [roomChangeLogs, setRoomChangeLogs] = useState<any[]>([]);
+
+  // Fetch room change logs
+  const fetchRoomChanges = async () => {
+    try {
+      const res = await fetch(`/api/room-changes?propertyId=${activePropertyId}`);
+      const data = await res.json();
+      if (data.success) setRoomChangeLogs(data.roomChanges);
+    } catch (e) {
+      console.error("Failed to fetch room changes", e);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchRoomChanges();
+  }, [activePropertyId]);
 
   const todayIndex = Math.floor(
     (new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) /
@@ -637,6 +659,45 @@ export default function FrontDeskOps({
     }
   };
 
+  // ── ROOM CHANGE HANDLER ─────────────────────────────────────────────
+  const handleRoomChange = async () => {
+    if (!roomChangeRes || !changeToRoomId || !changeReason.trim()) {
+      addToast("Please select a new room and provide a reason.", "error");
+      return;
+    }
+    setIsProcessingChange(true);
+    try {
+      const res = await fetch("/api/room-changes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reservationId: roomChangeRes.id,
+          fromRoomId: roomChangeRes.roomId,
+          toRoomId: changeToRoomId,
+          reason: changeReason,
+          guestName: roomChangeRes.guestName,
+          changedBy: currentUser?.name || "Front Desk",
+          propertyId: activePropertyId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast(`✅ Room changed successfully for ${roomChangeRes.guestName}`, "success");
+        setRoomChangeRes(null);
+        setChangeToRoomId("");
+        setChangeReason("");
+        await refreshData();
+        await fetchRoomChanges();
+      } else {
+        addToast(data.error || "Failed to change room.", "error");
+      }
+    } catch (e) {
+      addToast("Network error. Please try again.", "error");
+    } finally {
+      setIsProcessingChange(false);
+    }
+  };
+
   const inputStyle: React.CSSProperties = {
     backgroundColor: "rgba(255,255,255,0.05)",
     border: "1px solid var(--border-color)",
@@ -669,12 +730,14 @@ export default function FrontDeskOps({
     { id: "inhouse" as const, label: "🏠 In-House", count: inHouseGuests.length, color: "#10b981" },
     { id: "departures" as const, label: "🛫 Departing Today", count: departingToday.length, color: "#f59e0b" },
     { id: "history" as const, label: "📜 Check-Out History", count: pastGuests.length, color: "#6b7280" },
+    { id: "roomchanges" as const, label: "🔄 Room Changes", count: roomChangeLogs.length, color: "#ec4899" },
   ];
 
   const displayList =
     activeTab === "arrivals" ? arrivingToday :
     activeTab === "inhouse" ? inHouseGuests :
-    activeTab === "departures" ? departingToday : pastGuests;
+    activeTab === "departures" ? departingToday :
+    activeTab === "history" ? pastGuests : [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -829,6 +892,13 @@ export default function FrontDeskOps({
                           💰 Add Charge
                         </button>
                         <button
+                          className="btn-secondary"
+                          style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "rgba(236,72,153,0.15)", border: "1px solid rgba(236,72,153,0.4)", color: "#f472b6" }}
+                          onClick={() => { setRoomChangeRes(res); setChangeToRoomId(""); setChangeReason(""); }}
+                        >
+                          🔄 Change Room
+                        </button>
+                        <button
                           className="btn-primary"
                           style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
                           onClick={() => setCheckoutRes(res)}
@@ -862,6 +932,194 @@ export default function FrontDeskOps({
           </div>
         )}
       </div>
+
+      {/* ── ROOM CHANGES LOG TAB ─────────────────────────────────── */}
+      {activeTab === "roomchanges" && (
+        <div className="glass-card" style={{ padding: "0", overflow: "hidden" }}>
+          <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(135deg, rgba(236,72,153,0.12), transparent)" }}>
+            <div>
+              <h3 style={{ fontSize: "1.1rem", fontWeight: "700", color: "#f472b6", margin: 0 }}>🔄 Room Change Log</h3>
+              <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "4px", marginBottom: 0 }}>
+                Complete audit trail of all guest room changes and swaps.
+              </p>
+            </div>
+            <span style={{ fontSize: "0.8rem", background: "rgba(236,72,153,0.15)", color: "#f472b6", padding: "4px 12px", borderRadius: "20px", border: "1px solid rgba(236,72,153,0.3)", fontWeight: "600" }}>
+              {roomChangeLogs.length} Record{roomChangeLogs.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {roomChangeLogs.length === 0 ? (
+            <div style={{ padding: "64px", textAlign: "center", color: "var(--text-muted)" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🔄</div>
+              <p style={{ fontSize: "0.9rem" }}>No room changes have been recorded yet.</p>
+              <p style={{ fontSize: "0.8rem", opacity: 0.7 }}>Room changes appear here when you use the "Change Room" button for in-house guests.</p>
+            </div>
+          ) : (
+            <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              {roomChangeLogs.map((log: any, idx: number) => (
+                <div key={log.id} style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(236,72,153,0.15)",
+                  borderRadius: "12px",
+                  padding: "16px 20px",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "16px",
+                  transition: "all 0.2s",
+                  position: "relative",
+                  overflow: "hidden",
+                }}>
+                  {/* Left accent bar */}
+                  <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: "linear-gradient(to bottom, #ec4899, #8b5cf6)", borderRadius: "3px 0 0 3px" }} />
+
+                  {/* Avatar */}
+                  <div style={{
+                    width: "44px", height: "44px", borderRadius: "50%",
+                    background: "linear-gradient(135deg, #ec4899, #8b5cf6)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: "700", fontSize: "1rem", color: "#fff", flexShrink: 0,
+                  }}>
+                    {log.guestName?.charAt(0)?.toUpperCase() || "G"}
+                  </div>
+
+                  {/* Main content */}
+                  <div style={{ flexGrow: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "8px" }}>
+                      <span style={{ fontWeight: "700", fontSize: "0.95rem", color: "#fff" }}>{log.guestName}</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: "4px" }}>
+                        #{log.reservationId?.substring(0, 6)?.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Room Change Arrow */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                      <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "8px", padding: "6px 14px", textAlign: "center" }}>
+                        <div style={{ fontSize: "0.65rem", color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.05em" }}>From</div>
+                        <div style={{ fontWeight: "700", fontSize: "1rem", color: "#ef4444" }}>Room {log.fromRoomNumber}</div>
+                        {log.fromRoomName && <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{log.fromRoomName}</div>}
+                      </div>
+                      <div style={{ fontSize: "1.5rem", color: "#f472b6" }}>→</div>
+                      <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: "8px", padding: "6px 14px", textAlign: "center" }}>
+                        <div style={{ fontSize: "0.65rem", color: "#10b981", textTransform: "uppercase", letterSpacing: "0.05em" }}>To</div>
+                        <div style={{ fontWeight: "700", fontSize: "1rem", color: "#10b981" }}>Room {log.toRoomNumber}</div>
+                        {log.toRoomName && <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{log.toRoomName}</div>}
+                      </div>
+                    </div>
+
+                    {/* Reason */}
+                    <div style={{ background: "rgba(236,72,153,0.08)", borderLeft: "3px solid rgba(236,72,153,0.5)", borderRadius: "0 6px 6px 0", padding: "8px 12px", marginBottom: "6px" }}>
+                      <div style={{ fontSize: "0.7rem", color: "#f472b6", fontWeight: "600", marginBottom: "2px", textTransform: "uppercase" }}>Reason</div>
+                      <div style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontStyle: "italic" }}>&ldquo;{log.reason}&rdquo;</div>
+                    </div>
+                  </div>
+
+                  {/* Right meta */}
+                  <div style={{ textAlign: "right", flexShrink: 0, minWidth: "130px" }}>
+                    <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>
+                      {log.changedAt ? new Date(log.changedAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "N/A"}
+                    </div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                      {log.changedAt ? new Date(log.changedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : ""}
+                    </div>
+                    <div style={{ marginTop: "6px", fontSize: "0.72rem", background: "rgba(99,102,241,0.15)", color: "#818cf8", padding: "2px 8px", borderRadius: "20px", display: "inline-block" }}>
+                      by {log.changedBy}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── ROOM CHANGE MODAL ──────────────────────────────── */}
+      {roomChangeRes && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "520px", padding: "0", overflow: "hidden" }}>
+            {/* Header */}
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(135deg, rgba(236,72,153,0.18), transparent)" }}>
+              <div>
+                <h2 style={{ fontSize: "1.2rem", fontWeight: "700", color: "#f472b6", margin: 0 }}>🔄 Change Guest Room</h2>
+                <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginTop: "4px", marginBottom: 0 }}>
+                  {roomChangeRes.guestName} · Current: Room {getRoomForRes(roomChangeRes)?.number || "N/A"}
+                </p>
+              </div>
+              <button className={styles.modalCloseBtn} onClick={() => setRoomChangeRes(null)}>✕</button>
+            </div>
+
+            <div style={{ padding: "24px" }}>
+              {/* Current room info */}
+              <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "14px" }}>
+                <div style={{ fontSize: "2rem" }}>🛏️</div>
+                <div>
+                  <div style={{ fontSize: "0.75rem", color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>Current Room</div>
+                  <div style={{ fontWeight: "700", fontSize: "1.1rem", color: "#fff" }}>
+                    Room {getRoomForRes(roomChangeRes)?.number} — {getRoomForRes(roomChangeRes)?.name}
+                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{getRoomForRes(roomChangeRes)?.type}</div>
+                </div>
+              </div>
+
+              {/* Select new room */}
+              <label style={labelStyle}>Select New Room</label>
+              <select
+                style={{ ...inputStyle, marginBottom: "16px" }}
+                value={changeToRoomId}
+                onChange={(e) => setChangeToRoomId(e.target.value)}
+              >
+                <option value="" style={optionStyle}>-- Choose a Room --</option>
+                {currentRooms
+                  .filter(r => r.id !== roomChangeRes.roomId && r.propertyId === activePropertyId)
+                  .map(r => (
+                    <option key={r.id} value={r.id} style={optionStyle}>
+                      Room {r.number} — {r.name} ({r.type})
+                    </option>
+                  ))}
+              </select>
+
+              {/* New room preview */}
+              {changeToRoomId && (
+                <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: "10px", padding: "12px 18px", marginBottom: "16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ fontSize: "1.8rem" }}>✅</div>
+                  <div>
+                    <div style={{ fontSize: "0.72rem", color: "#10b981", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>Moving To</div>
+                    <div style={{ fontWeight: "700", color: "#10b981" }}>
+                      Room {currentRooms.find(r => r.id === changeToRoomId)?.number} — {currentRooms.find(r => r.id === changeToRoomId)?.name}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Reason */}
+              <label style={labelStyle}>Reason for Room Change *</label>
+              <textarea
+                style={{ ...inputStyle, height: "90px", resize: "none", marginBottom: "20px" }}
+                placeholder="e.g. Guest requested quieter room, maintenance issue in current room, room upgrade, etc."
+                value={changeReason}
+                onChange={(e) => setChangeReason(e.target.value)}
+              />
+
+              <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "8px", padding: "10px 14px", marginBottom: "20px", fontSize: "0.8rem", color: "#fcd34d" }}>
+                ⚠️ This action will immediately move the guest to the new room and log the change in the Room Changes report.
+              </div>
+
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button className="btn-secondary" style={{ flexGrow: 1, justifyContent: "center" }} onClick={() => setRoomChangeRes(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn-primary"
+                  style={{ flexGrow: 2, justifyContent: "center", background: "linear-gradient(135deg, #ec4899, #8b5cf6)", fontWeight: "700" }}
+                  onClick={handleRoomChange}
+                  disabled={isProcessingChange || !changeToRoomId || !changeReason.trim()}
+                >
+                  {isProcessingChange ? "⏳ Processing..." : "🔄 Confirm Room Change"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── CHECKOUT MODAL ─────────────────────────────── */}
       {checkoutRes && (
