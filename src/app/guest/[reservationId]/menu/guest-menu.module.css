@@ -1,10 +1,12 @@
 .container {
   min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
   color: #f8fafc;
   font-family: system-ui, -apple-system, sans-serif;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .header {
