@@ -222,8 +222,7 @@ export default function FrontDeskOps({
           name: "Room Service Food & Beverage",
           amount: totalFood,
           category: "food",
-          invoiceGroup: "A",
-          reservationId: res.id
+          invoiceGroup: "A"
         });
       }
     }
