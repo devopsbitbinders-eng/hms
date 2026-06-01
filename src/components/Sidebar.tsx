@@ -26,6 +26,7 @@ export default function Sidebar({
     { id: "front-desk", label: "Front Desk", icon: "🛎️" },
     { id: "channel-manager", label: "Channel Manager", icon: "🌍" },
     { id: "housekeeping", label: "Housekeeping & Ops", icon: "🧹" },
+    { id: "kitchen", label: "Kitchen (KDS)", icon: "🍳" },
     { id: "finance", label: activePropertyType === "homestay" ? "Bills & Earnings" : "Finance & GST", icon: "💰" },
     { id: "reviews", label: "Reviews", icon: "⭐" },
     { id: "attendance", label: "Attendance", icon: "⏱️" },
@@ -54,10 +55,10 @@ export default function Sidebar({
       return item.id !== "settings";
     }
     if (role === "Front Office Manager") {
-      return ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "staff-management"].includes(item.id);
+      return ["front-office", "front-desk", "housekeeping", "kitchen", "reviews", "attendance", "staff-management"].includes(item.id);
     }
     if (role === "Receptionist") {
-      return ["front-office", "front-desk", "housekeeping", "reviews", "attendance"].includes(item.id);
+      return ["front-office", "front-desk", "housekeeping", "kitchen", "reviews", "attendance"].includes(item.id);
     }
     if (role === "Finance Executive") {
       return ["front-office", "front-desk", "finance", "attendance"].includes(item.id);
@@ -82,7 +83,13 @@ export default function Sidebar({
               className={`${styles.menuItem} ${
                 activeMenu === item.id ? styles.menuItemActive : ""
               }`}
-              onClick={() => setActiveMenu(item.id)}
+              onClick={() => {
+                if (item.id === "kitchen") {
+                  window.open("/kitchen", "_blank");
+                } else {
+                  setActiveMenu(item.id);
+                }
+              }}
             >
               <span>{item.icon}</span>
               <span>{item.label}</span>
