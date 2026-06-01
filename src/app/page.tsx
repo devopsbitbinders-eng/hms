@@ -2210,7 +2210,7 @@ export default function Dashboard() {
           )
         ) : activeMenu === "kitchen" ? (
           <div style={{ height: "100%", width: "100%", overflow: "hidden" }}>
-            <KitchenDashboard />
+            <KitchenDashboard currentUser={currentUser} />
           </div>
         ) : activeMenu === "front-desk" ? (
           <section style={{ padding: "32px", overflowY: "auto", flexGrow: 1 }}>
@@ -4687,6 +4687,7 @@ export default function Dashboard() {
                 { id: "front-desk", label: "🛎️ Front Desk (Check-in/out)", subPerms: [{id: "front-desk:checkin", label: "Check Guests In/Out"}, {id: "front-desk:payments", label: "Manage Folio & Payments"}] },
                 { id: "channel-manager", label: "🌍 Channel Manager", subPerms: [{id: "channel-manager:sync", label: "Sync OTAs"}, {id: "channel-manager:rates", label: "Manage Room Rates"}] },
                 { id: "housekeeping", label: "🧹 Housekeeping & Ops", subPerms: [{id: "housekeeping:status", label: "Update Room Status"}, {id: "housekeeping:assign", label: "Assign Tasks to Staff"}] },
+                { id: "kitchen", label: "🍳 Kitchen", subPerms: [{id: "kitchen:manage", label: "Manage Kitchen Orders"}, {id: "kitchen:add", label: "Add & Modify Menu Items"}] },
                 { id: "finance", label: "💰 Finance & GST", subPerms: [{id: "finance:reports", label: "View Financial Reports"}, {id: "finance:invoices", label: "Export Invoices & GST"}] },
                 { id: "reviews", label: "⭐ Reviews", subPerms: [{id: "reviews:reply", label: "Reply to Guest Reviews"}, {id: "reviews:moderate", label: "Moderate & Hide Reviews"}] },
                 { 

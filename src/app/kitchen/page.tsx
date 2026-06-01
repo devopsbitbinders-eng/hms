@@ -34,7 +34,7 @@ type MenuItem = {
   isAvailable: boolean;
 };
 
-export default function KitchenDashboard() {
+export default function KitchenDashboard({ currentUser }: { currentUser?: any }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +43,10 @@ export default function KitchenDashboard() {
   const [newItemName, setNewItemName] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  // Check permissions
+  const hasManagePerm = currentUser?.role === "Super Admin" || currentUser?.role === "General Manager" || (currentUser?.permissions || []).includes("kitchen:manage");
+  const hasAddPerm = currentUser?.role === "Super Admin" || currentUser?.role === "General Manager" || (currentUser?.permissions || []).includes("kitchen:add");
 
   const fetchData = async () => {
     try {
@@ -265,12 +269,12 @@ export default function KitchenDashboard() {
                           ))}
                         </ul>
                         <div className={styles.actionRow}>
-                          {status === "NEW" && (
+                          {hasManagePerm && status === "NEW" && (
                             <button onClick={() => updateOrderStatus(order.id, "COOKING")} className={`${styles.actionBtn} ${styles.btnStart}`}>
                               Start Cooking
                             </button>
                           )}
-                          {status === "COOKING" && (
+                          {hasManagePerm && status === "COOKING" && (
                             <button onClick={() => updateOrderStatus(order.id, "READY")} className={`${styles.actionBtn} ${styles.btnReady}`}>
                               Mark Ready
                             </button>
@@ -280,9 +284,11 @@ export default function KitchenDashboard() {
                               <button onClick={() => generateKOT(order)} style={{ background: "#4f46e5", color: "white", padding: "0.375rem 0.75rem", borderRadius: "0.25rem", border: "none", cursor: "pointer", marginRight: "0.5rem", fontSize: "0.875rem", fontWeight: "600" }}>
                                 🖨️ Print Slip
                               </button>
-                              <button onClick={() => updateOrderStatus(order.id, "SERVED")} className={`${styles.actionBtn} ${styles.btnServe}`}>
-                                Serve Order
-                              </button>
+                              {hasManagePerm && (
+                                <button onClick={() => updateOrderStatus(order.id, "SERVED")} className={`${styles.actionBtn} ${styles.btnServe}`}>
+                                  Serve Order
+                                </button>
+                              )}
                             </>
                           )}
                         </div>
@@ -307,41 +313,43 @@ export default function KitchenDashboard() {
               </div>
             </div>
             
-            <div style={{ padding: "1rem", backgroundColor: "#0f172a", borderBottom: "1px solid #334155" }}>
-              <form onSubmit={handleAddItem} style={{ display: "flex", gap: "1rem", alignItems: "flex-end" }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem", fontWeight: "bold" }}>Item Name</label>
-                  <input 
-                    type="text" 
-                    value={newItemName} 
-                    onChange={e => setNewItemName(e.target.value)} 
-                    placeholder="e.g. Masala Dosa" 
-                    style={{ width: "100%", padding: "0.5rem", borderRadius: "0.25rem", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff" }} 
-                    required 
-                  />
-                </div>
-                <div style={{ width: "150px" }}>
-                  <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem", fontWeight: "bold" }}>Price (₹)</label>
-                  <input 
-                    type="number" 
-                    value={newItemPrice} 
-                    onChange={e => setNewItemPrice(e.target.value)} 
-                    placeholder="e.g. 150" 
-                    style={{ width: "100%", padding: "0.5rem", borderRadius: "0.25rem", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff" }} 
-                    required 
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <button 
-                  type="submit" 
-                  disabled={isAdding}
-                  style={{ padding: "0.5rem 1rem", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "0.25rem", fontWeight: "bold", cursor: isAdding ? "not-allowed" : "pointer" }}
-                >
-                  {isAdding ? "Adding..." : "+ Add Item"}
-                </button>
-              </form>
-            </div>
+            {hasAddPerm && (
+              <div style={{ padding: "1rem", backgroundColor: "#0f172a", borderBottom: "1px solid #334155" }}>
+                <form onSubmit={handleAddItem} style={{ display: "flex", gap: "1rem", alignItems: "flex-end" }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem", fontWeight: "bold" }}>Item Name</label>
+                    <input 
+                      type="text" 
+                      value={newItemName} 
+                      onChange={e => setNewItemName(e.target.value)} 
+                      placeholder="e.g. Masala Dosa" 
+                      style={{ width: "100%", padding: "0.5rem", borderRadius: "0.25rem", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff" }} 
+                      required 
+                    />
+                  </div>
+                  <div style={{ width: "150px" }}>
+                    <label style={{ display: "block", fontSize: "0.75rem", color: "#94a3b8", marginBottom: "0.25rem", fontWeight: "bold" }}>Price (₹)</label>
+                    <input 
+                      type="number" 
+                      value={newItemPrice} 
+                      onChange={e => setNewItemPrice(e.target.value)} 
+                      placeholder="e.g. 150" 
+                      style={{ width: "100%", padding: "0.5rem", borderRadius: "0.25rem", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#fff" }} 
+                      required 
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <button 
+                    type="submit" 
+                    disabled={isAdding}
+                    style={{ padding: "0.5rem 1rem", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "0.25rem", fontWeight: "bold", cursor: isAdding ? "not-allowed" : "pointer" }}
+                  >
+                    {isAdding ? "Adding..." : "+ Add Item"}
+                  </button>
+                </form>
+              </div>
+            )}
 
             <div>
               <table className={styles.menuTable}>
@@ -364,12 +372,16 @@ export default function KitchenDashboard() {
                         </span>
                       </td>
                       <td style={{ textAlign: "center" }}>
-                        <button
-                          onClick={() => toggleAvailability(item.id, item.isAvailable)}
-                          className={`${styles.toggleBtn} ${item.isAvailable ? styles.toggleAvail : styles.toggleOut}`}
-                        >
-                          {item.isAvailable ? "Mark Out of Stock" : "Mark Available"}
-                        </button>
+                        {hasAddPerm ? (
+                          <button
+                            onClick={() => toggleAvailability(item.id, item.isAvailable)}
+                            className={`${styles.toggleBtn} ${item.isAvailable ? styles.toggleAvail : styles.toggleOut}`}
+                          >
+                            {item.isAvailable ? "Mark Out of Stock" : "Mark Available"}
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Read-Only</span>
+                        )}
                       </td>
                     </tr>
                   ))}

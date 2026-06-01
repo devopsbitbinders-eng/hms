@@ -26,7 +26,7 @@ export default function Sidebar({
     { id: "front-desk", label: "Front Desk", icon: "🛎️" },
     { id: "channel-manager", label: "Channel Manager", icon: "🌍" },
     { id: "housekeeping", label: "Housekeeping & Ops", icon: "🧹" },
-    { id: "kitchen", label: "Kitchen (KDS)", icon: "🍳" },
+    { id: "kitchen", label: "Kitchen ", icon: "🍳" },
     { id: "finance", label: activePropertyType === "homestay" ? "Bills & Earnings" : "Finance & GST", icon: "💰" },
     { id: "reviews", label: "Reviews", icon: "⭐" },
     { id: "attendance", label: "Attendance", icon: "⏱️" },
@@ -47,7 +47,7 @@ export default function Sidebar({
     if (currentUser?.permissions && Array.isArray(currentUser.permissions)) {
       return currentUser.permissions.includes(item.id);
     }
-    
+
     // Otherwise fallback to default role-based logic
     if (role === "Super Admin") return true;
     if (role === "General Manager") {
@@ -80,9 +80,8 @@ export default function Sidebar({
           {filteredMenuItems.map((item) => (
             <li
               key={item.id}
-              className={`${styles.menuItem} ${
-                activeMenu === item.id ? styles.menuItemActive : ""
-              }`}
+              className={`${styles.menuItem} ${activeMenu === item.id ? styles.menuItemActive : ""
+                }`}
               onClick={() => setActiveMenu(item.id)}
             >
               <span>{item.icon}</span>
