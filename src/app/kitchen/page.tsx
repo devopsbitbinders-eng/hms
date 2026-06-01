@@ -372,7 +372,7 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
                         </span>
                       </td>
                       <td style={{ textAlign: "center" }}>
-                        {hasAddPerm ? (
+                        {(hasManagePerm || hasAddPerm) ? (
                           <button
                             onClick={() => toggleAvailability(item.id, item.isAvailable)}
                             className={`${styles.toggleBtn} ${item.isAvailable ? styles.toggleAvail : styles.toggleOut}`}
