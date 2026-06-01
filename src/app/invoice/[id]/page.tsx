@@ -32,26 +32,43 @@ export default function InvoicePage() {
   if (loading) return <div style={{ padding: "40px", textAlign: "center" }}>Loading Invoice...</div>;
   if (!reservation) return <div style={{ padding: "40px", textAlign: "center", color: "red" }}>Reservation not found.</div>;
 
+  const summarizeFood = searchParams.get('summarizeFood') === 'true';
+
   // Filter items if invoiceType is provided (for split billing)
-  const items = invoiceType 
-    ? (reservation.billingItems?.filter((item: any) => 
-        invoiceType === "B" 
-          ? item.invoiceGroup === "B" 
-          : (item.invoiceGroup === "A" || !item.invoiceGroup)
-      ) || [])
+  let items = invoiceType
+    ? (reservation.billingItems?.filter((item: any) =>
+      invoiceType === "B"
+        ? item.invoiceGroup === "B"
+        : (item.invoiceGroup === "A" || !item.invoiceGroup)
+    ) || [])
     : (reservation.billingItems || []);
+
+  if (summarizeFood) {
+    const foodItems = items.filter((i: any) => i.category === "food");
+    if (foodItems.length > 0) {
+      items = items.filter((i: any) => i.category !== "food");
+      const totalFood = foodItems.reduce((acc: number, curr: any) => acc + curr.amount, 0);
+      items.push({
+        id: "summary-food",
+        name: "Room Service Food & Beverage",
+        amount: totalFood,
+        category: "food",
+        invoiceGroup: invoiceType || "A"
+      });
+    }
+  }
 
   // Formatting helpers
   const bookingDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
-  
+
   // Calculate Base Date based on our pseudo logic (2026-05-20 + startIndex days)
-  const baseEpoch = new Date("2026-05-20").setHours(0,0,0,0);
+  const baseEpoch = new Date("2026-05-20").setHours(0, 0, 0, 0);
   const checkInDateObj = new Date(baseEpoch + (reservation.startIndex * 86400000));
   const checkOutDateObj = new Date(baseEpoch + ((reservation.startIndex + reservation.duration) * 86400000));
-  
+
   const checkInStr = checkInDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
   const checkOutStr = checkOutDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
-  
+
   // GST Calculation Logic matching SplitBillingModal
   const parseGstMode = (detailsStr?: string | null): "exclusive" | "inclusive" => {
     if (detailsStr && detailsStr.includes("[GST:inclusive]")) return "inclusive";
@@ -69,14 +86,14 @@ export default function InvoicePage() {
 
     if (gstMode === "inclusive") {
       const lockedTotal = Math.round(item.amount * 100) / 100;
-      const baseAmount  = Math.round((lockedTotal / (1 + rate)) * 100) / 100;
+      const baseAmount = Math.round((lockedTotal / (1 + rate)) * 100) / 100;
       const cgst = Math.round(baseAmount * (rate / 2) * 100) / 100;
       const sgst = cgst;
-      const sumCheck    = Number((baseAmount + cgst + sgst).toFixed(2));
+      const sumCheck = Number((baseAmount + cgst + sgst).toFixed(2));
       const roundingAdj = Number((lockedTotal - sumCheck).toFixed(2));
       return { rate: rate * 100, baseAmount, cgst, sgst, roundingAdj, total: lockedTotal };
     } else {
-      const baseAmount  = Math.round(item.amount * 100) / 100;
+      const baseAmount = Math.round(item.amount * 100) / 100;
       const cgst = Math.round(baseAmount * (rate / 2) * 100) / 100;
       const sgst = cgst;
       const total = Number((baseAmount + cgst + sgst).toFixed(2));
@@ -162,7 +179,7 @@ export default function InvoicePage() {
       <div className="invoice-container">
         <div className="header">
           <div className="logo-area">
-            <img src="/hotel-logo.png" alt="Hotel Logo" style={{ height: "30px", width: "auto" }} onError={(e) => { e.currentTarget.style.display='none'; }} />
+            <img src="/hotel-logo.png" alt="Hotel Logo" style={{ height: "30px", width: "auto" }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
             <span>{reservation.room?.property?.name || "Aether HMS"}</span>
           </div>
           <div className="booking-meta">
@@ -179,7 +196,7 @@ export default function InvoicePage() {
         <div className="intro-text">
           <p>Dear {reservation.guestName || "Guest"},</p>
           <p>
-            {reservation.status === 'confirmed' || reservation.status === 'checked-in' 
+            {reservation.status === 'confirmed' || reservation.status === 'checked-in'
               ? `We are pleased to confirm your booking. We would like to thank you for choosing ${reservation.room?.property?.name || "Aether HMS"} for your visit to our hotel. We look forward to host you in the future.`
               : `We regret to inform you! Your booking has been cancelled. We would like to thank you for choosing ${reservation.room?.property?.name || "Aether HMS"} for your visit to our hotel. We look forward to host you in the future.`
             }
@@ -264,7 +281,7 @@ export default function InvoicePage() {
               <tr>
                 <th style={{ width: "5%" }}>SR No</th>
                 <th style={{ width: "45%" }}>Room Category</th>
-                <th style={{ width: "20%" }}>Adult+E Bed</th>
+                <th style={{ width: "20%" }}>Adult</th>
                 <th style={{ width: "15%" }}>Child+Infant</th>
                 <th style={{ width: "15%" }}>Meal Plan</th>
               </tr>
