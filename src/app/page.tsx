@@ -3978,6 +3978,7 @@ export default function Dashboard() {
                       </label>
                     </div>
                   </div>
+                  </div>
 
                   {/* Billing Type & Guest GST Selection */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
