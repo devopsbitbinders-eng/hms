@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     // Automatically add food charges to the guest folio
     for (const item of items) {
-      const menuItem = await prisma.kitchenMenuItem.findUnique({ where: { id: item.menuItemId } });
+      const menuItem = await prisma.menuItem.findUnique({ where: { id: item.menuItemId } });
       if (menuItem) {
         await prisma.billingItem.create({
           data: {
