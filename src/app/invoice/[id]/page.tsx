@@ -80,11 +80,12 @@ export default function InvoicePage() {
       <style>{`
         @media print {
           @page { size: A4 portrait; margin: 10mm; }
-          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white !important; }
           .no-print { display: none !important; }
+          .invoice-container { margin: 0 !important; border: none !important; padding: 0 !important; box-shadow: none !important; }
         }
-        body { background: #fff !important; color: #000 !important; font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 0; }
-        .invoice-container { max-width: 900px; margin: 20px auto; padding: 20px; box-sizing: border-box; background: white; border: 1px solid #ddd; }
+        html, body { overflow: auto !important; height: auto !important; background: #f3f4f6 !important; color: #000 !important; font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 0; }
+        .invoice-container { max-width: 900px; margin: 80px auto 40px auto; padding: 30px; box-sizing: border-box; background: white; border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; }
         .header { display: flex; justify-content: space-between; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
         .logo-area { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 16px; }
         .booking-meta { text-align: right; line-height: 1.4; }
@@ -109,18 +110,23 @@ export default function InvoicePage() {
         .footer a { color: #0066cc; text-decoration: none; }
         
         .powered-by { text-align: center; font-size: 10px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+        
+        .floating-action-bar { position: fixed; top: 0; left: 0; right: 0; background: #1e293b; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
       `}</style>
 
-      <div className="invoice-container">
-        <div className="no-print" style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
-          <button onClick={() => router.back()} style={{ padding: "8px 16px", cursor: "pointer" }}>Back to Dashboard</button>
-          <button onClick={printDocument} style={{ padding: "8px 16px", cursor: "pointer", background: "#4f46e5", color: "white", border: "none" }}>Print Voucher</button>
+      <div className="no-print floating-action-bar">
+        <span style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>Invoice / Voucher View</span>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button onClick={() => router.back()} style={{ padding: "8px 16px", cursor: "pointer", background: "rgba(255,255,255,0.1)", color: "white", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "4px" }}>Back to Dashboard</button>
+          <button onClick={printDocument} style={{ padding: "8px 16px", cursor: "pointer", background: "#4f46e5", color: "white", border: "none", borderRadius: "4px", fontWeight: "bold" }}>🖨️ Print Voucher</button>
         </div>
+      </div>
 
+      <div className="invoice-container">
         <div className="header">
           <div className="logo-area">
             <img src="/hotel-logo.png" alt="Hotel Logo" style={{ height: "30px", width: "auto" }} onError={(e) => { e.currentTarget.style.display='none'; }} />
-            <span>The Amore Hills</span>
+            <span>{reservation.room?.property?.name || "Aether HMS"}</span>
           </div>
           <div className="booking-meta">
             <div style={{ fontWeight: "bold", fontSize: "12px", marginBottom: "4px", color: invoiceType ? '#4f46e5' : 'inherit' }}>
@@ -268,13 +274,10 @@ export default function InvoicePage() {
           <div>
             Thanks & Regards<br />
             Reservation Manager<br />
-            <strong>Add:</strong> The Amore Hills, GROUND FLOOR, KHASRA 255 KHATONI 28, SIWALI PATAL KANATAL, KANATAL POST OFFICE, KANATAL, Devaprayag, Tehri Garhwal, Uttarakhand, 249130<br />
-            <em>For Any Clarification Contact:</em> Mobile: +919999231323<br />
-            Mobile: 9999231323<br />
-            Landline: 9999231323<br />
-            Email: <a href="mailto:sas23enterprises@gmail.com">sas23enterprises@gmail.com</a><br />
-            Website: <a href="https://amorehills.com/">https://amorehills.com/</a><br />
-            GST Number: 05AAEPA9547Q1ZA<br /><br />
+            <strong>Add:</strong> {reservation.room?.property?.name || "Aether HMS"}, {reservation.room?.property?.location || "123, Hospitality Avenue, New Delhi"}<br />
+            <em>For Any Clarification Contact:</em><br />
+            Email: <a href={`mailto:contact@${(reservation.room?.property?.name || "aetherhms").replace(/\s+/g, '').toLowerCase()}.com`}>contact@{(reservation.room?.property?.name || "aetherhms").replace(/\s+/g, '').toLowerCase()}.com</a><br />
+            GST Number: {reservation.room?.property?.gstNumber || "Not Provided"}<br /><br />
             Currency: Rupee
           </div>
           <div style={{ color: "#ef4444", fontWeight: "bold", textAlign: "right" }}>
