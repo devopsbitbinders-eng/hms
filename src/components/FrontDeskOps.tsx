@@ -914,6 +914,23 @@ export default function FrontDeskOps({
                         >
                           🏁 Check Out
                         </button>
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.4)", color: "#4ade80" }}
+                          onClick={() => {
+                            let cleanPhone = res.phone?.replace(/\D/g, "");
+                            if (!cleanPhone) {
+                              addToast("Guest has no phone number on record.", "error");
+                              return;
+                            }
+                            if (cleanPhone.length === 10) cleanPhone = "91" + cleanPhone;
+                            const url = `${window.location.origin}/guest/${res.id}/menu`;
+                            const msg = `Welcome to Aether HMS, ${res.guestName}! Your room is ready. Order room service anytime from your phone using this secure link:\n\n${url}`;
+                            window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}`, "_blank");
+                          }}
+                        >
+                          💬 Send Menu
+                        </button>
                       </>
                     )}
                     {activeTab === "history" && (
