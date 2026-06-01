@@ -110,6 +110,7 @@ model Reservation {
   billingType         String        @default("individual") // "individual" or "corporate"
   guestGstNumber      String?
   reviews             Review[]
+  kitchenOrders       KitchenOrder[]
 }
 
 model BillingItem {
@@ -282,4 +283,46 @@ model ShiftSwapRequest {
 
   requester       User     @relation("ShiftSwapRequester", fields: [requesterId], references: [id], onDelete: Cascade)
   targetUser      User?    @relation("ShiftSwapTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+}
+
+// ── KITCHEN MANAGEMENT MODULE ──
+
+model MenuItem {
+  id          String             @id @default(uuid())
+  name        String
+  description String?            @db.Text
+  price       Float
+  isAvailable Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  orderItems  KitchenOrderItem[]
+}
+
+model KitchenOrder {
+  id            String             @id @default(uuid())
+  reservationId String
+  reservation   Reservation        @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  status        OrderStatus        @default(NEW)
+  totalAmount   Float              @default(0.0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  items         KitchenOrderItem[]
+}
+
+model KitchenOrderItem {
+  id         String       @id @default(uuid())
+  orderId    String
+  order      KitchenOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem     @relation(fields: [menuItemId], references: [id])
+  quantity   Int
+  price      Float
+  notes      String?      @db.Text
+}
+
+enum OrderStatus {
+  NEW
+  COOKING
+  READY
+  SERVED
 }
