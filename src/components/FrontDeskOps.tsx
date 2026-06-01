@@ -139,6 +139,12 @@ export default function FrontDeskOps({
   const [isProcessingChange, setIsProcessingChange] = useState(false);
   const [roomChangeLogs, setRoomChangeLogs] = useState<any[]>([]);
 
+  // Food Order state
+  const [foodOrderRes, setFoodOrderRes] = useState<Reservation | null>(null);
+  const [kitchenMenu, setKitchenMenu] = useState<any[]>([]);
+  const [newOrderItems, setNewOrderItems] = useState<{ [itemId: string]: number }>({});
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+
   // Fetch room change logs
   const fetchRoomChanges = async () => {
     try {
@@ -459,6 +465,56 @@ export default function FrontDeskOps({
     }
   };
 
+  const handleOpenFoodOrder = async (res: Reservation) => {
+    setFoodOrderRes(res);
+    setNewOrderItems({});
+    if (kitchenMenu.length === 0) {
+      try {
+        const r = await fetch("/api/kitchen/menu");
+        const data = await r.json();
+        if (data.success) setKitchenMenu(data.menuItems);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const submitFoodOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!foodOrderRes) return;
+    const itemsToOrder = Object.entries(newOrderItems).filter(([_, qty]) => qty > 0);
+    if (itemsToOrder.length === 0) return addToast("Please add at least one item.", "error");
+
+    setIsSubmittingOrder(true);
+    let total = 0;
+    const itemsPayload = itemsToOrder.map(([itemId, qty]) => {
+      const item = kitchenMenu.find(m => m.id === itemId);
+      total += (item?.price || 0) * qty;
+      return { menuItemId: itemId, quantity: qty, price: item?.price || 0, notes: "" };
+    });
+
+    try {
+      const res = await fetch("/api/kitchen/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId: foodOrderRes.id, items: itemsPayload, totalAmount: total }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast("Food order successfully placed!");
+        setFoodOrderRes(null);
+        refreshData();
+      } else {
+        addToast("Error creating order: " + data.error, "error");
+      }
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to submit food order.", "error");
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
+
   const inputStyle: React.CSSProperties = {
     backgroundColor: "rgba(255,255,255,0.05)",
     border: "1px solid var(--border-color)",
@@ -689,6 +745,13 @@ export default function FrontDeskOps({
                           }}
                         >
                           💬 Send Menu
+                        </button>
+                        <button
+                          className="btn-primary"
+                          style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "linear-gradient(135deg, #10b981, #059669)" }}
+                          onClick={() => handleOpenFoodOrder(res)}
+                        >
+                          🍔 Take Food Order
                         </button>
                       </>
                     )}
@@ -1234,6 +1297,56 @@ export default function FrontDeskOps({
         </div>
       )}
 
+      {/* Food Order Modal */}
+      {foodOrderRes && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "600px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "700" }}>Take Food Order</h3>
+              <button onClick={() => setFoodOrderRes(null)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "1.5rem" }}>&times;</button>
+            </div>
+            <p style={{ color: "var(--text-secondary)", marginBottom: "20px", fontSize: "0.9rem" }}>
+              Ordering for: <strong>{foodOrderRes.guestName}</strong> (Room {getRoomForRes(foodOrderRes)?.number || "N/A"})
+            </p>
+            <form onSubmit={submitFoodOrder}>
+              <div style={{ maxHeight: "400px", overflowY: "auto", paddingRight: "10px", marginBottom: "20px", display: "grid", gridTemplateColumns: "1fr", gap: "12px" }}>
+                {kitchenMenu.filter(m => m.isAvailable).map(item => {
+                  const qty = newOrderItems[item.id] || 0;
+                  return (
+                    <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "rgba(255,255,255,0.05)", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)" }}>
+                      <div>
+                        <div style={{ color: "#fff", fontWeight: "bold" }}>{item.name}</div>
+                        <div style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>₹{item.price.toFixed(2)}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <button type="button" onClick={() => setNewOrderItems(prev => ({ ...prev, [item.id]: Math.max(0, qty - 1) }))} style={{ width: "28px", height: "28px", borderRadius: "14px", border: "none", backgroundColor: "rgba(255,255,255,0.1)", color: "#fff", cursor: "pointer", fontWeight: "bold" }}>-</button>
+                        <span style={{ color: "#fff", minWidth: "1rem", textAlign: "center" }}>{qty}</span>
+                        <button type="button" onClick={() => setNewOrderItems(prev => ({ ...prev, [item.id]: qty + 1 }))} style={{ width: "28px", height: "28px", borderRadius: "14px", border: "none", backgroundColor: "#3b82f6", color: "#fff", cursor: "pointer", fontWeight: "bold" }}>+</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-color)", paddingTop: "20px" }}>
+                <div style={{ fontSize: "1.1rem", color: "#fff" }}>
+                  Total: <strong style={{ color: "#10b981" }}>₹{
+                    Object.entries(newOrderItems).reduce((acc, [id, qty]) => {
+                      const item = kitchenMenu.find(m => m.id === id);
+                      return acc + ((item?.price || 0) * qty);
+                    }, 0).toFixed(2)
+                  }</strong>
+                </div>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button type="button" className="btn-secondary" onClick={() => setFoodOrderRes(null)}>Cancel</button>
+                  <button type="submit" className="btn-primary" disabled={isSubmittingOrder || Object.values(newOrderItems).every(q => q === 0)}>
+                    {isSubmittingOrder ? "Submitting..." : "Submit Order"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
