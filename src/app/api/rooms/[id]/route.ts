@@ -49,3 +49,32 @@ export async function PUT(
     );
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Missing room ID parameter" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.room.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("Failed to delete room:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to delete room" },
+      { status: 500 }
+    );
+  }
+}

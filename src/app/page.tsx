@@ -927,6 +927,32 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteRoom = async () => {
+    if (!selectedRoomToEdit) return;
+
+    if (!window.confirm(`⚠️ DANGER: Are you sure you want to PERMANENTLY DELETE Room ${selectedRoomToEdit.number} (${selectedRoomToEdit.name})?\n\nThis action cannot be undone and will remove all reservations associated with this room!`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/rooms/${selectedRoomToEdit.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (data.success || response.ok) {
+        addToast(`🗑️ Room ${selectedRoomToEdit.number} has been deleted.`);
+        setShowEditRoomModal(false);
+        setSelectedRoomToEdit(null);
+        await loadData();
+      } else {
+        throw new Error(data.error || "Failed to delete room.");
+      }
+    } catch (err: any) {
+      addToast(`❌ Delete Failed: ${err.message}`, "error");
+    }
+  };
+
+
   const handleToggleRoomMaintenance = async (room: any) => {
     const isSeniorStaff =
       currentUser?.role === "Super Admin" ||
@@ -3273,12 +3299,38 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "12px" }}>
-                <button className="btn-secondary" type="button" onClick={() => {
-                  setShowEditRoomModal(false);
-                  setSelectedRoomToEdit(null);
-                }}>Cancel</button>
-                <button className="btn-primary" type="submit">Save Changes</button>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px" }}>
+                <button
+                  type="button"
+                  onClick={handleDeleteRoom}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    border: "1px solid #ef4444",
+                    color: "#ef4444",
+                    background: "rgba(239, 68, 68, 0.1)",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                    transition: "all 0.2s"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#ef4444";
+                    e.currentTarget.style.color = "#fff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+                    e.currentTarget.style.color = "#ef4444";
+                  }}
+                >
+                  Delete Room
+                </button>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button className="btn-secondary" type="button" onClick={() => {
+                    setShowEditRoomModal(false);
+                    setSelectedRoomToEdit(null);
+                  }}>Cancel</button>
+                  <button className="btn-primary" type="submit">Save Changes</button>
+                </div>
               </div>
             </form>
           </div>
