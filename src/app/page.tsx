@@ -3151,19 +3151,19 @@ export default function Dashboard() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "12px" }}>
                 <div>
-                  <label style={{...labelStyle, fontSize: "0.75rem"}}>EP Price (₹)</label>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>EP (Room Only)</label>
                   <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 2000" value={newRoomPriceEP} onChange={(e) => setNewRoomPriceEP(e.target.value)} />
                 </div>
                 <div>
-                  <label style={{...labelStyle, fontSize: "0.75rem"}}>CP Price (₹)</label>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>CP (Room + Breakfast)</label>
                   <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 2500" value={newRoomPriceCP} onChange={(e) => setNewRoomPriceCP(e.target.value)} />
                 </div>
                 <div>
-                  <label style={{...labelStyle, fontSize: "0.75rem"}}>MAP Price (₹)</label>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>MAP (Room + Breakfast + 1 Meal)</label>
                   <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 3200" value={newRoomPriceMAP} onChange={(e) => setNewRoomPriceMAP(e.target.value)} />
                 </div>
                 <div>
-                  <label style={{...labelStyle, fontSize: "0.75rem"}}>AP Price (₹)</label>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>AP (Room + All Meals)</label>
                   <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 4000" value={newRoomPriceAP} onChange={(e) => setNewRoomPriceAP(e.target.value)} />
                 </div>
               </div>
@@ -3210,19 +3210,19 @@ export default function Dashboard() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "12px" }}>
                 <div>
-                  <label style={{...labelStyle, fontSize: "0.75rem"}}>EP Price (₹)</label>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>EP (Room Only)</label>
                   <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 2000" value={editRoomPriceEP} onChange={(e) => setEditRoomPriceEP(e.target.value)} />
                 </div>
                 <div>
-                  <label style={{...labelStyle, fontSize: "0.75rem"}}>CP Price (₹)</label>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>CP (Room + Breakfast)</label>
                   <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 2500" value={editRoomPriceCP} onChange={(e) => setEditRoomPriceCP(e.target.value)} />
                 </div>
                 <div>
-                  <label style={{...labelStyle, fontSize: "0.75rem"}}>MAP Price (₹)</label>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>MAP (Room + Breakfast + 1 Meal)</label>
                   <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 3200" value={editRoomPriceMAP} onChange={(e) => setEditRoomPriceMAP(e.target.value)} />
                 </div>
                 <div>
-                  <label style={{...labelStyle, fontSize: "0.75rem"}}>AP Price (₹)</label>
+                  <label style={{...labelStyle, fontSize: "0.75rem"}}>AP (Room + All Meals)</label>
                   <input style={{...inputStyle, marginBottom: "0"}} type="number" placeholder="e.g. 4000" value={editRoomPriceAP} onChange={(e) => setEditRoomPriceAP(e.target.value)} />
                 </div>
               </div>
