@@ -45,18 +45,22 @@ export default function InvoicePage() {
 
   let originalFoodItems: any[] = [];
   const foodItems = items.filter((i: any) => i.category === "food");
-  if (summarizeFood) {
-    originalFoodItems = [...foodItems];
-    if (foodItems.length > 0) {
-      items = items.filter((i: any) => i.category !== "food");
-      const totalFood = foodItems.reduce((acc: number, curr: any) => acc + curr.amount, 0);
-      items.push({
-        id: "summary-food",
-        name: "Room Service Food & Beverage",
-        amount: totalFood,
-        category: "food",
-        invoiceGroup: invoiceType || "A"
-      });
+  
+  if (foodItems.length > 0) {
+    // ALWAYS consolidate the main table's food items into a single line
+    items = items.filter((i: any) => i.category !== "food");
+    const totalFood = foodItems.reduce((acc: number, curr: any) => acc + curr.amount, 0);
+    items.push({
+      id: "summary-food",
+      name: "Room Service & Kitchen Bill",
+      amount: totalFood,
+      category: "food",
+      invoiceGroup: invoiceType || "A"
+    });
+
+    // Only populate the secondary table if summarizeFood is checked
+    if (summarizeFood) {
+      originalFoodItems = [...foodItems];
     }
   }
 

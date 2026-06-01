@@ -999,7 +999,7 @@ export default function SplitBillingModal({
                 checked={summarizeKitchen} 
                 onChange={(e) => setSummarizeKitchen(e.target.checked)} 
               />
-              Summarize Kitchen Bill
+              Attach Detailed Kitchen Bill
             </label>
             <button 
               className="btn-primary" 
