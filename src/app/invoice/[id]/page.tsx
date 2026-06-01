@@ -52,16 +52,52 @@ export default function InvoicePage() {
   const checkInStr = checkInDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
   const checkOutStr = checkOutDateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
   
-  // Totals calculation
-  const totalAmount = items.reduce((sum: number, item: any) => sum + item.amount, 0) || 0;
-  
-  // Calculate pseudo GST based on per-night rate
-  const perNightTotal = totalAmount / (reservation.duration || 1);
-  const gstRate = perNightTotal > 8400 ? 0.18 : 0.12;
-  const netCost = Math.round(totalAmount / (1 + gstRate));
-  const totalGst = totalAmount - netCost;
-  const sgst = Math.round(totalGst / 2);
-  const cgst = totalGst - sgst;
+  // GST Calculation Logic matching SplitBillingModal
+  const parseGstMode = (detailsStr?: string | null): "exclusive" | "inclusive" => {
+    if (detailsStr && detailsStr.includes("[GST:inclusive]")) return "inclusive";
+    return "exclusive";
+  };
+  const gstMode = parseGstMode(reservation.details);
+
+  const calculateGST = (item: any) => {
+    let rate = 0;
+    if (item.category === "room") {
+      rate = item.amount > 7500 ? 0.18 : 0.05;
+    } else {
+      rate = 0.05; // F&B or others
+    }
+
+    if (gstMode === "inclusive") {
+      const lockedTotal = Math.round(item.amount * 100) / 100;
+      const baseAmount  = Math.round((lockedTotal / (1 + rate)) * 100) / 100;
+      const cgst = Math.round(baseAmount * (rate / 2) * 100) / 100;
+      const sgst = cgst;
+      const sumCheck    = Number((baseAmount + cgst + sgst).toFixed(2));
+      const roundingAdj = Number((lockedTotal - sumCheck).toFixed(2));
+      return { rate: rate * 100, baseAmount, cgst, sgst, roundingAdj, total: lockedTotal };
+    } else {
+      const baseAmount  = Math.round(item.amount * 100) / 100;
+      const cgst = Math.round(baseAmount * (rate / 2) * 100) / 100;
+      const sgst = cgst;
+      const total = Number((baseAmount + cgst + sgst).toFixed(2));
+      return { rate: rate * 100, baseAmount, cgst, sgst, roundingAdj: 0, total };
+    }
+  };
+
+  let netCost = 0, cgst = 0, sgst = 0, totalAmount = 0;
+  items.forEach((item: any) => {
+    const t = calculateGST(item);
+    netCost += t.baseAmount;
+    cgst += t.cgst;
+    sgst += t.sgst;
+    totalAmount += t.total;
+  });
+
+  netCost = Math.round(netCost);
+  cgst = Math.round(cgst);
+  sgst = Math.round(sgst);
+  const totalGst = cgst + sgst;
+  totalAmount = Math.round(totalAmount);
 
   // Extract meal plan from billing items if present
   const roomTariffItem = items.find((i: any) => i.name.includes("Room Tariff"));
