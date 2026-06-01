@@ -127,9 +127,17 @@ export default function KitchenDashboard() {
       `).join('')}
     </tbody>
   </table>
-  <div class="total-row">
+  <div class="total-row" style="border-top: 1px dashed #000; margin-top: 10px; padding-top: 5px;">
+    <span style="font-size: 13px;">Subtotal:</span>
+    <span style="font-size: 13px;">₹${allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0).toFixed(2)}</span>
+  </div>
+  <div class="total-row" style="margin-top: 2px;">
+    <span style="font-size: 13px;">GST (5%):</span>
+    <span style="font-size: 13px;">₹${(allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0) * 0.05).toFixed(2)}</span>
+  </div>
+  <div class="total-row" style="border-top: 1px solid #000; margin-top: 5px; padding-top: 5px; font-weight: bold; font-size: 16px;">
     <span>Total Charge:</span>
-    <span>₹${allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0)}</span>
+    <span>₹${(allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0) * 1.05).toFixed(2)}</span>
   </div>
   <div class="footer">
     <div><strong>Guest Signature:</strong></div>

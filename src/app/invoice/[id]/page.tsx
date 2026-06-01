@@ -43,8 +43,10 @@ export default function InvoicePage() {
     ) || [])
     : (reservation.billingItems || []);
 
+  let originalFoodItems: any[] = [];
   if (summarizeFood) {
     const foodItems = items.filter((i: any) => i.category === "food");
+    originalFoodItems = [...foodItems];
     if (foodItems.length > 0) {
       items = items.filter((i: any) => i.category !== "food");
       const totalFood = foodItems.reduce((acc: number, curr: any) => acc + curr.amount, 0);
@@ -315,6 +317,39 @@ export default function InvoicePage() {
             </tbody>
           </table>
         </div>
+
+        {summarizeFood && originalFoodItems.length > 0 && (
+          <div className="summary-table" style={{ marginTop: "30px" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th colSpan={5}>Room Service & Kitchen Details</th>
+                </tr>
+                <tr>
+                  <th style={{ width: "5%" }}>SR No</th>
+                  <th style={{ width: "45%" }}>Item Description</th>
+                  <th style={{ width: "20%" }}>Category</th>
+                  <th style={{ width: "15%" }}>Amount</th>
+                  <th style={{ width: "15%" }}>Total (Incl GST)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {originalFoodItems.map((fItem, idx) => {
+                  const t = calculateGST(fItem);
+                  return (
+                    <tr key={fItem.id || idx}>
+                      <td>{idx + 1}</td>
+                      <td>{fItem.name}</td>
+                      <td>{fItem.category.toUpperCase()}</td>
+                      <td>{t.baseAmount.toFixed(2)}</td>
+                      <td>{t.total.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="policy">
           <h4>Cancellation Policy</h4>
