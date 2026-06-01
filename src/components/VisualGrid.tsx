@@ -183,19 +183,62 @@ export default function VisualGrid({
         return;
       }
 
+      // Prevent past date drags
+      const todayIndex = Math.floor(
+        (new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) /
+          (1000 * 60 * 60 * 24)
+      );
+      if (targetColIdx < todayIndex && res.startIndex >= todayIndex) {
+        addToast("⚠️ Past Date Restriction: You cannot move a booking to start in the past.");
+        return;
+      }
+
       // Update reservation details
       const oldRoomNum = rooms[res.roomIndex].number;
       const newRoomNum = rooms[targetRoomIdx].number;
       
+      let updatedDetails = res.details;
+      if (targetRoomIdx !== res.roomIndex) {
+        const reason = window.prompt(`Please provide a reason for moving ${res.guestName} to Room ${newRoomNum}:`);
+        if (!reason) {
+          addToast("Room change cancelled: Reason is required.");
+          return;
+        }
+
+        // Fire room change log
+        fetch("/api/room-changes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reservationId: res.id,
+            guestName: res.guestName,
+            fromRoomId: rooms[res.roomIndex].id,
+            toRoomId: rooms[targetRoomIdx].id,
+            fromRoomNumber: oldRoomNum,
+            toRoomNumber: newRoomNum,
+            fromRoomName: rooms[res.roomIndex].name,
+            toRoomName: rooms[targetRoomIdx].name,
+            reason: reason,
+            changedBy: currentUser ? `${currentUser.name} (${currentUser.role})` : "Grid Drag",
+            propertyId: rooms[targetRoomIdx].propertyId || rooms[0]?.propertyId || "unknown"
+          })
+        }).catch(err => console.error("Failed to log room change:", err));
+
+        updatedDetails = `${updatedDetails || ""}\n\n[Swapped from Room ${oldRoomNum} to ${newRoomNum}: ${reason}]`.trim();
+        addToast(`🔄 Moved reservation for ${res.guestName} from Room ${oldRoomNum} to Room ${newRoomNum}`);
+      } else {
+        addToast(`📅 Date updated for ${res.guestName}`);
+      }
+
       const updated = {
         ...res,
         roomId: rooms[targetRoomIdx].id, // Map the target database roomId
         roomIndex: targetRoomIdx,
         startIndex: targetColIdx,
+        details: updatedDetails
       };
 
       onUpdateReservation(updated);
-      addToast(`🔄 Moved reservation for ${res.guestName} from Room ${oldRoomNum} to Room ${newRoomNum}`);
     }
   };
 
@@ -413,6 +456,9 @@ export default function VisualGrid({
             >
               <div className={styles.bookingCardTitle}>
                 {res.guestName}
+                {res.details && res.details.includes("[Swapped") && (
+                  <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(236,72,153,0.3)", color: "#fbcfe8", padding: "2px 6px", borderRadius: "10px" }}>🔄 Swapped</span>
+                )}
                 {res.isGroup && <span style={{ fontSize: "0.6rem", display: "block", color: "var(--text-secondary)" }}>🏢 Group: {res.groupName}</span>}
               </div>
               <div className={styles.bookingCardDetail}>
