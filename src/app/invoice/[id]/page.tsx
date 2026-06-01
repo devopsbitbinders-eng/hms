@@ -47,18 +47,17 @@ export default function InvoicePage() {
   const foodItems = items.filter((i: any) => i.category === "food");
   if (summarizeFood) {
     originalFoodItems = [...foodItems];
-  }
-  
-  if (foodItems.length > 0) {
-    items = items.filter((i: any) => i.category !== "food");
-    const totalFood = foodItems.reduce((acc: number, curr: any) => acc + curr.amount, 0);
-    items.push({
-      id: "summary-food",
-      name: "Room Service Food & Beverage",
-      amount: totalFood,
-      category: "food",
-      invoiceGroup: invoiceType || "A"
-    });
+    if (foodItems.length > 0) {
+      items = items.filter((i: any) => i.category !== "food");
+      const totalFood = foodItems.reduce((acc: number, curr: any) => acc + curr.amount, 0);
+      items.push({
+        id: "summary-food",
+        name: "Room Service Food & Beverage",
+        amount: totalFood,
+        category: "food",
+        invoiceGroup: invoiceType || "A"
+      });
+    }
   }
 
   // Formatting helpers
@@ -287,10 +286,11 @@ export default function InvoicePage() {
               {items.map((item: any, idx: number) => {
                 const t = calculateGST(item);
                 const gstText = t.total - t.baseAmount > 0 ? (t.total - t.baseAmount).toFixed(2) : "0.00";
+                const displayName = item.name.split(" | Qty:")[0];
                 return (
                   <tr key={item.id || idx}>
                     <td>{idx + 1}</td>
-                    <td>{item.name}</td>
+                    <td>{displayName}</td>
                     <td>{item.category.toUpperCase()}</td>
                     <td>{t.baseAmount.toFixed(2)}</td>
                     <td>{gstText}</td>
