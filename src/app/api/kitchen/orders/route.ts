@@ -10,7 +10,11 @@ export async function GET() {
             menuItem: true
           }
         },
-        reservation: true
+        reservation: {
+          include: {
+            room: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'asc'

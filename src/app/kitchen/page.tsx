@@ -11,6 +11,7 @@ type OrderItem = {
   menuItem: {
     id: string;
     name: string;
+    price: number;
   };
 };
 
@@ -21,7 +22,7 @@ type Order = {
   reservationId: string;
   reservation: {
     roomId: string;
-    room?: { name: string; id: string };
+    room?: { name: string; id: string; number: string };
     guestName: string;
   };
 };
@@ -88,7 +89,9 @@ export default function KitchenDashboard() {
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th { text-align: left; border-bottom: 1px dashed #000; padding-bottom: 5px; }
     td { padding: 5px 0; }
+    .price-col { text-align: right; }
     .notes { font-size: 12px; font-style: italic; }
+    .total-row { border-top: 1px dashed #000; font-weight: bold; margin-top: 5px; padding-top: 5px; display: flex; justify-content: space-between; }
     .footer { margin-top: 20px; border-top: 1px dashed #000; padding-top: 20px; }
     .sig-line { margin-top: 40px; border-bottom: 1px solid #000; width: 100%; }
     @media print { body { padding: 0; } }
@@ -98,7 +101,7 @@ export default function KitchenDashboard() {
   <h2>AETHER HMS</h2>
   <div style="text-align: center; font-size: 14px; margin-bottom: 10px;">KITCHEN ORDER TICKET (COMBINED)</div>
   <div class="meta">
-    <div><strong>Room:</strong> ${currentOrder.reservation?.roomId?.slice(0, 4) || "N/A"}</div>
+    <div><strong>Room:</strong> ${currentOrder.reservation?.room?.number || currentOrder.reservation?.room?.name || currentOrder.reservation?.roomId?.slice(0, 4) || "N/A"}</div>
     <div><strong>Guest:</strong> ${currentOrder.reservation?.guestName || "N/A"}</div>
     <div><strong>Orders:</strong> #${orderIds}</div>
     <div><strong>Time:</strong> ${new Date().toLocaleTimeString()}</div>
@@ -108,6 +111,7 @@ export default function KitchenDashboard() {
       <tr>
         <th style="width: 15%">Qty</th>
         <th>Item</th>
+        <th class="price-col">Price</th>
       </tr>
     </thead>
     <tbody>
@@ -118,10 +122,15 @@ export default function KitchenDashboard() {
             ${i.menuItem.name}
             ${i.notes ? `<div class="notes">Note: ${i.notes}</div>` : ''}
           </td>
+          <td class="price-col">₹${i.menuItem.price * i.quantity}</td>
         </tr>
       `).join('')}
     </tbody>
   </table>
+  <div class="total-row">
+    <span>Total Charge:</span>
+    <span>₹${allItems.reduce((sum, i) => sum + (i.menuItem.price * i.quantity), 0)}</span>
+  </div>
   <div class="footer">
     <div><strong>Guest Signature:</strong></div>
     <div class="sig-line"></div>
@@ -235,7 +244,7 @@ export default function KitchenDashboard() {
                     {columnOrders.map((order) => (
                       <div key={order.id} className={styles.orderCard}>
                         <div className={styles.orderHeader}>
-                          <div className={styles.roomName}>Room {order.reservation?.roomId?.slice(0,4) || "N/A"}</div>
+                          <div className={styles.roomName}>Room {order.reservation?.room?.number || order.reservation?.roomId?.slice(0,4) || "N/A"}</div>
                           <div className={styles.orderId}>#{order.id.slice(0, 5).toUpperCase()}</div>
                         </div>
                         <div className={styles.guestName}>{order.reservation?.guestName}</div>
