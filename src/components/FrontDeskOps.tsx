@@ -415,8 +415,268 @@ export default function FrontDeskOps({
 
   // ── CA-COMPLIANT RECEIPT PDF ───────────────────────────────────────
   const generateReceiptPDF = (res: Reservation, room?: Room, guestState: string = PROPERTY_STATE, summarizeFoodItem: boolean = false) => {
-    // Navigate to the beautiful NextJS invoice route and pass summarizeFood as a query string!
-    window.open(`/invoice/${res.id}?summarizeFood=${summarizeFoodItem}`, '_blank');
+    const bill = computeBill(res, summarizeFoodItem);
+    const now = new Date();
+    
+    // Intra/Inter State Logic based on Corporate GSTIN
+    let finalGuestState = guestState;
+    let isIntrastate = true;
+    if (res.billingType === "corporate" && res.guestGstNumber && res.guestGstNumber.length === 15) {
+      const code = res.guestGstNumber.substring(0, 2);
+      finalGuestState = STATE_CODES[code] || "Unknown State";
+      isIntrastate = code === PROPERTY_STATE_CODE;
+    } else {
+      isIntrastate = finalGuestState === PROPERTY_STATE;
+    }
+    const fy = now.getMonth() > 2 ? `${now.getFullYear().toString().slice(-2)}-${(now.getFullYear()+1).toString().slice(-2)}` : `${(now.getFullYear()-1).toString().slice(-2)}-${now.getFullYear().toString().slice(-2)}`;
+    const invoiceNo = `ATH/${fy}/${res.id.substring(0,4).toUpperCase()}`;
+    const halfRate = (bill.gstRate * 50).toFixed(1).replace(/\.0$/, '');
+    const fullRate = (bill.gstRate * 100).toFixed(1).replace(/\.0$/, '');
+    const words = amountInWords(bill.total);
+
+    // Build item rows with SAC/HSN codes
+    const isInclusive = res.details?.includes("[GST:inclusive]") ?? false;
+    const itemRows = bill.itemsToProcess.map((item) => {
+      const sac = getSacCode(item.category, item.name);
+      const itemGstRate = getGstRate(item.category, item.amount);
+      const itemHalf = (itemGstRate * 50).toFixed(1).replace(/\.0$/, '');
+      const itemFull = (itemGstRate * 100).toFixed(1).replace(/\.0$/, '');
+      
+      const baseAmount = isInclusive ? (item.amount / (1 + itemGstRate)) : item.amount;
+
+      if (isIntrastate) {
+        return `<tr>
+          <td>${item.name}</td>
+          <td style="text-align:center;color:#555;font-size:11px">${sac}</td>
+          <td style="text-align:center;font-size:11px;color:#555">${item.category.toUpperCase()}</td>
+          <td style="text-align:right">${formatCurrency(baseAmount)}</td>
+          <td style="text-align:center;font-size:11px">${itemGstRate > 0 ? itemHalf+'%' : '—'}</td>
+          <td style="text-align:center;font-size:11px">${itemGstRate > 0 ? itemHalf+'%' : '—'}</td>
+        </tr>`;
+      } else {
+        return `<tr>
+          <td>${item.name}</td>
+          <td style="text-align:center;color:#555;font-size:11px">${sac}</td>
+          <td style="text-align:center;font-size:11px;color:#555">${item.category.toUpperCase()}</td>
+          <td style="text-align:right">${formatCurrency(baseAmount)}</td>
+          <td style="text-align:center;font-size:11px">${itemGstRate > 0 ? itemFull+'%' : '—'}</td>
+        </tr>`;
+      }
+    }).join('');
+
+    const taxHeader = isIntrastate
+      ? `<th style="text-align:center">CGST Rate</th><th style="text-align:center">SGST Rate</th>`
+      : `<th style="text-align:center">IGST Rate</th>`;
+
+    const taxSummaryRows = bill.gstRate > 0
+      ? isIntrastate
+        ? `<tr class="gst-row"><td colspan="4" style="text-align:right">CGST @ ${halfRate}%</td><td colspan="2" style="text-align:right;padding-right:8px">${formatCurrency(bill.cgst)}</td></tr>
+           <tr class="gst-row"><td colspan="4" style="text-align:right">SGST @ ${halfRate}%</td><td colspan="2" style="text-align:right;padding-right:8px">${formatCurrency(bill.sgst)}</td></tr>
+           ${bill.roundingAdj !== 0 ? `<tr class="gst-row"><td colspan="4" style="text-align:right;font-style:italic;color:#b45309">Rounding Adjustment (Sec.170 CGST Act)</td><td colspan="2" style="text-align:right;padding-right:8px;color:#b45309">${bill.roundingAdj > 0 ? '+' : ''}${formatCurrency(bill.roundingAdj)}</td></tr>` : ''}`
+        : `<tr class="gst-row"><td colspan="4" style="text-align:right">IGST @ ${fullRate}%</td><td colspan="2" style="text-align:right;padding-right:8px">${formatCurrency(bill.gstAmt)}</td></tr>
+           ${bill.roundingAdj !== 0 ? `<tr class="gst-row"><td colspan="4" style="text-align:right;font-style:italic;color:#b45309">Rounding Adjustment (Sec.170 CGST Act)</td><td colspan="2" style="text-align:right;padding-right:8px;color:#b45309">${bill.roundingAdj > 0 ? '+' : ''}${formatCurrency(bill.roundingAdj)}</td></tr>` : ''}`
+      : '';
+
+    const colSpanTotal = isIntrastate ? 5 : 4;
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Tax Invoice – ${res.guestName} – ${invoiceNo}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',Arial,sans-serif;color:#111;background:#fff;padding:40px;font-size:13px;line-height:1.5}
+    @media print{
+      body{padding:20px}
+      .no-print{display:none}
+      @page{margin:15mm;size:A4}
+    }
+    /* ── HEADER ── */
+    .inv-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:2.5px solid #111;margin-bottom:20px}
+    .inv-logo{font-size:22px;font-weight:700;letter-spacing:-0.5px;color:#111}
+    .inv-logo span{color:#4f46e5}
+    .inv-tagline{font-size:10px;color:#666;margin-top:2px;letter-spacing:0.04em;text-transform:uppercase}
+    .inv-meta{text-align:right}
+    .inv-meta h2{font-size:18px;font-weight:700;color:#111;letter-spacing:0.02em;text-transform:uppercase}
+    .inv-meta p{font-size:11px;color:#555;margin-top:3px}
+    .inv-meta .inv-no{font-size:12px;font-weight:600;color:#4f46e5;margin-top:4px}
+    /* ── TAX TYPE BADGE ── */
+    .tax-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-top:6px}
+    .intrastate{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+    .interstate{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+    /* ── GUEST & PROPERTY INFO ── */
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0;padding:16px;background:#f9fafb;border-radius:6px;border:1px solid #e5e7eb}
+    .info-block label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#9ca3af;margin-bottom:3px;font-weight:600}
+    .info-block p{font-size:13px;color:#111;font-weight:500}
+    .info-block p.mono{font-family:monospace;font-size:12px;color:#374151}
+    /* ── TABLE ── */
+    table{width:100%;border-collapse:collapse;margin:16px 0;font-size:12px}
+    thead tr{background:#111;color:#fff}
+    thead th{padding:9px 10px;font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;text-align:left}
+    tbody tr{border-bottom:1px solid #f0f0f0}
+    tbody tr:hover{background:#fafafa}
+    tbody td{padding:9px 10px;vertical-align:middle;color:#222}
+    .sac-col{font-family:monospace;font-size:11px;color:#6b7280;text-align:center}
+    .gst-row td{color:#555;font-style:italic;background:#f9fafb}
+    .subtotal-row td{font-weight:600;background:#f3f4f6;border-top:1.5px solid #d1d5db}
+    .total-row td{font-weight:700;font-size:14px;background:#111;color:#fff;border:none;padding:11px 10px}
+    /* ── AMOUNT IN WORDS ── */
+    .words-block{margin:14px 0;padding:12px 16px;background:#f0f9ff;border-left:4px solid #0ea5e9;border-radius:0 6px 6px 0}
+    .words-label{font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#0369a1;font-weight:700;margin-bottom:4px}
+    .words-text{font-size:13px;color:#0c4a6e;font-weight:600;font-style:italic}
+    /* ── STAMP & FOOTER ── */
+    .payment-row{display:flex;align-items:center;justify-content:space-between;margin:20px 0 0}
+    .stamp{display:inline-block;border:2.5px solid #16a34a;color:#16a34a;padding:6px 18px;border-radius:4px;font-weight:700;font-size:13px;transform:rotate(-4deg);letter-spacing:0.06em}
+    .sig-block{text-align:right;font-size:11px;color:#555}
+    .sig-block p{margin-top:28px;border-top:1px solid #ccc;padding-top:6px;display:inline-block;min-width:120px}
+    .footer{margin-top:28px;padding-top:14px;border-top:1px dashed #d1d5db;text-align:center;font-size:10px;color:#9ca3af;letter-spacing:0.04em}
+    .gst-notice{font-size:10px;color:#6b7280;margin-top:8px;text-align:left}
+  </style>
+</head>
+<body>
+
+  <!-- PRINT BUTTON (hidden on print) -->
+  <div class="no-print" style="margin-bottom:20px">
+    <button onclick="window.print()" style="background:#4f46e5;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.03em">🖨 Print Invoice</button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="inv-header">
+    <div style="flex: 1;">
+      <div class="inv-logo">${activeProperty?.name || "Aether"}<span>HMS</span></div>
+      <div class="inv-tagline" style="font-weight:700; color:#111; margin-top:4px;">${activeProperty?.name || "Aether Hotel Management Pvt. Ltd."}</div>
+      <div class="inv-tagline" style="margin-top:2px; max-width: 250px;">${activeProperty?.location || "123, Hospitality Avenue, Sector 4, New Delhi - 110001, India"}</div>
+      <div class="inv-tagline" style="margin-top:4px; font-weight:600; color:#4f46e5;">Property GSTIN: ${activeProperty?.gstNumber || "N/A"} · State: ${PROPERTY_STATE} (Code: 07)</div>
+    </div>
+    <div class="inv-meta" style="flex: 1; text-align:right;">
+      <h2 style="font-size: 24px; color: #111; border-bottom: 2px solid #111; display: inline-block; padding-bottom: 4px; margin-bottom: 8px;">TAX INVOICE</h2>
+      <p class="inv-no">Invoice No: ${invoiceNo}</p>
+      <p>Date of Issue: ${now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</p>
+      <p>Time: ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</p>
+      <div class="tax-badge ${isIntrastate ? 'intrastate' : 'interstate'}">${isIntrastate ? '✓ Intrastate — CGST + SGST' : '⚡ Inter-State — IGST Applicable'}</div>
+    </div>
+  </div>
+
+  <!-- GUEST & STAY INFO -->
+  <div class="info-grid">
+    <div>
+      <div class="info-block" style="margin-bottom:10px">
+        <label style="color:#4f46e5;">Billed To (Guest Details)</label>
+        <p style="font-size:15px;font-weight:700">${res.guestName}</p>
+        ${res.groupName ? `<p style="font-size:12px;font-weight:600;margin-top:2px">${res.groupName}</p>` : ''}
+        ${res.guestGstNumber ? `<p style="font-size:11px;color:#4f46e5;margin-top:1px;font-weight:600">GSTIN: ${res.guestGstNumber}</p>` : ''}
+      </div>
+      <div class="info-block" style="margin-bottom:10px">
+        <label>Guest State</label>
+        <p>${finalGuestState}</p>
+      </div>
+      ${res.phone ? `<div class="info-block"><label>Mobile</label><p class="mono">${res.phone}</p></div>` : ''}
+      ${res.email ? `<div class="info-block" style="margin-top:8px"><label>Email</label><p class="mono">${res.email}</p></div>` : ''}
+      ${res.nationality === 'Foreign' && res.passportNumber ? `<div class="info-block" style="margin-top:8px"><label>Passport No.</label><p class="mono">${res.passportNumber}</p></div>` : ''}
+    </div>
+    <div>
+      <div class="info-block" style="margin-bottom:10px">
+        <label>Room</label>
+        <p style="font-weight:700">${room ? `Room ${room.number} — ${room.name}` : 'N/A'}</p>
+        <p style="font-size:11px;color:#6b7280;margin-top:2px">${room?.type || ''}</p>
+      </div>
+      <div class="info-block" style="margin-bottom:10px">
+        <label>Check-In</label>
+        <p>${indexToDate(res.startIndex)}</p>
+      </div>
+      <div class="info-block" style="margin-bottom:10px">
+        <label>Check-Out</label>
+        <p>${now.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</p>
+      </div>
+      <div class="info-block">
+        <label>Stay Duration</label>
+        <p>${res.duration} Night${res.duration !== 1 ? 's' : ''} · ${res.numAdults || 1} Guest${(res.numAdults||1)>1?'s':''}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARGE TABLE -->
+  <table>
+    <thead>
+      <tr>
+        <th style="width:30%">Description</th>
+        <th style="text-align:center;width:10%">SAC / HSN</th>
+        <th style="text-align:center;width:12%">Category</th>
+        <th style="text-align:right;width:14%">Amount (₹)</th>
+        ${taxHeader}
+      </tr>
+    </thead>
+    <tbody>
+      ${itemRows}
+      <!-- Subtotal -->
+      <tr class="subtotal-row">
+        <td colspan="3" style="text-align:right">Taxable Subtotal</td>
+        <td style="text-align:right">${formatCurrency(bill.subtotal)}</td>
+        <td ${isIntrastate ? 'colspan="2"' : ''} style="text-align:center;font-size:11px;color:#6b7280">—</td>
+      </tr>
+      <!-- Tax rows -->
+      ${taxSummaryRows}
+      <!-- Grand Total -->
+      <tr class="total-row">
+        <td colspan="${colSpanTotal}" style="text-align:right">Grand Total (Incl. GST)</td>
+        <td style="text-align:right">${formatCurrency(bill.total)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- AMOUNT IN WORDS -->
+  <div class="words-block">
+    <div class="words-label">Amount in Words</div>
+    <div class="words-text">${words}</div>
+  </div>
+
+  <!-- PAYMENT & SIGNATURE -->
+  <div class="payment-row">
+    <div>
+      <div style="font-size:11px;color:#555;margin-bottom:6px"><strong>Payment Method:</strong> ${checkoutPayment}</div>
+      <div class="stamp" style="margin-bottom:12px">PAYMENT RECEIVED</div>
+      
+      <div style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:10px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;font-weight:700;margin-bottom:4px">Payment Settlement Channels</div>
+        <table style="width:auto;margin:0;font-size:11px;border-collapse:collapse;border:none">
+          <tbody style="border:none">
+            <tr style="border:none;background:transparent"><td style="padding:2px 8px 2px 0;border:none;color:#555">Bank Name:</td><td style="padding:2px 0;border:none;font-weight:600">_____________________</td></tr>
+            <tr style="border:none;background:transparent"><td style="padding:2px 8px 2px 0;border:none;color:#555">Account No:</td><td style="padding:2px 0;border:none;font-family:monospace;font-weight:600">_____________________</td></tr>
+            <tr style="border:none;background:transparent"><td style="padding:2px 8px 2px 0;border:none;color:#555">IFSC Code:</td><td style="padding:2px 0;border:none;font-family:monospace;font-weight:600">_____________________</td></tr>
+            <tr style="border:none;background:transparent"><td style="padding:2px 8px 2px 0;border:none;color:#555">UPI ID:</td><td style="padding:2px 0;border:none;font-weight:600">_____________________</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="sig-block" style="align-self:flex-end">
+      <div style="height:60px"></div>
+      <p>Authorised Signatory</p>
+    </div>
+  </div>
+
+  <!-- GST NOTICE -->
+  <div class="gst-notice">
+    <strong>Note:</strong> ${isIntrastate
+      ? `This is an intrastate supply. CGST @ ${halfRate}% and SGST @ ${halfRate}% apply under CGST Act, 2017 and ${finalGuestState} GST Act, 2017.`
+      : `This is an inter-state supply from ${PROPERTY_STATE} to ${finalGuestState}. IGST @ ${fullRate}% applies under IGST Act, 2017.`
+    }
+    SAC Code 996311 — Accommodation Services per Schedule II, CGST Act.
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    AetherHMS · This is a computer-generated invoice and does not require a physical signature. · Generated: ${now.toLocaleString('en-IN')}
+  </div>
+
+</body>
+</html>`;
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
   };
 
   // ── ROOM CHANGE HANDLER ─────────────────────────────────────────────
