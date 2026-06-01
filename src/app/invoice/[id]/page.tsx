@@ -55,8 +55,9 @@ export default function InvoicePage() {
   // Totals calculation
   const totalAmount = items.reduce((sum: number, item: any) => sum + item.amount, 0) || 0;
   
-  // Calculate pseudo GST (Assuming 12% total, so 6% SGST, 6% CGST for reverse calculation - or 18% depending on amount)
-  const gstRate = totalAmount > 7500 ? 0.18 : 0.12;
+  // Calculate pseudo GST based on per-night rate
+  const perNightTotal = totalAmount / (reservation.duration || 1);
+  const gstRate = perNightTotal > 8400 ? 0.18 : 0.12;
   const netCost = Math.round(totalAmount / (1 + gstRate));
   const totalGst = totalAmount - netCost;
   const sgst = Math.round(totalGst / 2);
@@ -143,8 +144,8 @@ export default function InvoicePage() {
           <p>Dear {reservation.guestName || "Guest"},</p>
           <p>
             {reservation.status === 'confirmed' || reservation.status === 'checked-in' 
-              ? "We are pleased to confirm your booking. We would like to thank you for choosing The Amore Hills for your visit to our hotel. We look forward to host you in the future."
-              : "We regret to inform you! Your booking has been cancelled. We would like to thank you for choosing The Amore Hills for your visit to our hotel. We look forward to host you in the future."
+              ? `We are pleased to confirm your booking. We would like to thank you for choosing ${reservation.room?.property?.name || "Aether HMS"} for your visit to our hotel. We look forward to host you in the future.`
+              : `We regret to inform you! Your booking has been cancelled. We would like to thank you for choosing ${reservation.room?.property?.name || "Aether HMS"} for your visit to our hotel. We look forward to host you in the future.`
             }
           </p>
         </div>
@@ -287,7 +288,7 @@ export default function InvoicePage() {
         </div>
 
         <div className="powered-by">
-          Reservation Is Powered By <a href="#" style={{ color: "#0066cc", fontWeight: "bold", textDecoration: "underline" }}>AsiaTech Inc</a>
+          Reservation Is Powered By <a href="#" style={{ color: "#0066cc", fontWeight: "bold", textDecoration: "underline" }}>Aether HMS</a>
         </div>
       </div>
     </>
