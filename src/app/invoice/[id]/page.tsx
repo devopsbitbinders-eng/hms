@@ -350,7 +350,7 @@ export default function InvoicePage() {
                 <tr>
                   <td colSpan={4} className="bold" style={{ color: "#ef4444" }}>Balance Due</td>
                   <td className="right-align" style={{ color: "#ef4444" }}>
-                    {Math.max(0, (calcData ? calcData.grandTotal : parseFloat(totalAmount)) - reservation.advancePaid).toFixed(2)} /-
+                    {Math.max(0, (calcData ? calcData.grandTotal : totalAmount) - reservation.advancePaid).toFixed(2)} /-
                   </td>
                 </tr>
               )}
@@ -358,8 +358,8 @@ export default function InvoicePage() {
                 <td colSpan={4} className="bold">Amount Paid at Checkout</td>
                 <td className="right-align">
                   {(reservation.advancePaid > 0 
-                     ? Math.max(0, (calcData ? calcData.grandTotal : parseFloat(totalAmount)) - reservation.advancePaid)
-                     : (calcData ? calcData.grandTotal : parseFloat(totalAmount))).toFixed(2)} /-
+                     ? Math.max(0, (calcData ? calcData.grandTotal : totalAmount) - reservation.advancePaid)
+                     : (calcData ? calcData.grandTotal : totalAmount)).toFixed(2)} /-
                 </td>
               </tr>
             </tbody>
