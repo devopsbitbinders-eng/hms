@@ -382,10 +382,11 @@ export default function Dashboard() {
   // Fetch properties and structure states on mount
   async function loadData(ownerId?: string) {
     const oId = ownerId || currentUser?.ownerId || currentUser?.id;
-    if (!oId) return;
+    if (!oId && currentUser?.role !== "Super Admin") return;
     try {
       setLoading(true);
-      const response = await fetch("/api/properties?ownerId=" + oId);
+      const url = currentUser?.role === "Super Admin" ? "/api/properties" : `/api/properties?ownerId=${oId}`;
+      const response = await fetch(url);
       const data = await response.json();
       if (data.success) {
         setPropertiesList(data.properties);
