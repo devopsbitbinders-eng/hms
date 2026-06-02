@@ -1044,7 +1044,7 @@ export default function FrontDeskOps({
               <button className={styles.modalCloseBtn} onClick={() => setRoomChangeRes(null)}>✕</button>
             </div>
 
-            <div style={{ padding: "24px" }}>
+            <div style={{ padding: "24px", maxHeight: "75vh", overflowY: "auto" }}>
               {/* Current room info */}
               <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "10px", padding: "14px 18px", marginBottom: "20px", display: "flex", alignItems: "center", gap: "14px" }}>
                 <div style={{ fontSize: "2rem" }}>🛏️</div>
