@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const ownerId = searchParams.get("ownerId");
+    const whereFilter = ownerId ? { requester: { ownerId } } : {};
+
     const requests = await prisma.shiftSwapRequest.findMany({
+      where: whereFilter,
       include: {
         requester: { select: { id: true, name: true, role: true, assignedShift: true } },
         targetUser: { select: { id: true, name: true, role: true, assignedShift: true } }

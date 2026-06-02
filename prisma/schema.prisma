@@ -332,6 +332,7 @@ model KitchenOrderItem {
 
 model Coupon {
   id              String    @id @default(uuid())
+  ownerId         String?
   code            String    @unique
   discountType    String    // "PERCENTAGE" or "FLAT"
   discountValue   Float
@@ -350,6 +351,7 @@ model Coupon {
 
 model Affiliate {
   id              String    @id @default(uuid())
+  ownerId         String?
   name            String
   email           String    @unique
   referralCode    String    @unique
@@ -364,6 +366,7 @@ model Affiliate {
 
 model Referral {
   id              String      @id @default(uuid())
+  ownerId         String?
   affiliateId     String
   reservationId   String      @unique
   status          String      // "PENDING", "PAYABLE", "PAID", "CANCELLED"

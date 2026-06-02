@@ -19,8 +19,14 @@ export async function GET(request: Request) {
       }
     }
 
+    const ownerId = searchParams.get("ownerId");
+    let whereFilter: any = { ...dateFilter };
+    if (ownerId) {
+      whereFilter = { ...whereFilter, user: { ownerId } };
+    }
+
     const attendances = await prisma.attendance.findMany({
-      where: dateFilter,
+      where: whereFilter,
       include: {
         user: {
           select: { name: true, username: true, role: true, avatar: true }

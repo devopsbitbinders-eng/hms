@@ -549,8 +549,10 @@ export default function Dashboard() {
 
   async function fetchAttendance() {
     try {
+      const oId = currentUser?.ownerId || currentUser?.id;
+      if (!oId && currentUser?.role !== "Super Admin") return;
       const today = new Date().toISOString().split("T")[0];
-      const res = await fetch("/api/attendance?date=" + today);
+      const res = await fetch(`/api/attendance?date=${today}&ownerId=${oId || ""}`);
       const data = await res.json();
       if (data.success) {
         setAllAttendances(data.attendances);
@@ -562,7 +564,9 @@ export default function Dashboard() {
 
   async function fetchShiftSwapRequests() {
     try {
-      const res = await fetch("/api/shift-swap");
+      const oId = currentUser?.ownerId || currentUser?.id;
+      if (!oId && currentUser?.role !== "Super Admin") return;
+      const res = await fetch(`/api/shift-swap?ownerId=${oId || ""}`);
       const data = await res.json();
       if (!data.error) {
         setShiftSwapRequests(data.requests || []);
@@ -574,7 +578,9 @@ export default function Dashboard() {
 
   async function fetchLeaveRequests() {
     try {
-      const res = await fetch("/api/leave");
+      const oId = currentUser?.ownerId || currentUser?.id;
+      if (!oId && currentUser?.role !== "Super Admin") return;
+      const res = await fetch(`/api/leave?ownerId=${oId || ""}`);
       const data = await res.json();
       if (!data.error) {
         setLeaveRequests(data);

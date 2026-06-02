@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const ownerId = searchParams.get("ownerId");
+    const whereFilter = ownerId ? { ownerId } : {};
+
     const coupons = await prisma.coupon.findMany({
+      where: whereFilter,
       orderBy: { validUntil: 'desc' }
     });
     return NextResponse.json({ success: true, coupons });
@@ -15,7 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const { code, discountType, discountValue, applyTo, maxDiscount, minBookingValue, usageLimit, validFrom, validUntil } = data;
+    const { code, discountType, discountValue, applyTo, maxDiscount, minBookingValue, usageLimit, validFrom, validUntil, ownerId } = data;
 
     if (!code || !discountType || !discountValue) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
@@ -23,6 +28,7 @@ export async function POST(request: Request) {
 
     const newCoupon = await prisma.coupon.create({
       data: {
+        ownerId: ownerId || null,
         code: code.toUpperCase(),
         discountType,
         discountValue: parseFloat(discountValue),

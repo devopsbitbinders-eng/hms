@@ -24,11 +24,14 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
 
   const fetchData = async () => {
     try {
-      const cRes = await fetch("/api/coupons");
+      const oId = currentUser?.ownerId || currentUser?.id;
+      if (!oId && currentUser?.role !== "Super Admin") return;
+      const q = `?ownerId=${oId || ""}`;
+      const cRes = await fetch(`/api/coupons${q}`);
       const cData = await cRes.json();
       if (cData.success) setCoupons(cData.coupons);
       
-      const aRes = await fetch("/api/affiliates");
+      const aRes = await fetch(`/api/affiliates${q}`);
       const aData = await aRes.json();
       if (aData.success) setAffiliates(aData.affiliates);
     } catch (err) {
@@ -48,7 +51,8 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: couponCode, discountType, discountValue, applyTo: applyTo === "CUSTOM" ? `CUSTOM:${customTarget}` : applyTo,
-          validUntil: validUntil || null
+          validUntil: validUntil || null,
+          ownerId: currentUser?.ownerId || currentUser?.id
         })
       });
       const data = await res.json();
@@ -87,7 +91,8 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: affName, email: affEmail, referralCode: affCode, commissionType: affType, commissionValue: affValue
+          name: affName, email: affEmail, referralCode: affCode, commissionType: affType, commissionValue: affValue,
+          ownerId: currentUser?.ownerId || currentUser?.id
         })
       });
       const data = await res.json();

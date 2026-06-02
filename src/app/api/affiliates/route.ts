@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const ownerId = searchParams.get("ownerId");
+    const whereFilter = ownerId ? { ownerId } : {};
+
     const affiliates = await prisma.affiliate.findMany({
+      where: whereFilter,
       include: {
         referrals: true
       },
@@ -18,7 +23,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const { name, email, referralCode, commissionType, commissionValue } = data;
+    const { name, email, referralCode, commissionType, commissionValue, ownerId } = data;
 
     if (!name || !email || !referralCode || !commissionType || !commissionValue) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
@@ -26,6 +31,7 @@ export async function POST(request: Request) {
 
     const newAffiliate = await prisma.affiliate.create({
       data: {
+        ownerId: ownerId || null,
         name,
         email,
         referralCode: referralCode.toUpperCase(),

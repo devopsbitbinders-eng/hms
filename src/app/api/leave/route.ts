@@ -3,7 +3,12 @@ import prisma from '@/lib/db';
 
 export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const ownerId = searchParams.get("ownerId");
+    const whereFilter = ownerId ? { user: { ownerId } } : {};
+
     const leaveRequests = await prisma.leaveRequest.findMany({
+      where: whereFilter,
       include: {
         user: { select: { name: true, role: true, avatar: true } }
       },
