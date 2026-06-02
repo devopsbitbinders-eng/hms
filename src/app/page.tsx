@@ -1509,6 +1509,7 @@ export default function Dashboard() {
           role: finalRole,
           avatar: newStaffAvatar.toUpperCase().substring(0, 2),
           propertyId: finalRole === "Super Admin" ? null : newStaffPropertyId,
+          ownerId: currentUser?.ownerId || currentUser?.id,
         }),
       });
       const data = await response.json();
@@ -2001,12 +2002,12 @@ export default function Dashboard() {
                 </div>
 
                 <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                  {currentUser?.role === "Super Admin" && (
+                  {(currentUser?.role === "Super Admin" || currentUser?.role === "Owner") && (
                     <button className="btn-secondary" style={{ padding: "8px 14px", fontSize: "0.85rem" }} onClick={() => setShowPropertyModal(true)}>
                       🏢 Add Property
                     </button>
                   )}
-                  {(currentUser?.role === "Super Admin" ||
+                  {(currentUser?.role === "Super Admin" || currentUser?.role === "Owner" ||
                     ((currentUser?.role === "Front Office Manager" || currentUser?.role === "General Manager") &&
                       currentUser?.allowRoomManagement !== false)) && (
                     <button className="btn-secondary" style={{ padding: "8px 14px", fontSize: "0.85rem" }} onClick={() => setShowRoomModal(true)}>
@@ -2305,7 +2306,7 @@ export default function Dashboard() {
                 
                 {/* User List Grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "10px", marginBottom: "20px" }}>
-                  {usersList.map((user: any) => (
+                  {usersList.filter(user => user.role !== "Owner" && user.role !== "Super Admin").map((user: any) => (
                     <div key={user.id} className="glass-card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
                         <div className={styles.avatar} style={{ margin: 0, width: "36px", height: "36px", fontSize: "0.85rem", flexShrink: 0 }}>{user.avatar}</div>
