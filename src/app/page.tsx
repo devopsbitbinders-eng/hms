@@ -1444,14 +1444,43 @@ export default function Dashboard() {
           setShowProfileSwitcher(false);
           addToast(`🔑 Session initialized as ${data.user.name} (${data.user.role}).`);
 
-          // Redirect to appropriate module based on role mapping
-          if (data.user.role === "Housekeeping Supervisor") {
-            setActiveMenu("housekeeping");
-          } else if (data.user.role === "Finance Executive") {
-            setActiveMenu("finance");
-          } else {
-            setActiveMenu("front-office");
+          // Redirect to appropriate module based on permissions/role
+          // We need a helper to check permissions for the NEW user
+          const hasPerm = (permId: string, userObj: any) => {
+            if (userObj.role === "Super Admin" || userObj.role === "Owner") return true;
+            if (userObj.permissions && Array.isArray(userObj.permissions)) {
+              if (userObj.permissions.includes(permId)) return true;
+              if (permId.includes(":")) {
+                const parentId = permId.split(":")[0];
+                if (userObj.permissions.includes(parentId)) {
+                  const hasAnySub = userObj.permissions.some((p: string) => p.startsWith(parentId + ":"));
+                  if (!hasAnySub) return true;
+                }
+              }
+              return false;
+            }
+            if (userObj.role === "General Manager") return ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "staff-management"].includes(permId);
+            if (userObj.role === "Front Office Manager") return ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "staff-management"].includes(permId);
+            if (userObj.role === "Receptionist" || userObj.role === "Front Office Clerk") return ["front-office", "front-desk", "housekeeping", "attendance"].includes(permId);
+            if (userObj.role === "Housekeeping Supervisor") return ["housekeeping", "attendance"].includes(permId);
+            if (userObj.role === "Finance Executive") return ["finance", "attendance"].includes(permId);
+            return false;
+          };
+
+          const possibleMenus = ["front-office", "front-desk", "housekeeping", "finance", "reviews", "attendance", "staff-management", "channel-manager"];
+          let targetMenu = "front-office";
+          
+          if (data.user.role === "Housekeeping Supervisor" && hasPerm("housekeeping", data.user)) {
+            targetMenu = "housekeeping";
+          } else if (data.user.role === "Finance Executive" && hasPerm("finance", data.user)) {
+            targetMenu = "finance";
+          } else if (!hasPerm("front-office", data.user)) {
+            // Find the first menu they DO have access to
+            const firstAllowed = possibleMenus.find(m => hasPerm(m, data.user));
+            if (firstAllowed) targetMenu = firstAllowed;
           }
+
+          setActiveMenu(targetMenu);
         }, 800);
       } else {
         throw new Error(data.error || "Incorrect credentials.");
