@@ -105,6 +105,7 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
 
     if (isLocal) {
       return {
+        rate: rate * 100,
         baseAmount,
         cgst: gstAmount / 2,
         sgst: gstAmount / 2,
@@ -113,6 +114,7 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
       };
     } else {
       return {
+        rate: rate * 100,
         baseAmount,
         cgst: 0,
         sgst: 0,
@@ -124,6 +126,7 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
 
   const getInvoiceTotals = (items: any[], isLocal: boolean, gstMode: "exclusive" | "inclusive") => {
     let baseAmount = 0, cgst = 0, sgst = 0, igst = 0, total = 0;
+    let maxRate = 0;
     items.forEach(item => {
       const t = calculateItemGST(item, isLocal, gstMode);
       baseAmount += t.baseAmount;
@@ -131,8 +134,9 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
       sgst += t.sgst;
       igst += t.igst;
       total += t.total;
+      if (t.rate > maxRate) maxRate = t.rate;
     });
-    return { baseAmount, cgst, sgst, igst, total };
+    return { baseAmount, cgst, sgst, igst, total, rate: maxRate };
   };
 
   const selectedRes = currentReservations.find(r => r.id === selectedResId);
