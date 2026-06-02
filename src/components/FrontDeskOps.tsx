@@ -396,18 +396,30 @@ export default function FrontDeskOps({
     setIsApplyingCoupon(true);
     try {
       // 1. Lock the coupon to the reservation
-      const applyRes = await fetch("/api/billing/coupon", {
+      let applyRes = await fetch("/api/billing/coupon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reservationId: checkoutRes.id, couponCode: checkoutCouponCode, appliedBy: currentUser?.name || "Front Desk" })
       });
-      const applyData = await applyRes.json();
+      let applyData = await applyRes.json();
       
       if (!applyData.success) {
-        throw new Error(applyData.error);
+        // Fallback: Try as a referral code
+        applyRes = await fetch("/api/billing/referral", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reservationId: checkoutRes.id, referralCode: checkoutCouponCode })
+        });
+        applyData = await applyRes.json();
+        
+        if (!applyData.success) {
+          throw new Error("Invalid Coupon or Referral Code");
+        }
+        addToast(`✅ Referral Code ${checkoutCouponCode} applied! Commission tracked.`, "success");
+        return; // Referrals don't affect the guest's calculated invoice directly
       }
 
-      // 2. Fetch the calculated result
+      // 2. Fetch the calculated result for discount coupons
       const calcRes = await fetch(`/api/billing/calculate?reservationId=${checkoutRes.id}`);
       const calcData = await calcRes.json();
       
@@ -589,15 +601,27 @@ export default function FrontDeskOps({
     try {
       // Create a temporary mock item to calculate discount on the fly without saving to DB yet
       // But actually, it's easier to lock the coupon to the reservation right away
-      const applyRes = await fetch("/api/billing/coupon", {
+      let applyRes = await fetch("/api/billing/coupon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reservationId: roomChangeRes.id, couponCode: upgradeCouponCode, appliedBy: currentUser?.name || "Front Desk" })
       });
-      const applyData = await applyRes.json();
+      let applyData = await applyRes.json();
       
       if (!applyData.success) {
-        throw new Error(applyData.error);
+        // Fallback: Try as a referral code
+        applyRes = await fetch("/api/billing/referral", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reservationId: roomChangeRes.id, referralCode: upgradeCouponCode })
+        });
+        applyData = await applyRes.json();
+        
+        if (!applyData.success) {
+          throw new Error("Invalid Coupon or Referral Code");
+        }
+        addToast(`✅ Referral Code ${upgradeCouponCode} applied!`, "success");
+        return;
       }
 
       setUpgradeCouponData({ success: true, code: upgradeCouponCode });
