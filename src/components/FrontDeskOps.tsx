@@ -141,6 +141,7 @@ export default function FrontDeskOps({
   const [changeReason, setChangeReason] = useState("");
   const [isProcessingChange, setIsProcessingChange] = useState(false);
   const [roomChangeLogs, setRoomChangeLogs] = useState<any[]>([]);
+  const [viewProfileRes, setViewProfileRes] = useState<any>(null);
   const [upgradeCost, setUpgradeCost] = useState("");
   const [downgradeRefund, setDowngradeRefund] = useState("");
   const [upgradeCouponCode, setUpgradeCouponCode] = useState("");
@@ -859,6 +860,13 @@ export default function FrontDeskOps({
 
                   {/* Actions */}
                   <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                    <button
+                      className="btn-secondary"
+                      style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "rgba(56,189,248,0.15)", border: "1px solid rgba(56,189,248,0.4)", color: "#38bdf8" }}
+                      onClick={() => setViewProfileRes(res)}
+                    >
+                      👤 View Profile
+                    </button>
                     {activeTab === "arrivals" && (
                       <button
                         className="btn-primary"
@@ -1199,6 +1207,81 @@ export default function FrontDeskOps({
                 >
                   {isProcessingChange ? "⏳ Processing..." : "🔄 Confirm Room Change"}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── VIEW PROFILE MODAL ──────────────────────────────── */}
+      {viewProfileRes && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "600px", padding: "0", overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border-color)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "linear-gradient(135deg, rgba(56,189,248,0.18), transparent)" }}>
+              <div>
+                <h2 style={{ fontSize: "1.2rem", fontWeight: "700", color: "#38bdf8", margin: 0 }}>👤 Guest Profile</h2>
+                <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", marginTop: "4px", marginBottom: 0 }}>
+                  Detailed information for {viewProfileRes.guestName}
+                </p>
+              </div>
+              <button className={styles.modalCloseBtn} onClick={() => setViewProfileRes(null)}>✕</button>
+            </div>
+            
+            <div style={{ padding: "24px", maxHeight: "75vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
+                <div style={{
+                  width: "80px", height: "80px", borderRadius: "40px",
+                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: "700", fontSize: "2rem", color: "#fff", flexShrink: 0,
+                }}>
+                  {viewProfileRes.guestName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 style={{ margin: "0 0 5px 0", fontSize: "1.4rem" }}>{viewProfileRes.guestName}</h3>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                    <p style={{ margin: "2px 0" }}>📞 {viewProfileRes.phone || "Not provided"}</p>
+                    <p style={{ margin: "2px 0" }}>📧 {viewProfileRes.email || "Not provided"}</p>
+                    <p style={{ margin: "2px 0" }}>🆔 {viewProfileRes.idType ? `${viewProfileRes.idType}: ${viewProfileRes.idNumber}` : "No ID on file"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "16px", marginBottom: "20px" }}>
+                <h4 style={{ margin: "0 0 10px 0", color: "#818cf8" }}>Booking Details</h4>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "0.9rem" }}>
+                  <div><strong>Room:</strong> {getRoomForRes(viewProfileRes)?.number || "N/A"}</div>
+                  <div><strong>Status:</strong> <span style={{ textTransform: "capitalize" }}>{viewProfileRes.status}</span></div>
+                  <div><strong>Check-in:</strong> {indexToDate(viewProfileRes.startIndex)}</div>
+                  <div><strong>Check-out:</strong> {indexToDate(viewProfileRes.startIndex + viewProfileRes.duration)}</div>
+                  <div><strong>Adults:</strong> {viewProfileRes.numAdults || 1}</div>
+                  <div><strong>Children:</strong> {viewProfileRes.numChildren || 0}</div>
+                  <div><strong>Booking Type:</strong> <span style={{ textTransform: "capitalize" }}>{viewProfileRes.bookingType}</span></div>
+                  <div><strong>Billing:</strong> <span style={{ textTransform: "capitalize" }}>{viewProfileRes.billingType}</span></div>
+                </div>
+              </div>
+
+              {viewProfileRes.nationality === "Foreign" && (
+                <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "10px", padding: "16px", marginBottom: "20px" }}>
+                  <h4 style={{ margin: "0 0 10px 0", color: "#fcd34d" }}>Form C Details (Foreign National)</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "0.9rem" }}>
+                    <div><strong>Passport:</strong> {viewProfileRes.passportNumber || "N/A"}</div>
+                    <div><strong>Visa:</strong> {viewProfileRes.visaNumber || "N/A"}</div>
+                    <div><strong>Arrived From:</strong> {viewProfileRes.arrivedFrom || "N/A"}</div>
+                    <div><strong>Proceeding To:</strong> {viewProfileRes.proceedingTo || "N/A"}</div>
+                  </div>
+                </div>
+              )}
+
+              {viewProfileRes.specialRequests && (
+                <div style={{ background: "rgba(236,72,153,0.08)", border: "1px solid rgba(236,72,153,0.2)", borderRadius: "10px", padding: "16px", marginBottom: "20px" }}>
+                  <h4 style={{ margin: "0 0 10px 0", color: "#f472b6" }}>Special Requests</h4>
+                  <p style={{ margin: 0, fontSize: "0.9rem", fontStyle: "italic" }}>"{viewProfileRes.specialRequests}"</p>
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button className="btn-secondary" onClick={() => setViewProfileRes(null)}>Close Profile</button>
               </div>
             </div>
           </div>
