@@ -16,8 +16,9 @@ export async function GET(request: Request) {
         username: true,
         role: true,
         avatar: true,
-        password: true, // We return password for simple demo PIN checks inside client components
+        password: true,
         propertyId: true,
+        ownerId: true,
         allowRoomManagement: true,
         assignedShift: true,
         shiftTiming: true,

@@ -41,6 +41,7 @@ export async function POST(request: Request) {
         role: user.role,
         avatar: user.avatar,
         propertyId: user.propertyId,
+        ownerId: user.ownerId,
         allowRoomManagement: user.allowRoomManagement,
         isFirstLogin: user.isFirstLogin,
         permissions: user.permissions,
