@@ -142,6 +142,7 @@ export default function FrontDeskOps({
   const [isProcessingChange, setIsProcessingChange] = useState(false);
   const [roomChangeLogs, setRoomChangeLogs] = useState<any[]>([]);
   const [upgradeCost, setUpgradeCost] = useState("");
+  const [downgradeRefund, setDowngradeRefund] = useState("");
   const [upgradeCouponCode, setUpgradeCouponCode] = useState("");
   const [isApplyingUpgradeCoupon, setIsApplyingUpgradeCoupon] = useState(false);
   const [upgradeCouponData, setUpgradeCouponData] = useState<any>(null);
@@ -540,10 +541,29 @@ export default function FrontDeskOps({
           }
         }
 
+        // If there's a downgrade refund, add a negative folio charge
+        if (downgradeRefund && parseFloat(downgradeRefund) > 0) {
+          try {
+            await fetch("/api/billing/folio", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                reservationId: roomChangeRes.id,
+                name: "Room Downgrade Refund (Credit Note)",
+                amount: -parseFloat(downgradeRefund),
+                category: "room",
+              }),
+            });
+          } catch (err) {
+            console.error("Failed to add downgrade refund", err);
+          }
+        }
+
         setRoomChangeRes(null);
         setChangeToRoomId("");
         setChangeReason("");
         setUpgradeCost("");
+        setDowngradeRefund("");
         setUpgradeCouponCode("");
         setUpgradeCouponData(null);
         await refreshData();
@@ -1066,15 +1086,22 @@ export default function FrontDeskOps({
                   const newRoomId = e.target.value;
                   setChangeToRoomId(newRoomId);
                   
-                  if (changeReason.includes("Room Upgrade")) {
+                  if (changeReason.includes("Room Upgrade") || changeReason.includes("Room Downgrade")) {
                     const newRoom = currentRooms.find(r => r.id === newRoomId);
                     const oldRoom = getRoomForRes(roomChangeRes);
                     if (newRoom && oldRoom) {
                       const diff = (newRoom.basePrice || 0) - (oldRoom.basePrice || 0);
                       if (diff > 0) {
                         setUpgradeCost((diff * (roomChangeRes.duration || 1)).toString());
+                        setDowngradeRefund("");
+                        if (!changeReason.includes("Room Upgrade")) setChangeReason("Room Upgrade - " + changeReason.replace("Room Downgrade - ", ""));
+                      } else if (diff < 0) {
+                        setDowngradeRefund((Math.abs(diff) * (roomChangeRes.duration || 1)).toString());
+                        setUpgradeCost("");
+                        if (!changeReason.includes("Room Downgrade")) setChangeReason("Room Downgrade - " + changeReason.replace("Room Upgrade - ", ""));
                       } else {
                         setUpgradeCost("");
+                        setDowngradeRefund("");
                       }
                     }
                   }
@@ -1111,6 +1138,19 @@ export default function FrontDeskOps({
                 value={changeReason}
                 onChange={(e) => setChangeReason(e.target.value)}
               />
+
+              {changeReason.includes("Room Downgrade") && (
+                <>
+                  <label style={labelStyle}>Downgrade Refund / Credit Note (₹)</label>
+                  <input
+                    type="number"
+                    style={{ ...inputStyle, marginBottom: "16px", borderColor: "#ec4899" }}
+                    placeholder="Enter refund amount to credit to folio..."
+                    value={downgradeRefund}
+                    onChange={(e) => setDowngradeRefund(e.target.value)}
+                  />
+                </>
+              )}
 
               {changeReason.includes("Room Upgrade") && (
                 <>
