@@ -82,62 +82,62 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
     return "exclusive";
   };
 
-  const calculateGST = (totalAmount: number, isLocal: boolean, gstMode: "exclusive" | "inclusive") => {
-    // Syncing with Front Office logic: 
-    // <= 7500 = 5% (2.5% CGST/SGST)
-    // > 7500 = 18% (9% CGST/SGST)
-    const rate = totalAmount > 7500 ? 0.18 : 0.05;
-    
-    if (gstMode === "inclusive") {
-      const baseAmount = totalAmount / (1 + rate);
-      const gstAmount = totalAmount - baseAmount;
-      if (isLocal) {
-        return {
-          rate: rate * 100,
-          cgst: gstAmount / 2,
-          sgst: gstAmount / 2,
-          igst: 0,
-          total: totalAmount,
-          baseAmount,
-        };
-      } else {
-        return {
-          rate: rate * 100,
-          cgst: 0,
-          sgst: 0,
-          igst: gstAmount,
-          total: totalAmount,
-          baseAmount,
-        };
-      }
+  const calculateItemGST = (item: any, isLocal: boolean, gstMode: "exclusive" | "inclusive") => {
+    let rate = 0;
+    if (item.category === "room") {
+      rate = item.amount > 7500 ? 0.18 : 0.05;
+    } else if (item.category === "discount") {
+      // Discounts usually reduce the room tax or highest tax bracket
+      rate = 0.18; 
     } else {
-      const gstAmount = totalAmount * rate;
-      if (isLocal) {
-        return {
-          rate: rate * 100,
-          cgst: gstAmount / 2,
-          sgst: gstAmount / 2,
-          igst: 0,
-          total: totalAmount + gstAmount,
-          baseAmount: totalAmount,
-        };
-      } else {
-        return {
-          rate: rate * 100,
-          cgst: 0,
-          sgst: 0,
-          igst: gstAmount,
-          total: totalAmount + gstAmount,
-          baseAmount: totalAmount,
-        };
-      }
+      rate = 0.05;
+    }
+    
+    let baseAmount, gstAmount;
+    if (gstMode === "inclusive") {
+      const lockedTotal = Math.round(item.amount * 100) / 100;
+      baseAmount = Math.round((lockedTotal / (1 + rate)) * 100) / 100;
+      gstAmount = lockedTotal - baseAmount;
+    } else {
+      baseAmount = Math.round(item.amount * 100) / 100;
+      gstAmount = Math.round(baseAmount * rate * 100) / 100;
+    }
+
+    if (isLocal) {
+      return {
+        baseAmount,
+        cgst: gstAmount / 2,
+        sgst: gstAmount / 2,
+        igst: 0,
+        total: baseAmount + gstAmount
+      };
+    } else {
+      return {
+        baseAmount,
+        cgst: 0,
+        sgst: 0,
+        igst: gstAmount,
+        total: baseAmount + gstAmount
+      };
     }
   };
 
+  const getInvoiceTotals = (items: any[], isLocal: boolean, gstMode: "exclusive" | "inclusive") => {
+    let baseAmount = 0, cgst = 0, sgst = 0, igst = 0, total = 0;
+    items.forEach(item => {
+      const t = calculateItemGST(item, isLocal, gstMode);
+      baseAmount += t.baseAmount;
+      cgst += t.cgst;
+      sgst += t.sgst;
+      igst += t.igst;
+      total += t.total;
+    });
+    return { baseAmount, cgst, sgst, igst, total };
+  };
+
   const selectedRes = currentReservations.find(r => r.id === selectedResId);
-  const totalRoomCharge = selectedRes ? (selectedRes.billingItems || []).filter(b => b.category === "room").reduce((sum, item) => sum + item.amount, 0) : 0;
   const gstMode = selectedRes ? parseGstMode(selectedRes.details) : "exclusive";
-  const gstDetails = selectedRes ? calculateGST(totalRoomCharge, guestState.toLowerCase() === hotelState.toLowerCase(), gstMode) : null;
+  const gstDetails = selectedRes ? getInvoiceTotals(selectedRes.billingItems || [], guestState.toLowerCase() === hotelState.toLowerCase(), gstMode) : null;
 
   return (
     <div style={{ padding: "24px", color: "white", maxWidth: "1200px", margin: "0 auto" }}>
@@ -432,10 +432,9 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
               </thead>
               <tbody>
                 {currentReservations.filter(r => r.status === "checked-out").map(res => {
-                  const totalRoomCharge = (res.billingItems || []).filter(b => b.category === "room").reduce((sum, item) => sum + item.amount, 0);
                   const mode = parseGstMode(res.details);
                   // Default to local (CGST/SGST) for tabular summary unless state is known
-                  const gst = calculateGST(totalRoomCharge, true, mode);
+                  const gst = getInvoiceTotals(res.billingItems || [], true, mode);
                   let detailsObj: any = {};
                   try {
                     detailsObj = res.details ? (typeof res.details === 'string' ? JSON.parse(res.details) : res.details) : {};

@@ -487,7 +487,7 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
         )}
 
         {activeTab === "NEW_ORDER" && (
-          <div style={{ padding: "1.5rem", maxWidth: "800px", margin: "0 auto", backgroundColor: "#0f172a", borderRadius: "0.5rem" }}>
+          <div style={{ padding: "1.5rem", maxWidth: "800px", width: "100%", margin: "0 auto", backgroundColor: "#0f172a", borderRadius: "0.5rem", overflowY: "auto", maxHeight: "100%" }}>
             <h2 style={{ color: "#fff", marginBottom: "1.5rem" }}>Create New Kitchen Order</h2>
             <form onSubmit={submitNewOrder}>
               <div style={{ marginBottom: "1.5rem" }}>
