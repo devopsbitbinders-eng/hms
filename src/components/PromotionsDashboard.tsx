@@ -26,14 +26,13 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
     try {
       const activeUser = currentUser || JSON.parse(localStorage.getItem("aether_pms_user") || "null");
       const oId = activeUser?.ownerId || activeUser?.id;
-      const role = activeUser?.role;
-      if (!oId && role !== "Super Admin") return;
-      const qC = role === "Super Admin" ? `?t=${Date.now()}` : `?ownerId=${oId || ""}&t=${Date.now()}`;
+      if (!oId) return;
+      const qC = `?ownerId=${oId}&t=${Date.now()}`;
       const cRes = await fetch(`/api/coupons${qC}`);
       const cData = await cRes.json();
       if (cData.success) setCoupons(cData.coupons);
       
-      const qA = role === "Super Admin" ? `?t=${Date.now()}` : `?ownerId=${oId || ""}&t=${Date.now()}`;
+      const qA = `?ownerId=${oId}&t=${Date.now()}`;
       const aRes = await fetch(`/api/affiliates${qA}`);
       const aData = await aRes.json();
       if (aData.success) setAffiliates(aData.affiliates);
