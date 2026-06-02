@@ -155,7 +155,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
               {applyTo === "CUSTOM" && (
                 <input style={inputStyle} placeholder="e.g. Food, Spa, Laundry" value={customTarget} onChange={e => setCustomTarget(e.target.value)} required />
               )}
-              <input style={inputStyle} type="date" title="Expiry Date (Optional)" placeholder="Expiry Date" value={validUntil} onChange={e => setValidUntil(e.target.value)} />
+              <input style={inputStyle} type="datetime-local" title="Expiry Date & Time (Optional)" placeholder="Expiry Date" value={validUntil} onChange={e => setValidUntil(e.target.value)} />
               <button className="btn-primary" type="submit">Create Coupon</button>
             </form>
           </div>
@@ -170,6 +170,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                   <th style={{ textAlign: "left", padding: "8px" }}>Value</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Applies To</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Times Used</th>
+                  <th style={{ textAlign: "left", padding: "8px" }}>Expiry</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Status</th>
                   <th style={{ textAlign: "center", padding: "8px" }}>Actions</th>
                 </tr>
@@ -186,6 +187,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                       </span>
                     </td>
                     <td style={{ padding: "8px" }}>{c.timesUsed}</td>
+                    <td style={{ padding: "8px" }}>{c.validUntil ? new Date(c.validUntil).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : "No Expiry"}</td>
                     <td style={{ padding: "8px" }}>
                       {c.isActive ? "🟢 Active" : "🔴 Inactive"}
                       {c.validUntil && new Date(c.validUntil) < new Date() ? " (Expired)" : ""}
@@ -195,7 +197,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                     </td>
                   </tr>
                 ))}
-                {coupons.length === 0 && <tr><td colSpan={6} style={{ padding: "20px", textAlign: "center", color: "var(--text-secondary)" }}>No coupons found.</td></tr>}
+                {coupons.length === 0 && <tr><td colSpan={7} style={{ padding: "20px", textAlign: "center", color: "var(--text-secondary)" }}>No coupons found.</td></tr>}
               </tbody>
             </table>
           </div>
