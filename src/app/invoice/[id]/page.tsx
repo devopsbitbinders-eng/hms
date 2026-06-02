@@ -353,12 +353,13 @@ export default function InvoicePage() {
             <table>
               <thead>
                 <tr>
-                  <th colSpan={5}>Room Service & Kitchen Details</th>
+                  <th colSpan={6}>Room Service & Kitchen Details</th>
                 </tr>
                 <tr>
                   <th style={{ width: "5%" }}>SR No</th>
-                  <th style={{ width: "45%" }}>Description</th>
-                  <th style={{ width: "20%" }}>Category</th>
+                  <th style={{ width: "40%" }}>Description</th>
+                  <th style={{ width: "10%" }}>Qty</th>
+                  <th style={{ width: "15%" }}>Category</th>
                   <th style={{ width: "15%" }}>Amount</th>
                   <th style={{ width: "15%" }}>GST</th>
                 </tr>
@@ -367,12 +368,19 @@ export default function InvoicePage() {
                 {originalFoodItems.map((fItem, idx) => {
                   const t = calculateGST(fItem);
                   const gstText = t.total - t.baseAmount > 0 ? (t.total - t.baseAmount).toFixed(2) : "0.00";
-                  const displayName = fItem.name.split(" | Qty:")[0];
+                  
+                  const parts = fItem.name.split(" | Qty: ");
+                  const displayName = parts[0];
+                  let qty = "1";
+                  if (parts.length > 1) {
+                    qty = parts[1].split(" | ")[0];
+                  }
                   
                   return (
                     <tr key={fItem.id || idx}>
                       <td>{idx + 1}</td>
                       <td>{displayName}</td>
+                      <td>{qty}</td>
                       <td>{fItem.category.toUpperCase()}</td>
                       <td>{t.baseAmount.toFixed(2)}</td>
                       <td>{gstText}</td>
