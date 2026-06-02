@@ -80,6 +80,24 @@ export async function GET(request: Request) {
         data: { ownerId: newUser.id }
       });
       newUser.ownerId = newUser.id;
+
+      // Handle Affiliate Referral Code
+      const referralCode = body.referralCode;
+      if (referralCode && referralCode.trim() !== "") {
+        const affiliate = await prisma.affiliate.findUnique({
+          where: { referralCode: referralCode.trim().toUpperCase() }
+        });
+        if (affiliate && affiliate.isActive) {
+          // If flat rate, add the flat rate. If percentage, fallback to a flat 1000 since subscription isn't charged
+          const earned = affiliate.commissionType === "FLAT" ? affiliate.commissionValue : 1000;
+          await prisma.affiliate.update({
+            where: { id: affiliate.id },
+            data: {
+              pendingPayout: { increment: earned }
+            }
+          });
+        }
+      }
     }
 
     return NextResponse.json({

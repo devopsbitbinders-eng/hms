@@ -28,6 +28,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
   const [registerName, setRegisterName] = useState("");
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
+  const [registerReferralCode, setRegisterReferralCode] = useState("");
 
   // Fetch staff list on mount
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: registerName, username: registerUsername, password: registerPassword, role: "Owner", avatar: "👑" }),
+        body: JSON.stringify({ name: registerName, username: registerUsername, password: registerPassword, role: "Owner", avatar: "👑", referralCode: registerReferralCode }),
       });
       const data = await res.json();
       if (data.success) {
@@ -305,6 +306,10 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
                   <div>
                     <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Password</label>
                     <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="Set a strong password" required />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Referral Code (Optional)</label>
+                    <input type="text" value={registerReferralCode} onChange={(e) => setRegisterReferralCode(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff", letterSpacing: "1px" }} placeholder="e.g. PARTNER2026" />
                   </div>
                   {error && <div style={{ color: "#ef4444", fontSize: "0.85rem", textAlign: "center", backgroundColor: "rgba(239, 68, 68, 0.1)", padding: "10px", borderRadius: "8px" }}>{error}</div>}
                   <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", color: "#fff", fontWeight: "600", fontSize: "1rem", cursor: "pointer", opacity: loading ? 0.7 : 1 }}>
