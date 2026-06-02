@@ -1062,7 +1062,23 @@ export default function FrontDeskOps({
               <select
                 style={{ ...inputStyle, marginBottom: "16px" }}
                 value={changeToRoomId}
-                onChange={(e) => setChangeToRoomId(e.target.value)}
+                onChange={(e) => {
+                  const newRoomId = e.target.value;
+                  setChangeToRoomId(newRoomId);
+                  
+                  if (changeReason.includes("Room Upgrade")) {
+                    const newRoom = currentRooms.find(r => r.id === newRoomId);
+                    const oldRoom = getRoomForRes(roomChangeRes);
+                    if (newRoom && oldRoom) {
+                      const diff = (newRoom.basePrice || 0) - (oldRoom.basePrice || 0);
+                      if (diff > 0) {
+                        setUpgradeCost((diff * (roomChangeRes.duration || 1)).toString());
+                      } else {
+                        setUpgradeCost("");
+                      }
+                    }
+                  }
+                }}
               >
                 <option value="" style={optionStyle}>-- Choose a Room --</option>
                 {currentRooms
