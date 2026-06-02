@@ -26,7 +26,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
     try {
       const oId = currentUser?.ownerId || currentUser?.id;
       if (!oId && currentUser?.role !== "Super Admin") return;
-      const q = `?ownerId=${oId || ""}`;
+      const q = `?ownerId=${oId || ""}&t=${Date.now()}`;
       const cRes = await fetch(`/api/coupons${q}`);
       const cData = await cRes.json();
       if (cData.success) setCoupons(cData.coupons);

@@ -385,7 +385,7 @@ export default function Dashboard() {
     if (!oId) return;
     try {
       setLoading(true);
-      const url = `/api/properties?ownerId=${oId}`;
+      const url = `/api/properties?ownerId=${oId}&t=${Date.now()}`;
       const response = await fetch(url);
       const data = await response.json();
       if (data.success) {
@@ -458,7 +458,7 @@ export default function Dashboard() {
     const oId = ownerId || currentUser?.ownerId || currentUser?.id;
     if (!oId) return;
     try {
-      const res = await fetch("/api/users?ownerId=" + oId);
+      const res = await fetch(`/api/users?ownerId=${oId}&t=${Date.now()}`);
       const data = await res.json();
       if (data.success) {
         setUsersList(data.users);
@@ -552,7 +552,7 @@ export default function Dashboard() {
       const oId = currentUser?.ownerId || currentUser?.id;
       if (!oId && currentUser?.role !== "Super Admin") return;
       const today = new Date().toISOString().split("T")[0];
-      const res = await fetch(`/api/attendance?date=${today}&ownerId=${oId || ""}`);
+      const res = await fetch(`/api/attendance?date=${today}&ownerId=${oId || ""}&t=${Date.now()}`);
       const data = await res.json();
       if (data.success) {
         setAllAttendances(data.attendances);
@@ -566,7 +566,7 @@ export default function Dashboard() {
     try {
       const oId = currentUser?.ownerId || currentUser?.id;
       if (!oId && currentUser?.role !== "Super Admin") return;
-      const res = await fetch(`/api/shift-swap?ownerId=${oId || ""}`);
+      const res = await fetch(`/api/shift-swap?ownerId=${oId || ""}&t=${Date.now()}`);
       const data = await res.json();
       if (!data.error) {
         setShiftSwapRequests(data.requests || []);
@@ -580,7 +580,7 @@ export default function Dashboard() {
     try {
       const oId = currentUser?.ownerId || currentUser?.id;
       if (!oId && currentUser?.role !== "Super Admin") return;
-      const res = await fetch(`/api/leave?ownerId=${oId || ""}`);
+      const res = await fetch(`/api/leave?ownerId=${oId || ""}&t=${Date.now()}`);
       const data = await res.json();
       if (!data.error) {
         setLeaveRequests(data);
