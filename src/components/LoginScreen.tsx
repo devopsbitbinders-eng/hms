@@ -164,7 +164,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
       zIndex: 99999,
       backgroundImage: "radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15), transparent 60%)"
     }}>
-      <div className="glass-card" style={{ width: "100%", maxWidth: "450px", padding: "40px", borderRadius: "16px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
+      <div className="glass-card" style={{ width: "100%", maxWidth: "450px", maxHeight: "90vh", overflowY: "auto", padding: "40px", borderRadius: "16px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
         
         {/* Logo / Header */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>

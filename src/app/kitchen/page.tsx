@@ -53,7 +53,7 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
 
   const checkPerm = (permId: string) => {
     if (!currentUser) return false;
-    if (currentUser.role === "Super Admin") return true;
+    if (currentUser.role === "Super Admin" || currentUser.role === "Owner") return true;
     if (currentUser.permissions && Array.isArray(currentUser.permissions)) {
       if (currentUser.permissions.includes(permId)) return true;
       if (permId.includes(":")) {

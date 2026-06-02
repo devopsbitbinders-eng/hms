@@ -72,8 +72,8 @@ export default function Dashboard() {
   const hasPermission = (permId: string) => {
     if (!currentUser) return false;
     
-    // Super Admins bypass everything
-    if (currentUser.role === "Super Admin") return true;
+    // Super Admins and Owners bypass everything
+    if (currentUser.role === "Super Admin" || currentUser.role === "Owner") return true;
 
     // If they have explicitly defined custom permissions, STRICTLY rely on that array
     if (currentUser.permissions && Array.isArray(currentUser.permissions)) {
@@ -1714,7 +1714,7 @@ export default function Dashboard() {
   // Check if active user has permission to open a tab
   const checkTabPermission = (menuId: string) => {
     if (!currentUser) return true;
-    if (currentUser.role === "Super Admin") return true;
+    if (currentUser.role === "Super Admin" || currentUser.role === "Owner") return true;
 
     // Check if an override is active
     if (tabOverrides[menuId]) return true;
