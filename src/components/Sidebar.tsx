@@ -28,6 +28,7 @@ export default function Sidebar({
     { id: "housekeeping", label: "Housekeeping & Ops", icon: "🧹" },
     { id: "kitchen", label: "Kitchen ", icon: "🍳" },
     { id: "finance", label: activePropertyType === "homestay" ? "Bills & Earnings" : "Finance & GST", icon: "💰" },
+    { id: "promotions", label: "Coupons & Referrals", icon: "🎁" },
     { id: "reviews", label: "Reviews", icon: "⭐" },
     { id: "attendance", label: "Attendance", icon: "⏱️" },
     { id: "staff-management", label: "Staff & Shifts", icon: "👥" },
@@ -55,13 +56,13 @@ export default function Sidebar({
       return item.id !== "settings";
     }
     if (role === "Front Office Manager") {
-      return ["front-office", "front-desk", "housekeeping", "kitchen", "reviews", "attendance", "staff-management"].includes(item.id);
+      return ["front-office", "front-desk", "housekeeping", "kitchen", "promotions", "reviews", "attendance", "staff-management"].includes(item.id);
     }
     if (role === "Receptionist") {
       return ["front-office", "front-desk", "housekeeping", "kitchen", "reviews", "attendance"].includes(item.id);
     }
     if (role === "Finance Executive") {
-      return ["front-office", "front-desk", "finance", "attendance"].includes(item.id);
+      return ["front-office", "front-desk", "finance", "promotions", "attendance"].includes(item.id);
     }
     if (role === "Housekeeper" || role === "Housekeeping Supervisor") {
       return ["housekeeping", "attendance"].includes(item.id);

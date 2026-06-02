@@ -15,6 +15,7 @@ import FinanceOps from "../components/FinanceOps";
 import FrontDeskOps from "../components/FrontDeskOps";
 import ReviewManagement from "../components/ReviewManagement";
 import LoginScreen from "../components/LoginScreen";
+import PromotionsDashboard from "../components/PromotionsDashboard";
 
 // Helper to map DB property names to frontend property keys
 const mapPropertyKey = (name: string): string => {
@@ -2232,7 +2233,13 @@ export default function Dashboard() {
               addToast={addToast}
             />
           </section>
-        
+        ) : activeMenu === "promotions" ? (
+          <section style={{ overflowY: "auto", flexGrow: 1 }}>
+            <PromotionsDashboard
+              currentUser={currentUser}
+              addToast={addToast}
+            />
+          </section>
         ) : activeMenu === "attendance" ? (
           <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, minHeight: 0 }}>
             <div className="glass-card" style={{ padding: "32px", display: "flex", flexDirection: "column", minHeight: "min-content" }}>
