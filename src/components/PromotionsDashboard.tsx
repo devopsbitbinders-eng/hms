@@ -236,6 +236,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                   <th style={{ textAlign: "left", padding: "8px" }}>Name</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Code</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Commission</th>
+                  <th style={{ textAlign: "left", padding: "8px" }}>Times Used</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Total Earned</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Pending Payout</th>
                   <th style={{ textAlign: "right", padding: "8px" }}>Actions</th>
@@ -247,6 +248,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                     <td style={{ padding: "8px", fontWeight: "bold" }}>{a.name}</td>
                     <td style={{ padding: "8px", color: "var(--primary-color)" }}>{a.referralCode}</td>
                     <td style={{ padding: "8px" }}>{a.commissionType === "FLAT" ? `₹${a.commissionValue}` : `${a.commissionValue}%`}</td>
+                    <td style={{ padding: "8px" }}>{a.referrals?.length || 0}</td>
                     <td style={{ padding: "8px" }}>₹{a.totalEarned.toFixed(2)}</td>
                     <td style={{ padding: "8px", color: a.pendingPayout > 0 ? "#f59e0b" : "var(--text-secondary)" }}>
                       ₹{a.pendingPayout.toFixed(2)}

@@ -343,6 +343,27 @@ export default function FrontDeskOps({
     }
 
     try {
+      if (checkoutCouponData && checkoutCouponData.discountAmount > 0) {
+        await fetch("/api/billing/folio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reservationId: checkoutRes.id,
+            name: `Discount (${checkoutCouponData.couponApplied})`,
+            amount: -checkoutCouponData.discountAmount,
+            category: "discount",
+          }),
+        });
+        
+        // Push it into checkoutRes locally so the PDF generation picks it up
+        checkoutRes.billingItems.push({
+          id: "discount-item-" + Date.now(),
+          name: `Discount (${checkoutCouponData.couponApplied})`,
+          amount: -checkoutCouponData.discountAmount,
+          category: "discount"
+        });
+      }
+
       // 1. Mark reservation as checked-out and update duration
       const response = await fetch(`/api/reservations/${checkoutRes.id}`, {
         method: "PUT",

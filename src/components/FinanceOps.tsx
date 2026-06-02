@@ -86,11 +86,8 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
     let rate = 0;
     if (item.category === "room") {
       rate = item.amount > 7500 ? 0.18 : 0.05;
-    } else if (item.category === "discount") {
-      // Discounts usually reduce the room tax or highest tax bracket
-      rate = 0.18; 
     } else {
-      rate = 0.05;
+      rate = 0.05; // 5% for F&B, spa, discount, etc.
     }
     
     let baseAmount, gstAmount;
