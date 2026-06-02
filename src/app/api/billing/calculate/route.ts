@@ -95,8 +95,9 @@ export async function GET(request: Request) {
     let discountAmount = 0;
     let targetBase = roomBase;
     let upgradeBase = 0;
+    let customBase = 0;
     
-    if (coupon && (coupon.applyTo === "GRAND_TOTAL" || coupon.applyTo === "CUSTOM")) {
+    if (coupon && coupon.applyTo === "GRAND_TOTAL") {
       targetBase = roomBase + finalOtherBase;
     } else if (coupon && coupon.applyTo === "ROOM_UPGRADE_ONLY") {
       // Find upgrade items in billing
@@ -107,6 +108,15 @@ export async function GET(request: Request) {
         }
       });
       targetBase = upgradeBase;
+    } else if (coupon && coupon.applyTo.startsWith("CUSTOM:")) {
+      const target = coupon.applyTo.split(":")[1].toLowerCase();
+      reservation.billingItems.forEach(item => {
+        if (item.name.toLowerCase().includes(target) || item.category.toLowerCase().includes(target)) {
+           const rate = getGstRate(item.category, item.amount);
+           customBase += isInclusive ? (item.amount / (1 + rate)) : item.amount;
+        }
+      });
+      targetBase = customBase;
     }
 
     if (coupon) {
@@ -138,7 +148,7 @@ export async function GET(request: Request) {
       } else {
         discountedRoomBase = roomBase - remainingDiscount;
       }
-    } else if (coupon && (coupon.applyTo === "GRAND_TOTAL" || coupon.applyTo === "CUSTOM")) {
+    } else if (coupon && (coupon.applyTo === "GRAND_TOTAL" || coupon.applyTo.startsWith("CUSTOM:"))) {
       // If it's a grand total discount, we just reduce the roomBase proportionally or take it entirely from room to keep things simple.
       // Usually, we just subtract from the total base. Let's just deduct it from room base first, and if it exceeds, from other base.
       let remainingDiscount = discountAmount;

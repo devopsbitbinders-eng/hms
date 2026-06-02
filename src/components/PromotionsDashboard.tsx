@@ -12,6 +12,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
   const [discountType, setDiscountType] = useState("PERCENTAGE");
   const [discountValue, setDiscountValue] = useState("");
   const [applyTo, setApplyTo] = useState("ROOM_ONLY");
+  const [customTarget, setCustomTarget] = useState("");
   
   // Form States for Affiliates
   const [affName, setAffName] = useState("");
@@ -45,7 +46,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: couponCode, discountType, discountValue, applyTo
+          code: couponCode, discountType, discountValue, applyTo: applyTo === "CUSTOM" ? `CUSTOM:${customTarget}` : applyTo
         })
       });
       const data = await res.json();
@@ -131,8 +132,11 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                 <option value="ROOM_ONLY">Room Tariff Only</option>
                 <option value="GRAND_TOTAL">Grand Total (Inc. Food/Extras)</option>
                 <option value="ROOM_UPGRADE_ONLY">Room Upgrade Only</option>
-                <option value="CUSTOM">Custom / Other</option>
+                <option value="CUSTOM">Custom Category/Name</option>
               </select>
+              {applyTo === "CUSTOM" && (
+                <input style={inputStyle} placeholder="e.g. Food, Spa, Laundry" value={customTarget} onChange={e => setCustomTarget(e.target.value)} required />
+              )}
               <button className="btn-primary" type="submit">Create Coupon</button>
             </form>
           </div>
@@ -158,7 +162,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                     <td style={{ padding: "8px" }}>{c.discountType === "FLAT" ? `₹${c.discountValue}` : `${c.discountValue}%`}</td>
                     <td style={{ padding: "8px" }}>
                       <span style={{ fontSize: "0.75rem", padding: "2px 6px", borderRadius: "4px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>
-                        {c.applyTo.replace(/_/g, " ")}
+                        {c.applyTo.replace(/_/g, " ").replace("CUSTOM:", "Custom: ")}
                       </span>
                     </td>
                     <td style={{ padding: "8px" }}>{c.timesUsed}</td>
