@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const reservationId = searchParams.get("reservationId");
     const couponCode = searchParams.get("couponCode"); // Optional: if applying a new coupon
+    const invoiceGroup = searchParams.get("invoiceGroup");
 
     if (!reservationId) {
       return NextResponse.json({ success: false, error: "Missing reservationId" }, { status: 400 });
@@ -25,6 +26,13 @@ export async function GET(request: Request) {
 
     if (!reservation) {
       return NextResponse.json({ success: false, error: "Reservation not found" }, { status: 404 });
+    }
+
+    // Filter items if invoiceGroup is provided
+    if (invoiceGroup) {
+      reservation.billingItems = reservation.billingItems.filter((item: any) => 
+        invoiceGroup === "B" ? item.invoiceGroup === "B" : (item.invoiceGroup === "A" || !item.invoiceGroup)
+      );
     }
 
     const isInclusive = reservation.details?.includes("[GST:inclusive]") ?? false;

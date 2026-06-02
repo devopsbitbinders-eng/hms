@@ -9,6 +9,7 @@ export default function InvoicePage() {
   const router = useRouter();
   const invoiceType = searchParams.get('type'); // "A" or "B"
   const [reservation, setReservation] = useState<any>(null);
+  const [calcData, setCalcData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,6 +21,12 @@ export default function InvoicePage() {
         if (data.success) {
           setReservation(data.reservation);
         }
+
+        const calcRes = await fetch(`/api/billing/calculate?reservationId=${id}${invoiceType ? `&invoiceGroup=${invoiceType}` : ''}`);
+        const cData = await calcRes.json();
+        if (cData.success) {
+          setCalcData(cData.data);
+        }
       } catch (err) {
         console.error("Failed to fetch reservation:", err);
       } finally {
@@ -27,7 +34,7 @@ export default function InvoicePage() {
       }
     };
     fetchReservation();
-  }, [id]);
+  }, [id, invoiceType]);
 
   if (loading) return <div style={{ padding: "40px", textAlign: "center" }}>Loading Invoice...</div>;
   if (!reservation) return <div style={{ padding: "40px", textAlign: "center", color: "red" }}>Reservation not found.</div>;
@@ -319,13 +326,23 @@ export default function InvoicePage() {
                 </td>
                 <td className="right-align">{totalGst} /-</td>
               </tr>
+              {calcData && calcData.discountAmount > 0 && (
+                <tr>
+                  <td colSpan={4} className="bold" style={{ color: "#10b981" }}>
+                    Discount ({calcData.couponApplied})
+                  </td>
+                  <td className="right-align" style={{ color: "#10b981" }}>
+                    - {calcData.discountAmount.toFixed(2)} /-
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td colSpan={4} className="bold">Grand Total</td>
-                <td className="right-align">{totalAmount} /-</td>
+                <td className="right-align">{calcData ? calcData.grandTotal.toFixed(2) : totalAmount} /-</td>
               </tr>
               <tr>
                 <td colSpan={4} className="bold">Paid Amount</td>
-                <td className="right-align">{totalAmount} /-</td>
+                <td className="right-align">{calcData ? calcData.grandTotal.toFixed(2) : totalAmount} /-</td>
               </tr>
             </tbody>
           </table>
