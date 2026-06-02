@@ -141,6 +141,10 @@ export default function FrontDeskOps({
   const [changeReason, setChangeReason] = useState("");
   const [isProcessingChange, setIsProcessingChange] = useState(false);
   const [roomChangeLogs, setRoomChangeLogs] = useState<any[]>([]);
+  const [upgradeCost, setUpgradeCost] = useState("");
+  const [upgradeCouponCode, setUpgradeCouponCode] = useState("");
+  const [isApplyingUpgradeCoupon, setIsApplyingUpgradeCoupon] = useState(false);
+  const [upgradeCouponData, setUpgradeCouponData] = useState<any>(null);
 
   // Food Order state
   const [foodOrderRes, setFoodOrderRes] = useState<Reservation | null>(null);
@@ -516,9 +520,31 @@ export default function FrontDeskOps({
       const data = await res.json();
       if (data.success) {
         addToast(`✅ Room changed successfully for ${roomChangeRes.guestName}`, "success");
+        
+        // If there's an upgrade cost, add a folio charge
+        if (upgradeCost && parseFloat(upgradeCost) > 0) {
+          try {
+            await fetch("/api/billing/folio", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                reservationId: roomChangeRes.id,
+                name: "Room Upgrade",
+                amount: parseFloat(upgradeCost),
+                category: "room",
+              }),
+            });
+          } catch (err) {
+            console.error("Failed to add upgrade charge", err);
+          }
+        }
+
         setRoomChangeRes(null);
         setChangeToRoomId("");
         setChangeReason("");
+        setUpgradeCost("");
+        setUpgradeCouponCode("");
+        setUpgradeCouponData(null);
         await refreshData();
         await fetchRoomChanges();
       } else {
@@ -528,6 +554,48 @@ export default function FrontDeskOps({
       addToast("Network error. Please try again.", "error");
     } finally {
       setIsProcessingChange(false);
+    }
+  };
+
+  const handleApplyUpgradeCoupon = async () => {
+    if (!roomChangeRes || !upgradeCouponCode.trim() || !upgradeCost) return;
+    setIsApplyingUpgradeCoupon(true);
+    try {
+      // Create a temporary mock item to calculate discount on the fly without saving to DB yet
+      // But actually, it's easier to lock the coupon to the reservation right away
+      const applyRes = await fetch("/api/billing/coupon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId: roomChangeRes.id, couponCode: upgradeCouponCode, appliedBy: currentUser?.name || "Front Desk" })
+      });
+      const applyData = await applyRes.json();
+      
+      if (!applyData.success) {
+        throw new Error(applyData.error);
+      }
+
+      setUpgradeCouponData({ success: true, code: upgradeCouponCode });
+      addToast(`✅ Coupon ${upgradeCouponCode} applied! Discount will be calculated upon checkout.`, "success");
+    } catch (err: any) {
+      addToast(`Failed to apply coupon: ${err.message}`, "error");
+      setUpgradeCouponCode("");
+    } finally {
+      setIsApplyingUpgradeCoupon(false);
+    }
+  };
+
+  const handleRemoveUpgradeCoupon = async () => {
+    if (!roomChangeRes) return;
+    try {
+      const res = await fetch(`/api/billing/coupon?reservationId=${roomChangeRes.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        setUpgradeCouponCode("");
+        setUpgradeCouponData(null);
+        addToast("Coupon removed", "success");
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -1012,6 +1080,37 @@ export default function FrontDeskOps({
                 value={changeReason}
                 onChange={(e) => setChangeReason(e.target.value)}
               />
+
+              {changeReason.includes("Room Upgrade") && (
+                <>
+                  <label style={labelStyle}>Upgrade Cost (₹)</label>
+                  <input
+                    type="number"
+                    style={{ ...inputStyle, marginBottom: "16px" }}
+                    placeholder="Enter additional charge for this upgrade..."
+                    value={upgradeCost}
+                    onChange={(e) => setUpgradeCost(e.target.value)}
+                  />
+
+                  <label style={labelStyle}>Apply Upgrade Coupon</label>
+                  <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
+                    <input
+                      style={{ ...inputStyle, flexGrow: 1, marginBottom: 0 }}
+                      placeholder="Enter Coupon / Referral Code"
+                      value={upgradeCouponCode}
+                      onChange={(e) => setUpgradeCouponCode(e.target.value.toUpperCase())}
+                      disabled={upgradeCouponData !== null}
+                    />
+                    {upgradeCouponData ? (
+                      <button className="btn-secondary" onClick={handleRemoveUpgradeCoupon}>Remove</button>
+                    ) : (
+                      <button className="btn-primary" onClick={handleApplyUpgradeCoupon} disabled={isApplyingUpgradeCoupon || !upgradeCouponCode.trim() || !upgradeCost}>
+                        {isApplyingUpgradeCoupon ? "..." : "Apply"}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
 
               <div style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "8px", padding: "10px 14px", marginBottom: "20px", fontSize: "0.8rem", color: "#fcd34d" }}>
                 ⚠️ This action will immediately move the guest to the new room and log the change in the Room Changes report.
