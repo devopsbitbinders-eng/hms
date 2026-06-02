@@ -1,13 +1,23 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    // Relational safe truncation in reverse order of constraints
-    await prisma.billingItem.deleteMany();
-    await prisma.reservation.deleteMany();
-    await prisma.room.deleteMany();
-    await prisma.property.deleteMany();
+    let ownerId = null;
+    try {
+      const body = await request.json();
+      ownerId = body.ownerId;
+    } catch (e) {}
+
+    if (ownerId) {
+      await prisma.property.deleteMany({ where: { ownerId } });
+      await prisma.user.deleteMany({ where: { ownerId, NOT: { id: ownerId } } });
+    } else {
+      await prisma.billingItem.deleteMany();
+      await prisma.reservation.deleteMany();
+      await prisma.room.deleteMany();
+      await prisma.property.deleteMany();
+    }
 
     return NextResponse.json({
       success: true,

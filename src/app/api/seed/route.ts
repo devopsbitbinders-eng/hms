@@ -1,55 +1,32 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // 1. Clean the database tables in reverse order of relations
-    await prisma.billingItem.deleteMany();
-    await prisma.reservation.deleteMany();
-    await prisma.room.deleteMany();
-    await prisma.property.deleteMany();
-    
-    // Safely attempt clearing of User table if it exists in DB
-    try {
-      await prisma.user.deleteMany();
-    } catch (e) {
-      console.warn("User table cleanup skipped or failed:", e);
+    const { searchParams } = new URL(request.url);
+    const ownerId = searchParams.get("ownerId");
+
+    if (ownerId) {
+      await prisma.property.deleteMany({ where: { ownerId } });
+      await prisma.user.deleteMany({ where: { ownerId, NOT: { id: ownerId } } });
+    } else {
+      await prisma.billingItem.deleteMany();
+      await prisma.reservation.deleteMany();
+      await prisma.room.deleteMany();
+      await prisma.property.deleteMany();
+      try { await prisma.user.deleteMany(); } catch(e) {}
     }
 
-    // 2. Seed Default Staff Accounts
-    await prisma.user.createMany({
-      data: [
-        {
-          name: "Aravind Mehta",
-          username: "aravind",
-          password: "adminpassword",
-          role: "Super Admin",
-          avatar: "AM"
-        },
-        {
-          name: "Kabir Anand",
-          username: "kabir",
-          password: "frontoffice",
-          role: "Front Office Manager",
-          avatar: "KA"
-        },
-        {
-          name: "Meera Sen",
-          username: "meera",
-          password: "housekeeping",
-          role: "Housekeeping Supervisor",
-          avatar: "MS"
-        },
-        {
-          name: "Sanjay Singhal",
-          username: "sanjay",
-          password: "finance",
-          role: "Finance Executive",
-          avatar: "SS"
-        }
-      ]
-    });
-
+    // Seed default staff for this owner
+    if (ownerId) {
+      await prisma.user.createMany({
+        data: [
+          { name: "Kabir Anand", username: `kabir_${ownerId.substring(0, 4)}`, password: "frontoffice", role: "Front Office Manager", avatar: "KA", ownerId },
+          { name: "Meera Sen", username: `meera_${ownerId.substring(0, 4)}`, password: "housekeeping", role: "Housekeeping Supervisor", avatar: "MS", ownerId },
+          { name: "Sanjay Singhal", username: `sanjay_${ownerId.substring(0, 4)}`, password: "finance", role: "Finance Executive", avatar: "SS", ownerId }
+        ]
+      });
+    }
 
     // 2. Seed Goa Beachfront Homestay
     const goa = await prisma.property.create({
@@ -57,6 +34,7 @@ export async function GET() {
         name: "Goa Beachfront Homestay",
         type: "homestay",
         location: "Goa, India",
+        ownerId: ownerId || null,
         rooms: {
           create: [
             { number: "101", name: "Suite Palms", type: "Premium Suite" },
@@ -143,6 +121,7 @@ export async function GET() {
         name: "Manali Alpine Chalet",
         type: "resort",
         location: "Manali, Himachal Pradesh",
+        ownerId: ownerId || null,
         rooms: {
           create: [
             { number: "201", name: "Pine Retreat", type: "Deluxe Room" },
@@ -216,6 +195,7 @@ export async function GET() {
         name: "Delhi Business Suite",
         type: "hotel",
         location: "Connaught Place, New Delhi",
+        ownerId: ownerId || null,
         rooms: {
           create: [
             { number: "301", name: "Executive Club A", type: "Business Suite" },

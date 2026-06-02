@@ -838,6 +838,7 @@ export default function Dashboard() {
           type: newPropType,
           location: newPropLocation,
           gstNumber: newPropGstNumber,
+          ownerId: currentUser?.ownerId || currentUser?.id,
         }),
       });
       const data = await response.json();
@@ -1666,7 +1667,12 @@ export default function Dashboard() {
 
     try {
       setLoading(true);
-      const response = await fetch("/api/clear", { method: "POST" });
+      const oId = currentUser?.ownerId || currentUser?.id;
+      const response = await fetch("/api/clear", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ownerId: oId })
+      });
       const data = await response.json();
       if (data.success) {
         addToast("🗑️ MySQL Database fully wiped.");
@@ -1689,7 +1695,8 @@ export default function Dashboard() {
   const handleSeedDatabase = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/seed");
+      const oId = currentUser?.ownerId || currentUser?.id;
+      const response = await fetch(`/api/seed?ownerId=${oId}`);
       const data = await response.json();
       if (data.success) {
         addToast("🌱 Seeded Goan, Manali & Delhi demo branches successfully!");
