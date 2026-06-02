@@ -31,16 +31,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
 
   // Fetch staff list on mount
   useEffect(() => {
-    fetch("/api/users")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success && data.users) {
-          // Filter out Super Admin if you only want staff in the dropdown,
-          // or just show everyone except Super Admin
-          setStaffList(data.users.filter((u: any) => u.role !== "Super Admin" && u.role !== "Owner"));
-        }
-      })
-      .catch((err) => console.error("Failed to load staff list", err));
+    // No longer pre-fetching staff list — staff type username for privacy
   }, []);
 
   const handleOwnerLogin = async (e: React.FormEvent) => {
@@ -263,20 +254,15 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
             {tab === "staff" ? (
               <form onSubmit={handleStaffLogin} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Select Your Name</label>
-                  <select 
-                    value={selectedStaffUsername} 
+                  <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Staff Username</label>
+                  <input
+                    type="text"
+                    value={selectedStaffUsername}
                     onChange={(e) => setSelectedStaffUsername(e.target.value)}
                     style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }}
+                    placeholder="Enter username"
                     required
-                  >
-                    <option value="" style={{ background: "#0f0c1b", color: "#fff" }}>-- Choose Staff Profile --</option>
-                    {staffList.map(staff => (
-                      <option key={staff.username} value={staff.username} style={{ background: "#0f0c1b", color: "#fff", padding: "10px" }}>
-                        {staff.name} ({staff.role})
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Access PIN</label>
