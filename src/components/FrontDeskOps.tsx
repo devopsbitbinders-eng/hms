@@ -151,6 +151,7 @@ export default function FrontDeskOps({
   const [kitchenMenu, setKitchenMenu] = useState<any[]>([]);
   const [newOrderItems, setNewOrderItems] = useState<{ [itemId: string]: number }>({});
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [isQuickOrderModalOpen, setIsQuickOrderModalOpen] = useState(false);
 
   // Fetch room change logs
   const fetchRoomChanges = async () => {
@@ -693,13 +694,27 @@ export default function FrontDeskOps({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Header */}
-      <div>
-        <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginBottom: "4px", display: "flex", alignItems: "center", gap: "10px" }}>
-          🏨 Front Desk Operations
-        </h2>
-        <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-          Manage daily arrivals, in-house guest folios, and check-outs in real time.
-        </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: "700", marginBottom: "4px", display: "flex", alignItems: "center", gap: "10px" }}>
+            🏨 Front Desk Operations
+          </h2>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+            Manage daily arrivals, in-house guest folios, and check-outs in real time.
+          </p>
+        </div>
+        <button 
+          className="btn-primary" 
+          style={{ background: "linear-gradient(135deg, #10b981, #059669)", fontWeight: "600" }}
+          onClick={() => {
+            if (kitchenMenu.length === 0) {
+              fetch("/api/kitchen/menu").then(r => r.json()).then(data => { if(data.success) setKitchenMenu(data.menuItems); });
+            }
+            setIsQuickOrderModalOpen(true);
+          }}
+        >
+          📞 New Phone Order
+        </button>
       </div>
 
       {/* Summary Cards */}
@@ -1545,6 +1560,42 @@ export default function FrontDeskOps({
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Phone Order Modal */}
+      {isQuickOrderModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-card" style={{ maxWidth: "450px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: "700" }}>📞 New Phone Order</h3>
+              <button onClick={() => setIsQuickOrderModalOpen(false)} style={{ background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "1.5rem" }}>&times;</button>
+            </div>
+            
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>Select Guest / Room *</label>
+            <select 
+              style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(0,0,0,0.2)", color: "#fff", marginBottom: "24px" }}
+              onChange={(e) => {
+                const res = inHouseGuests.find(r => r.id === e.target.value);
+                if (res) {
+                  setIsQuickOrderModalOpen(false);
+                  handleOpenFoodOrder(res);
+                }
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>-- Choose an In-House Guest --</option>
+              {inHouseGuests.map(res => (
+                <option key={res.id} value={res.id}>
+                  Room {getRoomForRes(res)?.number} — {res.guestName}
+                </option>
+              ))}
+            </select>
+            
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button className="btn-secondary" onClick={() => setIsQuickOrderModalOpen(false)}>Cancel</button>
+            </div>
           </div>
         </div>
       )}
