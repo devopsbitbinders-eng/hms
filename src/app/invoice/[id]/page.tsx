@@ -52,7 +52,7 @@ export default function InvoicePage() {
 
   let originalFoodItems: any[] = [];
   const foodItems = items.filter((i: any) => i.category === "food");
-  
+
   if (foodItems.length > 0) {
     if (summarizeFood) {
       // Consolidate the main table's food items into a single line
@@ -182,9 +182,9 @@ export default function InvoicePage() {
       `}</style>
 
       <div className="no-print floating-action-bar">
-        <span style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>Invoice / Voucher View</span>
+        <span style={{ color: "white", fontSize: "14px", fontWeight: "bold" }}>Invoice View</span>
         <div style={{ display: "flex", gap: "12px" }}>
-          <button onClick={printDocument} style={{ padding: "8px 16px", cursor: "pointer", background: "#4f46e5", color: "white", border: "none", borderRadius: "4px", fontWeight: "bold" }}>🖨️ Print Voucher</button>
+          <button onClick={printDocument} style={{ padding: "8px 16px", cursor: "pointer", background: "#4f46e5", color: "white", border: "none", borderRadius: "4px", fontWeight: "bold" }}>🖨️ Print Invoice</button>
         </div>
       </div>
 
@@ -368,14 +368,14 @@ export default function InvoicePage() {
                 {originalFoodItems.map((fItem, idx) => {
                   const t = calculateGST(fItem);
                   const gstText = t.total - t.baseAmount > 0 ? (t.total - t.baseAmount).toFixed(2) : "0.00";
-                  
+
                   const parts = fItem.name.split(" | Qty: ");
                   const displayName = parts[0];
                   let qty = "1";
                   if (parts.length > 1) {
                     qty = parts[1].split(" | ")[0];
                   }
-                  
+
                   return (
                     <tr key={fItem.id || idx}>
                       <td>{idx + 1}</td>
