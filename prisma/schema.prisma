@@ -150,6 +150,7 @@ model User {
   leaveRequests       LeaveRequest[]
   shiftSwapRequestsMade     ShiftSwapRequest[] @relation("ShiftSwapRequester")
   shiftSwapRequestsReceived ShiftSwapRequest[] @relation("ShiftSwapTarget")
+  referredBy          Referral?  @relation("OwnerReferral")
 }
 
 model Notification {
@@ -368,13 +369,15 @@ model Referral {
   id              String      @id @default(uuid())
   ownerId         String?
   affiliateId     String
-  reservationId   String      @unique
+  reservationId   String?     @unique
+  referredOwnerId String?     @unique
   status          String      // "PENDING", "PAYABLE", "PAID", "CANCELLED"
   commissionEarned Float
   createdAt       DateTime    @default(now())
   
   affiliate       Affiliate   @relation(fields: [affiliateId], references: [id])
-  reservation     Reservation @relation(fields: [reservationId], references: [id])
+  reservation     Reservation? @relation(fields: [reservationId], references: [id])
+  referredOwner   User?       @relation("OwnerReferral", fields: [referredOwnerId], references: [id])
 }
 
 model CouponAuditLog {

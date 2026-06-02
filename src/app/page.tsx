@@ -381,11 +381,13 @@ export default function Dashboard() {
 
   // Fetch properties and structure states on mount
   async function loadData(ownerId?: string) {
-    const oId = ownerId || currentUser?.ownerId || currentUser?.id;
-    if (!oId && currentUser?.role !== "Super Admin") return;
+    const activeUser = currentUser || JSON.parse(localStorage.getItem("aether_pms_user") || "null");
+    const oId = ownerId || activeUser?.ownerId || activeUser?.id;
+    const role = activeUser?.role;
+    if (!oId && role !== "Super Admin") return;
     try {
       setLoading(true);
-      const url = currentUser?.role === "Super Admin" ? `/api/properties?t=${Date.now()}` : `/api/properties?ownerId=${oId}&t=${Date.now()}`;
+      const url = role === "Super Admin" ? `/api/properties?t=${Date.now()}` : `/api/properties?ownerId=${oId}&t=${Date.now()}`;
       const response = await fetch(url);
       const data = await response.json();
       if (data.success) {
@@ -455,10 +457,12 @@ export default function Dashboard() {
   }
 
   const fetchUsers = async (ownerId?: string) => {
-    const oId = ownerId || currentUser?.ownerId || currentUser?.id;
-    if (!oId && currentUser?.role !== "Super Admin") return;
+    const activeUser = currentUser || JSON.parse(localStorage.getItem("aether_pms_user") || "null");
+    const oId = ownerId || activeUser?.ownerId || activeUser?.id;
+    const role = activeUser?.role;
+    if (!oId && role !== "Super Admin") return;
     try {
-      const url = currentUser?.role === "Super Admin" ? `/api/users?t=${Date.now()}` : `/api/users?ownerId=${oId}&t=${Date.now()}`;
+      const url = role === "Super Admin" ? `/api/users?t=${Date.now()}` : `/api/users?ownerId=${oId}&t=${Date.now()}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
@@ -550,10 +554,12 @@ export default function Dashboard() {
 
   async function fetchAttendance() {
     try {
-      const oId = currentUser?.ownerId || currentUser?.id;
-      if (!oId && currentUser?.role !== "Super Admin") return;
+      const activeUser = currentUser || JSON.parse(localStorage.getItem("aether_pms_user") || "null");
+      const oId = activeUser?.ownerId || activeUser?.id;
+      const role = activeUser?.role;
+      if (!oId && role !== "Super Admin") return;
       const today = new Date().toISOString().split("T")[0];
-      const url = currentUser?.role === "Super Admin" ? `/api/attendance?date=${today}&t=${Date.now()}` : `/api/attendance?date=${today}&ownerId=${oId || ""}&t=${Date.now()}`;
+      const url = role === "Super Admin" ? `/api/attendance?date=${today}&t=${Date.now()}` : `/api/attendance?date=${today}&ownerId=${oId || ""}&t=${Date.now()}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
@@ -566,9 +572,11 @@ export default function Dashboard() {
 
   async function fetchShiftSwapRequests() {
     try {
-      const oId = currentUser?.ownerId || currentUser?.id;
-      if (!oId && currentUser?.role !== "Super Admin") return;
-      const url = currentUser?.role === "Super Admin" ? `/api/shift-swap?t=${Date.now()}` : `/api/shift-swap?ownerId=${oId || ""}&t=${Date.now()}`;
+      const activeUser = currentUser || JSON.parse(localStorage.getItem("aether_pms_user") || "null");
+      const oId = activeUser?.ownerId || activeUser?.id;
+      const role = activeUser?.role;
+      if (!oId && role !== "Super Admin") return;
+      const url = role === "Super Admin" ? `/api/shift-swap?t=${Date.now()}` : `/api/shift-swap?ownerId=${oId || ""}&t=${Date.now()}`;
       const res = await fetch(url);
       const data = await res.json();
       if (!data.error) {
@@ -581,9 +589,11 @@ export default function Dashboard() {
 
   async function fetchLeaveRequests() {
     try {
-      const oId = currentUser?.ownerId || currentUser?.id;
-      if (!oId && currentUser?.role !== "Super Admin") return;
-      const url = currentUser?.role === "Super Admin" ? `/api/leave?t=${Date.now()}` : `/api/leave?ownerId=${oId || ""}&t=${Date.now()}`;
+      const activeUser = currentUser || JSON.parse(localStorage.getItem("aether_pms_user") || "null");
+      const oId = activeUser?.ownerId || activeUser?.id;
+      const role = activeUser?.role;
+      if (!oId && role !== "Super Admin") return;
+      const url = role === "Super Admin" ? `/api/leave?t=${Date.now()}` : `/api/leave?ownerId=${oId || ""}&t=${Date.now()}`;
       const res = await fetch(url);
       const data = await res.json();
       if (!data.error) {
