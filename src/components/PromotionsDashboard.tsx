@@ -131,6 +131,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                 <option value="ROOM_ONLY">Room Tariff Only</option>
                 <option value="GRAND_TOTAL">Grand Total (Inc. Food/Extras)</option>
                 <option value="ROOM_UPGRADE_ONLY">Room Upgrade Only</option>
+                <option value="CUSTOM">Custom / Other</option>
               </select>
               <button className="btn-primary" type="submit">Create Coupon</button>
             </form>
