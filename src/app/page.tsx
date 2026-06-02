@@ -382,10 +382,10 @@ export default function Dashboard() {
   // Fetch properties and structure states on mount
   async function loadData(ownerId?: string) {
     const oId = ownerId || currentUser?.ownerId || currentUser?.id;
-    if (!oId) return;
+    if (!oId && currentUser?.role !== "Super Admin") return;
     try {
       setLoading(true);
-      const url = `/api/properties?ownerId=${oId}&t=${Date.now()}`;
+      const url = currentUser?.role === "Super Admin" ? `/api/properties?t=${Date.now()}` : `/api/properties?ownerId=${oId}&t=${Date.now()}`;
       const response = await fetch(url);
       const data = await response.json();
       if (data.success) {
@@ -456,9 +456,10 @@ export default function Dashboard() {
 
   const fetchUsers = async (ownerId?: string) => {
     const oId = ownerId || currentUser?.ownerId || currentUser?.id;
-    if (!oId) return;
+    if (!oId && currentUser?.role !== "Super Admin") return;
     try {
-      const res = await fetch(`/api/users?ownerId=${oId}&t=${Date.now()}`);
+      const url = currentUser?.role === "Super Admin" ? `/api/users?t=${Date.now()}` : `/api/users?ownerId=${oId}&t=${Date.now()}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setUsersList(data.users);
@@ -552,7 +553,8 @@ export default function Dashboard() {
       const oId = currentUser?.ownerId || currentUser?.id;
       if (!oId && currentUser?.role !== "Super Admin") return;
       const today = new Date().toISOString().split("T")[0];
-      const res = await fetch(`/api/attendance?date=${today}&ownerId=${oId || ""}&t=${Date.now()}`);
+      const url = currentUser?.role === "Super Admin" ? `/api/attendance?date=${today}&t=${Date.now()}` : `/api/attendance?date=${today}&ownerId=${oId || ""}&t=${Date.now()}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setAllAttendances(data.attendances);
@@ -566,7 +568,8 @@ export default function Dashboard() {
     try {
       const oId = currentUser?.ownerId || currentUser?.id;
       if (!oId && currentUser?.role !== "Super Admin") return;
-      const res = await fetch(`/api/shift-swap?ownerId=${oId || ""}&t=${Date.now()}`);
+      const url = currentUser?.role === "Super Admin" ? `/api/shift-swap?t=${Date.now()}` : `/api/shift-swap?ownerId=${oId || ""}&t=${Date.now()}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (!data.error) {
         setShiftSwapRequests(data.requests || []);
@@ -580,7 +583,8 @@ export default function Dashboard() {
     try {
       const oId = currentUser?.ownerId || currentUser?.id;
       if (!oId && currentUser?.role !== "Super Admin") return;
-      const res = await fetch(`/api/leave?ownerId=${oId || ""}&t=${Date.now()}`);
+      const url = currentUser?.role === "Super Admin" ? `/api/leave?t=${Date.now()}` : `/api/leave?ownerId=${oId || ""}&t=${Date.now()}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (!data.error) {
         setLeaveRequests(data);
@@ -2278,7 +2282,7 @@ export default function Dashboard() {
                   </div>
                   
                   {/* ========== ANALYTICS DASHBOARD ========== */}
-                  <AttendanceAnalytics usersList={usersList} />
+                  <AttendanceAnalytics usersList={usersList} ownerId={currentUser?.role === "Super Admin" ? undefined : (currentUser?.ownerId || currentUser?.id)} />
           </section>
 ) : activeMenu === "staff-management" ? (
           <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, minHeight: 0 }}>

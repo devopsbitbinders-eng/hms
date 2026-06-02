@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-export default function AttendanceAnalytics({ usersList }: { usersList: any[] }) {
+export default function AttendanceAnalytics({ usersList, ownerId }: { usersList: any[], ownerId?: string }) {
   const [attendances, setAttendances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<"weekly" | "monthly" | "yearly">("weekly");
@@ -14,7 +14,8 @@ export default function AttendanceAnalytics({ usersList }: { usersList: any[] })
   useEffect(() => {
     const fetchAllAttendances = async () => {
       try {
-        const res = await fetch("/api/attendance");
+        const q = ownerId ? `?ownerId=${ownerId}&t=${Date.now()}` : `?t=${Date.now()}`;
+        const res = await fetch(`/api/attendance${q}`);
         const data = await res.json();
         if (data.success) {
           setAttendances(data.attendances);
