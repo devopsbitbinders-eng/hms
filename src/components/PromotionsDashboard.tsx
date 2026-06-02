@@ -13,6 +13,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
   const [discountValue, setDiscountValue] = useState("");
   const [applyTo, setApplyTo] = useState("ROOM_ONLY");
   const [customTarget, setCustomTarget] = useState("");
+  const [validUntil, setValidUntil] = useState("");
   
   // Form States for Affiliates
   const [affName, setAffName] = useState("");
@@ -46,19 +47,36 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: couponCode, discountType, discountValue, applyTo: applyTo === "CUSTOM" ? `CUSTOM:${customTarget}` : applyTo
+          code: couponCode, discountType, discountValue, applyTo: applyTo === "CUSTOM" ? `CUSTOM:${customTarget}` : applyTo,
+          validUntil: validUntil || null
         })
       });
       const data = await res.json();
       if (data.success) {
         addToast("Coupon created successfully!", "success");
-        setCouponCode(""); setDiscountValue("");
+        setCouponCode(""); setDiscountValue(""); setCustomTarget(""); setValidUntil("");
         fetchData();
       } else {
         addToast(data.error, "error");
       }
     } catch (err) {
       addToast("Failed to create coupon", "error");
+    }
+  };
+
+  const handleDeleteCoupon = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this coupon?")) return;
+    try {
+      const res = await fetch(`/api/coupons?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        addToast("Coupon deleted successfully!", "success");
+        fetchData();
+      } else {
+        addToast(data.error || "Failed to delete coupon", "error");
+      }
+    } catch (err: any) {
+      addToast(err.message, "error");
     }
   };
 
@@ -137,6 +155,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
               {applyTo === "CUSTOM" && (
                 <input style={inputStyle} placeholder="e.g. Food, Spa, Laundry" value={customTarget} onChange={e => setCustomTarget(e.target.value)} required />
               )}
+              <input style={inputStyle} type="date" title="Expiry Date (Optional)" placeholder="Expiry Date" value={validUntil} onChange={e => setValidUntil(e.target.value)} />
               <button className="btn-primary" type="submit">Create Coupon</button>
             </form>
           </div>
@@ -152,6 +171,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                   <th style={{ textAlign: "left", padding: "8px" }}>Applies To</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Times Used</th>
                   <th style={{ textAlign: "left", padding: "8px" }}>Status</th>
+                  <th style={{ textAlign: "center", padding: "8px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,7 +186,13 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                       </span>
                     </td>
                     <td style={{ padding: "8px" }}>{c.timesUsed}</td>
-                    <td style={{ padding: "8px" }}>{c.isActive ? "🟢 Active" : "🔴 Inactive"}</td>
+                    <td style={{ padding: "8px" }}>
+                      {c.isActive ? "🟢 Active" : "🔴 Inactive"}
+                      {c.validUntil && new Date(c.validUntil) < new Date() ? " (Expired)" : ""}
+                    </td>
+                    <td style={{ padding: "8px", textAlign: "center" }}>
+                      <button onClick={() => handleDeleteCoupon(c.id)} style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "16px" }} title="Delete Coupon">🗑️</button>
+                    </td>
                   </tr>
                 ))}
                 {coupons.length === 0 && <tr><td colSpan={6} style={{ padding: "20px", textAlign: "center", color: "var(--text-secondary)" }}>No coupons found.</td></tr>}

@@ -64,3 +64,22 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: false, error: "Failed to update coupon" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Missing coupon id" }, { status: 400 });
+    }
+
+    await prisma.coupon.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: "Failed to delete coupon" }, { status: 500 });
+  }
+}
