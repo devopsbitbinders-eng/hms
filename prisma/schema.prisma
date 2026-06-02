@@ -109,6 +109,13 @@ model Reservation {
   guestTag            String?       // VIP, Corporate Guest, Frequent Flyer, Blacklisted
   billingType         String        @default("individual") // "individual" or "corporate"
   guestGstNumber      String?
+  
+  // Coupon and Referral Relations
+  couponId            String?
+  coupon              Coupon?       @relation(fields: [couponId], references: [id])
+  referral            Referral?
+  couponAuditLogs     CouponAuditLog[]
+  
   reviews             Review[]
   kitchenOrders       KitchenOrder[]
 }
@@ -318,6 +325,62 @@ model KitchenOrderItem {
   quantity   Int
   price      Float
   notes      String?      @db.Text
+}
+
+model Coupon {
+  id              String    @id @default(uuid())
+  code            String    @unique
+  discountType    String    // "PERCENTAGE" or "FLAT"
+  discountValue   Float
+  applyTo         String    @default("ROOM_ONLY") // "ROOM_ONLY" or "GRAND_TOTAL"
+  maxDiscount     Float?
+  minBookingValue Float?
+  usageLimit      Int?
+  timesUsed       Int       @default(0)
+  validFrom       DateTime?
+  validUntil      DateTime?
+  isActive        Boolean   @default(true)
+  
+  reservations    Reservation[]
+  auditLogs       CouponAuditLog[]
+}
+
+model Affiliate {
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  referralCode    String    @unique
+  commissionType  String    // "PERCENTAGE" or "FLAT"
+  commissionValue Float
+  totalEarned     Float     @default(0)
+  pendingPayout   Float     @default(0)
+  isActive        Boolean   @default(true)
+  
+  referrals       Referral[]
+}
+
+model Referral {
+  id              String      @id @default(uuid())
+  affiliateId     String
+  reservationId   String      @unique
+  status          String      // "PENDING", "PAYABLE", "PAID", "CANCELLED"
+  commissionEarned Float
+  createdAt       DateTime    @default(now())
+  
+  affiliate       Affiliate   @relation(fields: [affiliateId], references: [id])
+  reservation     Reservation @relation(fields: [reservationId], references: [id])
+}
+
+model CouponAuditLog {
+  id              String   @id @default(uuid())
+  couponId        String
+  reservationId   String
+  appliedBy       String   
+  discountApplied Float
+  createdAt       DateTime @default(now())
+  
+  coupon          Coupon      @relation(fields: [couponId], references: [id])
+  reservation     Reservation @relation(fields: [reservationId], references: [id])
 }
 
 enum OrderStatus {

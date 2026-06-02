@@ -236,6 +236,35 @@ export async function PUT(
         where: { id: targetRoomId },
         data: { cleanStatus: "Dirty" }
       });
+
+      // Hook for Referral Commission
+      const referral = await prisma.referral.findUnique({
+        where: { reservationId: id }
+      });
+      
+      if (referral && referral.status === "PENDING") {
+        await prisma.referral.update({
+          where: { id: referral.id },
+          data: { status: "PAYABLE" }
+        });
+        
+        await prisma.affiliate.update({
+          where: { id: referral.affiliateId },
+          data: { pendingPayout: { increment: referral.commissionEarned } }
+        });
+      }
+    } else if (status === "cancelled" && currentReservation.status !== "cancelled") {
+      // Hook for Referral Commission Cancellation
+      const referral = await prisma.referral.findUnique({
+        where: { reservationId: id }
+      });
+      
+      if (referral && referral.status === "PENDING") {
+        await prisma.referral.update({
+          where: { id: referral.id },
+          data: { status: "CANCELLED", commissionEarned: 0 }
+        });
+      }
     }
 
     return NextResponse.json({ success: true, reservation });
