@@ -324,6 +324,7 @@ export default function Dashboard() {
 
   // Billing, Preferences & VIP Tags
   const [newResPaymentMethod, setNewResPaymentMethod] = useState("Pay at Property");
+  const [newResAdvancePaid, setNewResAdvancePaid] = useState<number>(0);
   const [newResUpiTransactionId, setNewResUpiTransactionId] = useState("");
   const [newResSpecialRequests, setNewResSpecialRequests] = useState("");
   const [newResGuestTag, setNewResGuestTag] = useState("");
@@ -1178,6 +1179,7 @@ export default function Dashboard() {
           vehicleNumber: newResVehicleNumber,
 
           // Billing, Preferences & VIP Tags
+          advancePaid: newResAdvancePaid,
           paymentMethod: newResPaymentMethod,
           upiTransactionId: newResUpiTransactionId,
           specialRequests: newResSpecialRequests,
@@ -1299,6 +1301,7 @@ export default function Dashboard() {
         setNewResChildAges([]);
         setNewResVehicleNumber("");
         setNewResPaymentMethod("Pay at Property");
+        setNewResAdvancePaid(0);
         setNewResUpiTransactionId("");
         setNewResSpecialRequests("");
         setNewResGuestTag("");
@@ -4030,6 +4033,10 @@ export default function Dashboard() {
                         <option value="Credit Card">Credit/Debit Card</option>
                         <option value="Corporate Billing">Corporate Billing</option>
                       </select>
+                    </div>
+                    <div>
+                      <label style={labelStyle}>💰 Advance Paid (₹)</label>
+                      <input style={inputStyle} type="number" placeholder="e.g. 500" value={newResAdvancePaid || ""} onChange={(e) => setNewResAdvancePaid(parseFloat(e.target.value) || 0)} />
                     </div>
                     <div>
                       <label style={labelStyle}>🏷️ Special Guest Tag badge</label>

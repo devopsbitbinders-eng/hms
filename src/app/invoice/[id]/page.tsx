@@ -340,9 +340,27 @@ export default function InvoicePage() {
                 <td colSpan={4} className="bold">Grand Total</td>
                 <td className="right-align">{calcData ? calcData.grandTotal.toFixed(2) : totalAmount} /-</td>
               </tr>
+              {reservation.advancePaid > 0 && (
+                <tr>
+                  <td colSpan={4} className="bold" style={{ color: "#3b82f6" }}>Advance Paid (At Booking)</td>
+                  <td className="right-align" style={{ color: "#3b82f6" }}>{reservation.advancePaid.toFixed(2)} /-</td>
+                </tr>
+              )}
+              {reservation.advancePaid > 0 && (
+                <tr>
+                  <td colSpan={4} className="bold" style={{ color: "#ef4444" }}>Balance Due</td>
+                  <td className="right-align" style={{ color: "#ef4444" }}>
+                    {Math.max(0, (calcData ? calcData.grandTotal : parseFloat(totalAmount)) - reservation.advancePaid).toFixed(2)} /-
+                  </td>
+                </tr>
+              )}
               <tr>
-                <td colSpan={4} className="bold">Paid Amount</td>
-                <td className="right-align">{calcData ? calcData.grandTotal.toFixed(2) : totalAmount} /-</td>
+                <td colSpan={4} className="bold">Amount Paid at Checkout</td>
+                <td className="right-align">
+                  {(reservation.advancePaid > 0 
+                     ? Math.max(0, (calcData ? calcData.grandTotal : parseFloat(totalAmount)) - reservation.advancePaid)
+                     : (calcData ? calcData.grandTotal : parseFloat(totalAmount))).toFixed(2)} /-
+                </td>
               </tr>
             </tbody>
           </table>

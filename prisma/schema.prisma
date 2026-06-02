@@ -103,6 +103,7 @@ model Reservation {
   vehicleNumber       String?
 
   // Billing, Preferences & VIP Tags
+  advancePaid         Float         @default(0.0)
   paymentMethod       String?       // UPI, Credit Card, Corporate, Pay at Property
   upiTransactionId    String?
   specialRequests     String?       @db.Text

@@ -49,6 +49,7 @@ export async function POST(request: Request) {
       vehicleNumber,
 
       // Billing, Preferences & VIP Tags
+      advancePaid,
       paymentMethod,
       upiTransactionId,
       specialRequests,
@@ -156,6 +157,7 @@ export async function POST(request: Request) {
         numChildren: numChildren !== undefined ? parseInt(numChildren, 10) : 0,
         childAges: childAges || null,
         vehicleNumber: vehicleNumber || null,
+        advancePaid: advancePaid ? parseFloat(advancePaid) : 0,
         paymentMethod: paymentMethod || null,
         upiTransactionId: upiTransactionId || null,
         specialRequests: specialRequests || null,
