@@ -338,6 +338,10 @@ export default function FrontDeskOps({
       updatedDetails += `\n[System: Guest checked out ${timeStr}. Duration auto-adjusted from ${originalDuration} to ${actualDuration} nights to free up calendar.]`;
     }
 
+    if (summarizeFood) {
+      updatedDetails += `\n[SummarizeFood:true]`;
+    }
+
     try {
       // 1. Mark reservation as checked-out and update duration
       const response = await fetch(`/api/reservations/${checkoutRes.id}`, {
@@ -936,7 +940,7 @@ export default function FrontDeskOps({
                       <button
                         className="btn-secondary"
                         style={{ padding: "8px 16px", fontSize: "0.8rem", whiteSpace: "nowrap" }}
-                        onClick={() => generateReceiptPDF(res, room, PROPERTY_STATE)}
+                        onClick={() => generateReceiptPDF(res, room, PROPERTY_STATE, res.details?.includes("[SummarizeFood:true]"))}
                       >
                         📄 View Receipt
                       </button>
