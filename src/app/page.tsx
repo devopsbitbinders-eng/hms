@@ -132,6 +132,7 @@ export default function Dashboard() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState(false);
+  const [showSetupForm, setShowSetupForm] = useState(false);
 
   // Dynamic staff creation inputs
   const [newStaffName, setNewStaffName] = useState("");

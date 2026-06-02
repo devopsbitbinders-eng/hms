@@ -23,6 +23,12 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Owner Registration State
+  const [isRegisteringOwner, setIsRegisteringOwner] = useState(false);
+  const [registerName, setRegisterName] = useState("");
+  const [registerUsername, setRegisterUsername] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+
   // Fetch staff list on mount
   useEffect(() => {
     fetch("/api/users")
@@ -55,6 +61,33 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
       }
     } catch (err) {
       setError("Server error during login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegisterOwner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!registerName || !registerUsername || !registerPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: registerName, username: registerUsername, password: registerPassword, role: "Owner", avatar: "👑" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onLoginSuccess(data.user);
+      } else {
+        setError(data.error || "Registration failed");
+      }
+    } catch (err) {
+      setError("Server error during registration");
     } finally {
       setLoading(false);
     }
@@ -268,40 +301,55 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleOwnerLogin} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Owner Username</label>
-                  <input 
-                    type="text" 
-                    value={ownerUsername} 
-                    onChange={(e) => setOwnerUsername(e.target.value)} 
-                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} 
-                    placeholder="admin"
-                    required 
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Password</label>
-                  <input 
-                    type="password" 
-                    value={ownerPassword} 
-                    onChange={(e) => setOwnerPassword(e.target.value)} 
-                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} 
-                    placeholder="••••••••"
-                    required 
-                  />
-                </div>
-                {error && <div style={{ color: "#ef4444", fontSize: "0.85rem", textAlign: "center", backgroundColor: "rgba(239, 68, 68, 0.1)", padding: "10px", borderRadius: "8px" }}>{error}</div>}
-                
-                <button type="submit" disabled={loading} style={{
-                  width: "100%", padding: "14px", borderRadius: "8px", border: "none",
-                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  color: "#fff", fontWeight: "600", fontSize: "1rem", cursor: "pointer",
-                  opacity: loading ? 0.7 : 1
-                }}>
-                  {loading ? "Authenticating..." : "Owner Login"}
-                </button>
-              </form>
+              isRegisteringOwner ? (
+                /* NEW OWNER REGISTRATION */
+                <form onSubmit={handleRegisterOwner} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  <div style={{ textAlign: "center", marginBottom: "4px" }}>
+                    <h2 style={{ fontSize: "1.1rem", color: "#fff", margin: "0 0 4px 0" }}>Create Owner Account</h2>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", margin: 0 }}>First time? Register as the property owner.</p>
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Full Name</label>
+                    <input type="text" value={registerName} onChange={(e) => setRegisterName(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="Your full name" required />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Username</label>
+                    <input type="text" value={registerUsername} onChange={(e) => setRegisterUsername(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="e.g. admin" required />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Password</label>
+                    <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="Set a strong password" required />
+                  </div>
+                  {error && <div style={{ color: "#ef4444", fontSize: "0.85rem", textAlign: "center", backgroundColor: "rgba(239, 68, 68, 0.1)", padding: "10px", borderRadius: "8px" }}>{error}</div>}
+                  <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", color: "#fff", fontWeight: "600", fontSize: "1rem", cursor: "pointer", opacity: loading ? 0.7 : 1 }}>
+                    {loading ? "Creating Account..." : "Create Owner Account"}
+                  </button>
+                  <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--text-secondary)", margin: 0 }}>
+                    Already have an account?{" "}
+                    <button type="button" onClick={() => { setIsRegisteringOwner(false); setError(null); }} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontWeight: "600", fontSize: "0.85rem" }}>Sign In</button>
+                  </p>
+                </form>
+              ) : (
+                /* EXISTING OWNER LOGIN */
+                <form onSubmit={handleOwnerLogin} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Owner Username</label>
+                    <input type="text" value={ownerUsername} onChange={(e) => setOwnerUsername(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="admin" required />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Password</label>
+                    <input type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="••••••••" required />
+                  </div>
+                  {error && <div style={{ color: "#ef4444", fontSize: "0.85rem", textAlign: "center", backgroundColor: "rgba(239, 68, 68, 0.1)", padding: "10px", borderRadius: "8px" }}>{error}</div>}
+                  <button type="submit" disabled={loading} style={{ width: "100%", padding: "14px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", color: "#fff", fontWeight: "600", fontSize: "1rem", cursor: "pointer", opacity: loading ? 0.7 : 1 }}>
+                    {loading ? "Authenticating..." : "Owner Login"}
+                  </button>
+                  <p style={{ textAlign: "center", fontSize: "0.85rem", color: "var(--text-secondary)", margin: 0 }}>
+                    New here?{" "}
+                    <button type="button" onClick={() => { setIsRegisteringOwner(true); setError(null); }} style={{ background: "none", border: "none", color: "#10b981", cursor: "pointer", fontWeight: "600", fontSize: "0.85rem" }}>Register as Owner</button>
+                  </p>
+                </form>
+              )
             )}
           </>
         )}
