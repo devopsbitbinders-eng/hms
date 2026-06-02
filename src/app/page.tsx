@@ -380,10 +380,10 @@ export default function Dashboard() {
   };
 
   // Fetch properties and structure states on mount
-  async function loadData() {
+  async function loadData(ownerId: string) {
     try {
       setLoading(true);
-      const response = await fetch("/api/properties");
+      const response = await fetch("/api/properties?ownerId=" + ownerId);
       const data = await response.json();
       if (data.success) {
         setPropertiesList(data.properties);
@@ -451,9 +451,9 @@ export default function Dashboard() {
     }
   }
 
-  async function fetchUsers() {
+  const fetchUsers = async (ownerId: string) => {
     try {
-      const res = await fetch("/api/users");
+      const res = await fetch("/api/users?ownerId=" + ownerId);
       const data = await res.json();
       if (data.success) {
         setUsersList(data.users);
@@ -707,22 +707,28 @@ export default function Dashboard() {
 
   useEffect(() => {
     const saved = localStorage.getItem("aether_pms_user");
+    let initialUser = null;
     if (saved) {
       try {
-        setCurrentUser(JSON.parse(saved));
+        initialUser = JSON.parse(saved);
+        setCurrentUser(initialUser);
       } catch (e) {
         console.error(e);
       }
     }
-    loadData();
-    fetchUsers();
-    fetchAttendance();
-    fetchLeaveRequests();
-    fetchShiftSwapRequests();
+    const oId = initialUser?.ownerId || initialUser?.id; // fallback for older users without ownerId
+    
+    if (oId) {
+      loadData(oId);
+      fetchUsers(oId);
+      fetchAttendance();
+      fetchLeaveRequests();
+      fetchShiftSwapRequests();
+    }
 
-    // Poll for permission changes every 5 seconds so revoked managers see UI updates without reload
+    // Poll for permission changes every 5 seconds
     const pollInterval = setInterval(() => {
-      fetchUsers();
+      if (oId) fetchUsers(oId);
     }, 5000);
     return () => clearInterval(pollInterval);
   }, []);
@@ -1965,6 +1971,14 @@ export default function Dashboard() {
       <LoginScreen onLoginSuccess={(user) => {
         setCurrentUser(user);
         localStorage.setItem("aether_pms_user", JSON.stringify(user));
+        const oId = user.ownerId || user.id;
+        if (oId) {
+          loadData(oId);
+          fetchUsers(oId);
+          fetchAttendance();
+          fetchLeaveRequests();
+          fetchShiftSwapRequests();
+        }
       }} />
     );
   }

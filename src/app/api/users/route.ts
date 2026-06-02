@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const ownerId = searchParams.get("ownerId");
+
+    const whereClause = ownerId ? { ownerId } : {};
+
     const users = await prisma.user.findMany({
+      where: whereClause,
       select: {
         id: true,
         name: true,
@@ -29,10 +35,10 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+  export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, username, password, role, avatar, propertyId, assignedShift, shiftTiming } = body;
+    const { name, username, password, role, avatar, propertyId, assignedShift, shiftTiming, ownerId } = body;
 
     if (!name || !username || !password || !role || !avatar) {
       return NextResponse.json(
@@ -61,11 +67,20 @@ export async function POST(request: Request) {
         role,
         avatar,
         propertyId: propertyId || null,
+        ownerId: ownerId || null,
         allowRoomManagement: true, // Managers defaulted to ON
         assignedShift: assignedShift || "Morning",
         shiftTiming: shiftTiming || null,
       },
     });
+
+    if (role === "Owner" && !ownerId) {
+      await prisma.user.update({
+        where: { id: newUser.id },
+        data: { ownerId: newUser.id }
+      });
+      newUser.ownerId = newUser.id;
+    }
 
     return NextResponse.json({
       success: true,

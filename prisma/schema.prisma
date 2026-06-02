@@ -9,6 +9,7 @@ generator client {
 
 model Property {
   id        String   @id @default(uuid())
+  ownerId   String?  // Links property to a specific Owner user
   name      String
   type      String   // homestay, hotel, resort
   location  String
@@ -136,9 +137,10 @@ model User {
   name                String
   username            String   @unique
   password            String   // Plaintext PIN or password for simple demonstration & checking
-  role                String   // Super Admin, Front Office Manager, Housekeeping Supervisor, Finance Executive
+  role                String   // Super Admin, Front Office Manager, Housekeeping Supervisor, Finance Executive, Owner
   avatar              String   // Two-character initials (e.g. "AM") or emojis
   propertyId          String?  // Assigned property ID for staff members
+  ownerId             String?  // Links staff to a specific Owner user (or is their own ID if they are the owner)
   allowRoomManagement Boolean  @default(true)
   isFirstLogin        Boolean  @default(true) // Used for temporary PIN reset workflow
   assignedShift       String   @default("Morning") // "Morning", "Evening", "Night", "Custom"

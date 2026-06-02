@@ -3,9 +3,15 @@ import prisma from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const ownerId = searchParams.get("ownerId");
+
+    const whereClause = ownerId ? { ownerId } : {};
+
     const properties = await prisma.property.findMany({
+      where: whereClause,
       include: {
         rooms: {
           include: {
@@ -32,7 +38,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, type, location, gstNumber } = body;
+    const { name, type, location, gstNumber, ownerId } = body;
 
     if (!name || !type || !location) {
       return NextResponse.json(
@@ -47,6 +53,7 @@ export async function POST(request: Request) {
         type,
         location,
         gstNumber: gstNumber || null,
+        ownerId: ownerId || null,
       },
     });
 
