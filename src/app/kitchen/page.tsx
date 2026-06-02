@@ -240,6 +240,29 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
     }
   };
 
+  const handleEditPrice = async (itemId: string, currentPrice: number) => {
+    const newPrice = prompt("Enter new price (₹):", currentPrice.toString());
+    if (newPrice === null || newPrice.trim() === "") return;
+    const parsedPrice = parseFloat(newPrice);
+    if (isNaN(parsedPrice) || parsedPrice < 0) return alert("Invalid price entered.");
+    
+    // Optimistic UI update
+    setMenuItems((prev) =>
+      prev.map((m) => (m.id === itemId ? { ...m, price: parsedPrice } : m))
+    );
+
+    try {
+      await fetch(`/api/kitchen/menu/${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price: parsedPrice }),
+      });
+    } catch (err) {
+      console.error("Failed to update price", err);
+      fetchData();
+    }
+  };
+
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName || !newItemPrice) return;
@@ -455,7 +478,18 @@ export default function KitchenDashboard({ currentUser }: { currentUser?: any })
                   {menuItems.map((item) => (
                     <tr key={item.id}>
                       <td>{item.name}</td>
-                      <td>₹{item.price.toFixed(2)}</td>
+                      <td style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        ₹{item.price.toFixed(2)}
+                        {(currentUser?.role === "Owner" || currentUser?.role === "Super Admin") && (
+                          <button 
+                            onClick={() => handleEditPrice(item.id, item.price)}
+                            style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "0.85rem", opacity: 0.7 }}
+                            title="Edit Price"
+                          >
+                            ✏️
+                          </button>
+                        )}
+                      </td>
                       <td style={{ textAlign: "center" }}>
                         <span className={`${styles.statusBadge} ${item.isAvailable ? styles.statusAvail : styles.statusOut}`}>
                           {item.isAvailable ? "Available" : "Out of Stock"}

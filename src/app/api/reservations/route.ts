@@ -187,3 +187,24 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function GET(request: Request) {
+  try {
+    const reservations = await prisma.reservation.findMany({
+      include: {
+        room: true,
+        billingItems: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+    return NextResponse.json({ success: true, reservations });
+  } catch (error: any) {
+    console.error("Failed to fetch reservations:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch reservations" },
+      { status: 500 }
+    );
+  }
+}
