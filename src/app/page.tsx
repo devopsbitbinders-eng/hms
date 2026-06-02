@@ -380,10 +380,12 @@ export default function Dashboard() {
   };
 
   // Fetch properties and structure states on mount
-  async function loadData(ownerId: string) {
+  async function loadData(ownerId?: string) {
+    const oId = ownerId || currentUser?.ownerId || currentUser?.id;
+    if (!oId) return;
     try {
       setLoading(true);
-      const response = await fetch("/api/properties?ownerId=" + ownerId);
+      const response = await fetch("/api/properties?ownerId=" + oId);
       const data = await response.json();
       if (data.success) {
         setPropertiesList(data.properties);
@@ -451,9 +453,11 @@ export default function Dashboard() {
     }
   }
 
-  const fetchUsers = async (ownerId: string) => {
+  const fetchUsers = async (ownerId?: string) => {
+    const oId = ownerId || currentUser?.ownerId || currentUser?.id;
+    if (!oId) return;
     try {
-      const res = await fetch("/api/users?ownerId=" + ownerId);
+      const res = await fetch("/api/users?ownerId=" + oId);
       const data = await res.json();
       if (data.success) {
         setUsersList(data.users);
