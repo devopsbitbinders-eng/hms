@@ -139,7 +139,7 @@ export default function Dashboard() {
   const [newStaffUsername, setNewStaffUsername] = useState("");
   const [newStaffPassword, setNewStaffPassword] = useState("");
   const [justCreatedStaff, setJustCreatedStaff] = useState<{name: string, pin: string} | null>(null);
-  const [newStaffRole, setNewStaffRole] = useState("Front Office Clerk");
+  const [newStaffRole, setNewStaffRole] = useState("General Manager");
   const [customStaffRole, setCustomStaffRole] = useState("");
   const [newStaffAvatar, setNewStaffAvatar] = useState("");
   const [newStaffPropertyId, setNewStaffPropertyId] = useState("");
