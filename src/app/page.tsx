@@ -109,6 +109,21 @@ export default function Dashboard() {
       return defaults.includes(permId);
     }
     
+    if (currentUser.role === "Receptionist" || currentUser.role === "Front Office Clerk") {
+      const defaults = ["front-office", "front-desk", "housekeeping", "attendance"];
+      return defaults.includes(permId);
+    }
+
+    if (currentUser.role === "Housekeeping Supervisor") {
+      const defaults = ["housekeeping", "attendance"];
+      return defaults.includes(permId);
+    }
+
+    if (currentUser.role === "Finance Executive") {
+      const defaults = ["finance", "attendance"];
+      return defaults.includes(permId);
+    }
+    
     // Other roles fall back to simple rules
     return false;
   };
@@ -2037,6 +2052,7 @@ export default function Dashboard() {
                   if (res.status === "maintenance") {
                     const isSeniorStaff =
                       currentUser?.role === "Super Admin" ||
+                      currentUser?.role === "Owner" ||
                       currentUser?.role === "General Manager";
                     
                     if (!isSeniorStaff) {
@@ -2184,7 +2200,7 @@ export default function Dashboard() {
                     </div>
                   )}
 
-                  {currentUser?.role === "Super Admin" && (
+                  {(currentUser?.role === "Super Admin" || currentUser?.role === "Owner" || hasPermission("attendance:manual-clock")) && (
                     <div style={{ marginTop: "24px", padding: "16px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px dashed var(--border-color)" }}>
                       <h3 style={{ fontSize: "0.9rem", color: "#fff", fontWeight: "600", marginBottom: "12px" }}>✅ Mark Staff Attendance Manually</h3>
                       <div style={{ display: "flex", gap: "12px", alignItems: "flex-end" }}>
@@ -2379,7 +2395,7 @@ export default function Dashboard() {
                               >
                                 🕐 Assign Shift
                               </button>
-                              {currentUser?.role === "Super Admin" && (
+                              {(currentUser?.role === "Super Admin" || currentUser?.role === "Owner") && (
                                 <button
                                   onClick={() => {
                                     setEditingPermissionsUserId(user.id);
@@ -2672,7 +2688,7 @@ export default function Dashboard() {
                               {/* iOS-style toggle switch */}
                               <button
                                 id={`toggle-room-mgmt-${manager.id}`}
-                                onClick={() => currentUser?.role === "Super Admin" && handleToggleRoomManagement(manager.id, manager.allowRoomManagement !== false)}
+                                onClick={() => (currentUser?.role === "Super Admin" || currentUser?.role === "Owner") && handleToggleRoomManagement(manager.id, manager.allowRoomManagement !== false)}
                                 title={currentUser?.role !== "Super Admin" ? "Only Super Admin can change this" : (manager.allowRoomManagement !== false ? "Click to revoke" : "Click to grant")}
                                 style={{
                                   position: "relative",
@@ -2680,7 +2696,7 @@ export default function Dashboard() {
                                   height: "28px",
                                   borderRadius: "14px",
                                   border: "none",
-                                  cursor: currentUser?.role === "Super Admin" ? "pointer" : "not-allowed",
+                                  cursor: (currentUser?.role === "Super Admin" || currentUser?.role === "Owner") ? "pointer" : "not-allowed",
                                   background: manager.allowRoomManagement !== false
                                     ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
                                     : "rgba(239, 68, 68, 0.3)",
@@ -2819,7 +2835,7 @@ export default function Dashboard() {
               <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
                 <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "4px" }}>⚠️ Dangerous Database Actions</h2>
                 
-                {currentUser?.role === "Super Admin" ? (
+                {(currentUser?.role === "Super Admin" || currentUser?.role === "Owner") ? (
                   <>
                     <div style={{ backgroundColor: "rgba(239, 68, 68, 0.04)", border: "1px solid rgba(239, 68, 68, 0.15)", borderRadius: "8px", padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ maxWidth: "70%" }}>
@@ -3147,7 +3163,7 @@ export default function Dashboard() {
               </div>
 
               {/* Maintenance Toggle restricted to Super Admins & General Managers */}
-              {(currentUser?.role === "Super Admin" || currentUser?.role === "General Manager") && (
+              {(currentUser?.role === "Super Admin" || currentUser?.role === "Owner" || currentUser?.role === "General Manager") && (
                 <div style={{ marginTop: "16px", borderTop: "1px solid var(--border-color)", paddingTop: "16px", marginBottom: "16px" }}>
                   <label style={{ ...labelStyle, display: "block", marginBottom: "8px", fontWeight: "600" }}>🔧 Room Operations & Maintenance</label>
                   <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "12px", lineHeight: "1.4" }}>
