@@ -329,7 +329,7 @@ export default function InvoicePage() {
               {calcData && calcData.discountAmount > 0 && (
                 <tr>
                   <td colSpan={4} className="bold" style={{ color: "#10b981" }}>
-                    Discount ({calcData.couponApplied})
+                    Discount
                   </td>
                   <td className="right-align" style={{ color: "#10b981" }}>
                     - {calcData.discountAmount.toFixed(2)} /-
@@ -397,7 +397,12 @@ export default function InvoicePage() {
           <ul>
             <li>Non Refundable</li>
           </ul>
-          <p style={{ fontWeight: "bold", fontSize: "11px" }}>Please provide Govt. Approved Photo Identity Card of All Adult person at the time of check in. This is computer generated reservation and does not require any signature.</p>
+          {reservation.status !== "checked-in" && reservation.status !== "checked-out" && (
+            <p style={{ fontWeight: "bold", fontSize: "11px" }}>Please provide Govt. Approved Photo Identity Card of All Adult person at the time of check in. This is computer generated reservation and does not require any signature.</p>
+          )}
+          {(reservation.status === "checked-in" || reservation.status === "checked-out") && (
+            <p style={{ fontWeight: "bold", fontSize: "11px" }}>This is a computer generated invoice and does not require any signature.</p>
+          )}
         </div>
 
         <div className="footer">
