@@ -194,10 +194,7 @@ export async function GET(request: Request) {
       include: {
         room: true,
         billingItems: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      }
     });
     return NextResponse.json({ success: true, reservations });
   } catch (error: any) {
