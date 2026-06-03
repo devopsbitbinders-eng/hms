@@ -194,6 +194,7 @@ export async function GET(request: Request) {
       include: {
         room: true,
         billingItems: true,
+        coupon: true,
       }
     });
     return NextResponse.json({ success: true, reservations });

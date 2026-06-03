@@ -121,11 +121,19 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
     }
   };
 
-  const getInvoiceTotals = (items: any[], isLocal: boolean, gstMode: "exclusive" | "inclusive") => {
+  const getInvoiceTotals = (items: any[], isLocal: boolean, gstMode: "exclusive" | "inclusive", coupon?: any) => {
     let baseAmount = 0, cgst = 0, sgst = 0, igst = 0, total = 0;
     let maxRate = 0;
+    let roomBase = 0;
+    let otherBase = 0;
+
     items.forEach(item => {
       const t = calculateItemGST(item, isLocal, gstMode);
+      if (item.category === "room") {
+        roomBase += t.baseAmount;
+      } else {
+        otherBase += t.baseAmount;
+      }
       baseAmount += t.baseAmount;
       cgst += t.cgst;
       sgst += t.sgst;
@@ -133,12 +141,43 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
       total += t.total;
       if (t.rate > maxRate) maxRate = t.rate;
     });
+
+    if (coupon) {
+      let discountAmount = 0;
+      let targetBase = roomBase;
+      if (coupon.applyTo === "GRAND_TOTAL") targetBase = baseAmount;
+      
+      if (coupon.discountType === "FLAT") {
+        discountAmount = coupon.discountValue;
+      } else if (coupon.discountType === "PERCENTAGE") {
+        discountAmount = targetBase * (coupon.discountValue / 100);
+        if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
+          discountAmount = coupon.maxDiscount;
+        }
+      }
+      if (discountAmount > targetBase) discountAmount = targetBase;
+
+      if (discountAmount > 0) {
+        // Proportionately reduce base and GST
+        const effectiveRate = maxRate / 100;
+        baseAmount -= discountAmount;
+        const discountGst = discountAmount * effectiveRate;
+        if (isLocal) {
+          cgst -= discountGst / 2;
+          sgst -= discountGst / 2;
+        } else {
+          igst -= discountGst;
+        }
+        total -= (discountAmount + discountGst);
+      }
+    }
+
     return { baseAmount, cgst, sgst, igst, total, rate: maxRate };
   };
 
   const selectedRes = currentReservations.find(r => r.id === selectedResId);
   const gstMode = selectedRes ? parseGstMode(selectedRes.details) : "exclusive";
-  const gstDetails = selectedRes ? getInvoiceTotals(selectedRes.billingItems || [], guestState.toLowerCase() === hotelState.toLowerCase(), gstMode) : null;
+  const gstDetails = selectedRes ? getInvoiceTotals(selectedRes.billingItems || [], guestState.toLowerCase() === hotelState.toLowerCase(), gstMode, selectedRes.coupon) : null;
 
   return (
     <div style={{ padding: "24px", color: "white", maxWidth: "1200px", margin: "0 auto" }}>
@@ -435,7 +474,7 @@ export default function FinanceOps({ currentReservations, activePropertyId }: Fi
                 {currentReservations.filter(r => r.status === "checked-out").map(res => {
                   const mode = parseGstMode(res.details);
                   // Default to local (CGST/SGST) for tabular summary unless state is known
-                  const gst = getInvoiceTotals(res.billingItems || [], true, mode);
+                  const gst = getInvoiceTotals(res.billingItems || [], true, mode, res.coupon);
                   let detailsObj: any = {};
                   try {
                     detailsObj = res.details ? (typeof res.details === 'string' ? JSON.parse(res.details) : res.details) : {};
