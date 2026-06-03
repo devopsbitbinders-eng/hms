@@ -558,6 +558,31 @@ export default function FrontDeskOps({
       if (data.success) {
         addToast(`✅ Room changed successfully for ${roomChangeRes.guestName}`, "success");
         
+        // Determine upgrade vs swap
+        const oldRoom = currentRooms.find((r) => r.id === roomChangeRes.roomId);
+        const newRoom = currentRooms.find((r) => r.id === changeToRoomId);
+        const oldPrice = oldRoom?.basePrice || 0;
+        const newPrice = newRoom?.basePrice || 0;
+        const actionStr = newPrice > oldPrice ? "Upgraded" : "Swapped";
+        const oldRoomNum = oldRoom?.number || "?";
+        const newRoomNum = newRoom?.number || "?";
+
+        const updatedDetails = `${roomChangeRes.details || ""}\n\n[${actionStr} from Room ${oldRoomNum} to ${newRoomNum}: ${changeReason}]`.trim();
+        try {
+          await fetch(`/api/reservations/${roomChangeRes.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ details: updatedDetails }),
+          });
+          onUpdateReservation({
+            ...roomChangeRes,
+            roomId: changeToRoomId,
+            details: updatedDetails,
+          });
+        } catch (err) {
+          console.error("Failed to update reservation details for room change tag", err);
+        }
+
         // If there's an upgrade cost, add a folio charge
         if (upgradeCost && parseFloat(upgradeCost) > 0) {
           try {
