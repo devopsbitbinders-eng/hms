@@ -152,6 +152,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
   const inputStyle = { padding: "8px", borderRadius: "4px", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)" };
 
   const canManage = currentUser?.role === "Super Admin" || currentUser?.role === "Owner" || (currentUser?.permissions || []).includes("promotions:manage");
+  const canViewAffiliates = currentUser?.role === "Super Admin" || currentUser?.role === "Owner" || (currentUser?.permissions || []).includes("promotions:affiliates");
 
   return (
     <div style={{ padding: "24px" }}>
@@ -159,7 +160,9 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
         <h1 style={{ fontSize: "1.8rem", fontWeight: "700" }}>🎁 Coupons & Referrals Dashboard</h1>
         <div style={{ display: "flex", gap: "8px" }}>
           <button className={`btn-secondary ${activeTab === 'coupons' ? 'active' : ''}`} onClick={() => setActiveTab('coupons')} style={{ background: activeTab === 'coupons' ? 'var(--primary-color)' : '', color: activeTab === 'coupons' ? '#fff' : '' }}>Discount Coupons</button>
-          <button className={`btn-secondary ${activeTab === 'affiliates' ? 'active' : ''}`} onClick={() => setActiveTab('affiliates')} style={{ background: activeTab === 'affiliates' ? 'var(--primary-color)' : '', color: activeTab === 'affiliates' ? '#fff' : '' }}>Affiliate Referrals</button>
+          {canViewAffiliates && (
+            <button className={`btn-secondary ${activeTab === 'affiliates' ? 'active' : ''}`} onClick={() => setActiveTab('affiliates')} style={{ background: activeTab === 'affiliates' ? 'var(--primary-color)' : '', color: activeTab === 'affiliates' ? '#fff' : '' }}>Affiliate Referrals</button>
+          )}
         </div>
       </div>
 
@@ -254,7 +257,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
         </>
       )}
 
-      {activeTab === "affiliates" && (
+      {activeTab === "affiliates" && canViewAffiliates && (
         <>
           {canManage && (
             <div className="glass-card">

@@ -4631,7 +4631,7 @@ export default function Dashboard() {
                 { id: "housekeeping", label: "🧹 Housekeeping & Ops", subPerms: [{id: "housekeeping:status", label: "Update Room Status"}, {id: "housekeeping:assign", label: "Assign Tasks to Staff"}] },
                 { id: "kitchen", label: "🍳 Kitchen", subPerms: [{id: "kitchen:manage", label: "Manage Kitchen Orders"}, {id: "kitchen:add", label: "Add & Modify Menu Items"}] },
                 { id: "finance", label: "💰 Finance & GST", subPerms: [{id: "finance:reports", label: "View Financial Reports"}, {id: "finance:invoices", label: "Export Invoices & GST"}] },
-                { id: "promotions", label: "🎁 Promotions & Coupons", subPerms: [{id: "promotions:manage", label: "Create & Manage Deals"}] },
+                { id: "promotions", label: "🎁 Promotions & Coupons", subPerms: [{id: "promotions:manage", label: "Create & Manage Deals"}, {id: "promotions:affiliates", label: "View & Manage Affiliates"}] },
                 { id: "reviews", label: "⭐ Reviews", subPerms: [{id: "reviews:reply", label: "Reply to Guest Reviews"}, {id: "reviews:moderate", label: "Moderate & Hide Reviews"}] },
                 { 
                   id: "attendance", label: "⏱️ Attendance", 
