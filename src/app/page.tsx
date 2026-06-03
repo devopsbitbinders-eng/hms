@@ -1439,6 +1439,11 @@ export default function Dashboard() {
           setCurrentUser(data.user);
           localStorage.setItem("aether_pms_user", JSON.stringify(data.user));
           
+          // Fetch data for the newly logged in user
+          const oId = data.user.ownerId || data.user.id;
+          fetchUsers(oId);
+          loadData(oId);
+          
           // Reset credentials checker overlay state
           setAuthenticatingUser(null);
           setAuthPassword("");
