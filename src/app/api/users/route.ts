@@ -97,6 +97,15 @@ export async function GET(request: Request) {
               pendingPayout: { increment: earned }
             }
           });
+          
+          await prisma.referral.create({
+            data: {
+              affiliateId: affiliate.id,
+              referredOwnerId: newUser.id,
+              status: "PAYABLE",
+              commissionEarned: earned
+            }
+          });
         }
       }
     }

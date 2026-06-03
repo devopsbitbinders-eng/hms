@@ -100,7 +100,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
         body: JSON.stringify({ username: selectedStaffUsername, password: staffPin }),
       });
       const data = await res.json();
-      
+
       if (data.success) {
         if (data.user.isFirstLogin) {
           // Trigger first time pin setup
@@ -143,7 +143,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
         }),
       });
       const data = await res.json();
-      
+
       if (data.success) {
         onLoginSuccess(data.user);
       } else {
@@ -165,7 +165,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
       backgroundImage: "radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15), transparent 60%)"
     }}>
       <div className="glass-card" style={{ width: "100%", maxWidth: "450px", maxHeight: "90vh", overflowY: "auto", padding: "40px", borderRadius: "16px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)" }}>
-        
+
         {/* Logo / Header */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div style={{ width: "64px", height: "64px", background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", color: "#fff", margin: "0 auto 16px" }}>
@@ -184,27 +184,27 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
                 Since this is your first time logging in, you must change your temporary PIN to a new, secure one.
               </p>
             </div>
-            
+
             <div>
               <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>New PIN</label>
-              <input 
-                type="password" 
-                value={newPin} 
-                onChange={(e) => setNewPin(e.target.value)} 
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} 
+              <input
+                type="password"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value)}
+                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }}
                 placeholder="Enter new 4-digit PIN"
-                required 
+                required
               />
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Confirm New PIN</label>
-              <input 
-                type="password" 
-                value={confirmNewPin} 
-                onChange={(e) => setConfirmNewPin(e.target.value)} 
-                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} 
+              <input
+                type="password"
+                value={confirmNewPin}
+                onChange={(e) => setConfirmNewPin(e.target.value)}
+                style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }}
                 placeholder="Confirm new PIN"
-                required 
+                required
               />
             </div>
 
@@ -224,7 +224,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
           <>
             {/* Tabs */}
             <div style={{ display: "flex", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: "8px", padding: "4px", marginBottom: "24px" }}>
-              <button 
+              <button
                 type="button"
                 onClick={() => { setTab("staff"); setError(null); }}
                 style={{
@@ -237,7 +237,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
               >
                 Staff PIN Login
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => { setTab("owner"); setError(null); }}
                 style={{
@@ -267,17 +267,17 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Access PIN</label>
-                  <input 
-                    type="password" 
-                    value={staffPin} 
-                    onChange={(e) => setStaffPin(e.target.value)} 
-                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff", letterSpacing: "4px" }} 
+                  <input
+                    type="password"
+                    value={staffPin}
+                    onChange={(e) => setStaffPin(e.target.value)}
+                    style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff", letterSpacing: "4px" }}
                     placeholder="••••"
-                    required 
+                    required
                   />
                 </div>
                 {error && <div style={{ color: "#ef4444", fontSize: "0.85rem", textAlign: "center", backgroundColor: "rgba(239, 68, 68, 0.1)", padding: "10px", borderRadius: "8px" }}>{error}</div>}
-                
+
                 <button type="submit" disabled={loading} style={{
                   width: "100%", padding: "14px", borderRadius: "8px", border: "none",
                   background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
@@ -304,7 +304,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
                     <input type="text" value={registerUsername} onChange={(e) => setRegisterUsername(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="e.g. admin" required />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Access PIN</label>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Set Access PIN</label>
                     <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="Set a strong PIN (e.g. 4+ digits)" required />
                   </div>
                   <div>
