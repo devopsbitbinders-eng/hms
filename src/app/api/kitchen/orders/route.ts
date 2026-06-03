@@ -36,6 +36,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
+    if (!reservation) {
+      return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
+    }
+
+    if (reservation.status === "checked-out" || reservation.status === "cancelled") {
+      return NextResponse.json({ error: "Cannot place order: Reservation is no longer active" }, { status: 403 });
+    }
+
     const newOrder = await prisma.kitchenOrder.create({
       data: {
         reservationId,
@@ -52,8 +61,7 @@ export async function POST(request: Request) {
       }
     });
 
-    const reservation = await prisma.reservation.findUnique({ where: { id: reservationId } });
-    const isInclusive = reservation?.details?.includes("[GST:inclusive]") ?? false;
+    const isInclusive = reservation.details?.includes("[GST:inclusive]") ?? false;
 
     // Automatically add food charges to the guest folio
     for (const item of items) {

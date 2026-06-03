@@ -26,18 +26,26 @@ export default function GuestMenuPage({ params }: { params: Promise<{ reservatio
   const [loading, setLoading] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
-    fetch("/api/kitchen/menu")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          // Only show available items to guests
-          setMenuItems(data.menuItems.filter((m: MenuItem) => m.isAvailable));
+    Promise.all([
+      fetch("/api/kitchen/menu").then(r => r.json()),
+      fetch(`/api/reservations/${reservationId}`).then(r => r.json())
+    ])
+    .then(([menuData, resData]) => {
+      if (menuData.success) {
+        setMenuItems(menuData.menuItems.filter((m: MenuItem) => m.isAvailable));
+      }
+      if (resData.success && resData.reservation) {
+        const status = resData.reservation.status;
+        if (status === "checked-out" || status === "cancelled") {
+          setIsActive(false);
         }
-      })
-      .finally(() => setLoading(false));
-  }, []);
+      }
+    })
+    .finally(() => setLoading(false));
+  }, [reservationId]);
 
   const updateCart = (menuItem: MenuItem, delta: number) => {
     setCart((prev) => {
@@ -94,7 +102,7 @@ export default function GuestMenuPage({ params }: { params: Promise<{ reservatio
         setShowSuccess(true);
         setCart([]);
       } else {
-        alert("Sorry, we couldn't place your order. Please call the front desk.");
+        alert(data.error || "Sorry, we couldn't place your order. Please call the front desk.");
       }
     } catch (e) {
       alert("Error placing order. Please try again.");
@@ -113,8 +121,20 @@ export default function GuestMenuPage({ params }: { params: Promise<{ reservatio
         <div className={styles.roomTag}>Room ID: {reservationId.slice(0, 4).toUpperCase()}</div>
       </header>
 
-      <main className={styles.main}>
-        <div className={styles.menuGrid}>
+      {!isActive ? (
+        <main className={styles.main}>
+          <div style={{ textAlign: "center", padding: "4rem 2rem", background: "rgba(0,0,0,0.5)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <h2 style={{ color: "white", marginBottom: "1rem" }}>Thank You For Staying With Us</h2>
+            <p style={{ color: "#94a3b8", lineHeight: "1.6" }}>
+              This reservation has been completed or cancelled.<br/>
+              Room service is no longer available for this stay.
+            </p>
+          </div>
+        </main>
+      ) : (
+        <>
+          <main className={styles.main}>
+            <div className={styles.menuGrid}>
           {menuItems.map((item) => {
             const cartItem = cart.find((c) => c.menuItem.id === item.id);
             const qty = cartItem?.quantity || 0;
@@ -194,6 +214,8 @@ export default function GuestMenuPage({ params }: { params: Promise<{ reservatio
             </button>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );
