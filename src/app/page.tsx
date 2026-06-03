@@ -2047,9 +2047,20 @@ export default function Dashboard() {
                     </button>
                   </div>
                 ) : (
-                  <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontStyle: "italic", textAlign: "center" }}>
-                    🔒 Property setup is locked. Please login as a Super Admin to create a property or seed demo data.
-                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center" }}>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontStyle: "italic", textAlign: "center" }}>
+                      🔒 Property setup is locked. Please login as a Super Admin to create a property or seed demo data.
+                    </p>
+                    <div style={{ marginTop: "16px", padding: "12px", backgroundColor: "rgba(255,0,0,0.1)", border: "1px solid red", borderRadius: "8px", fontSize: "0.8rem", color: "#fff", textAlign: "left", width: "100%" }}>
+                      <strong>Debug Info:</strong><br/>
+                      User Role: {currentUser?.role}<br/>
+                      User ID: {currentUser?.id}<br/>
+                      User OwnerID: {currentUser?.ownerId || 'null/undefined'}<br/>
+                      User PropertyID: {currentUser?.propertyId || 'null/undefined'}<br/>
+                      PropertiesList Length: {propertiesList.length}<br/>
+                      PropertyRooms Keys: {Object.keys(propertyRooms).length}
+                    </div>
+                  </div>
                 )}
               </div>
             </section>
