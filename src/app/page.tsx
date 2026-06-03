@@ -1378,7 +1378,9 @@ export default function Dashboard() {
       (new Date().setHours(0, 0, 0, 0) - BASE_DATE.setHours(0, 0, 0, 0)) /
         (1000 * 60 * 60 * 24)
     );
-    if (colIdx < todayIndex) {
+    // In hourly mode, colIdx is a 2-hr time-slot index (0–11), NOT a day index.
+    // The past-date check only applies to the daily grid.
+    if (timeScale === "daily" && colIdx < todayIndex) {
       addToast("Past Date Restriction|You cannot create a booking that starts in the past. Please select today or a future date.", "error");
       return;
     }

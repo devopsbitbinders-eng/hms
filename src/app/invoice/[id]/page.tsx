@@ -330,6 +330,12 @@ export default function InvoicePage() {
                 <tr>
                   <td colSpan={4} className="bold" style={{ color: "#10b981" }}>
                     Discount
+                    {calcData.couponApplied && (
+                      <span style={{ fontWeight: "normal", fontSize: "10px", marginLeft: "8px", color: "#059669" }}>
+                        (Coupon: <strong>{calcData.couponApplied}</strong>
+                        {calcData.originalRoomBase > 0 && ` · Applied on Room Charges`})
+                      </span>
+                    )}
                   </td>
                   <td className="right-align" style={{ color: "#10b981" }}>
                     - {calcData.discountAmount.toFixed(2)} /-
