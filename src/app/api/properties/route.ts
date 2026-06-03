@@ -18,6 +18,7 @@ export async function GET(request: Request) {
             reservations: {
               include: {
                 billingItems: true,
+                coupon: true,
               },
             },
           },
