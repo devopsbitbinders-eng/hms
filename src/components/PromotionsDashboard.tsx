@@ -219,7 +219,6 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                     <td style={{ padding: "8px" }}>{c.timesUsed}</td>
                     <td style={{ padding: "8px" }}>{c.validUntil ? new Date(c.validUntil).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : "No Expiry"}</td>
                     <td style={{ padding: "8px" }}>
-                    <td style={{ padding: "8px" }}>
                       {canManage ? (
                         <button 
                           onClick={() => handleToggleCouponStatus(c.id, c.isActive)}
