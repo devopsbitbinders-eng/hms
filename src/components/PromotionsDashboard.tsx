@@ -151,6 +151,8 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
   const formStyle = { display: "flex", gap: "10px", flexWrap: "wrap" as "wrap", marginBottom: "20px", padding: "20px", background: "var(--bg-secondary)", borderRadius: "8px" };
   const inputStyle = { padding: "8px", borderRadius: "4px", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)" };
 
+  const canManage = currentUser?.role === "Super Admin" || currentUser?.role === "Owner" || currentUser?.role === "General Manager" || (currentUser?.permissions || []).includes("promotions:manage");
+
   return (
     <div style={{ padding: "24px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
@@ -163,28 +165,30 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
 
       {activeTab === "coupons" && (
         <>
-          <div className="glass-card">
-            <h3>Create New Coupon</h3>
-            <form style={formStyle} onSubmit={handleCreateCoupon}>
-              <input style={inputStyle} placeholder="Coupon Code (e.g. SUMMER20)" value={couponCode} onChange={e => setCouponCode(e.target.value)} required />
-              <select style={inputStyle} value={discountType} onChange={e => setDiscountType(e.target.value)}>
-                <option value="PERCENTAGE">Percentage (%)</option>
-                <option value="FLAT">Flat Amount (₹)</option>
-              </select>
-              <input style={inputStyle} type="number" placeholder="Value" value={discountValue} onChange={e => setDiscountValue(e.target.value)} required />
-              <select style={inputStyle} value={applyTo} onChange={e => setApplyTo(e.target.value)}>
-                <option value="ROOM_ONLY">Room Tariff Only</option>
-                <option value="GRAND_TOTAL">Grand Total (Inc. Food/Extras)</option>
-                <option value="ROOM_UPGRADE_ONLY">Room Upgrade Only</option>
-                <option value="CUSTOM">Custom Category/Name</option>
-              </select>
-              {applyTo === "CUSTOM" && (
-                <input style={inputStyle} placeholder="e.g. Food, Spa, Laundry" value={customTarget} onChange={e => setCustomTarget(e.target.value)} required />
-              )}
-              <input style={inputStyle} type="datetime-local" title="Expiry Date & Time (Optional)" placeholder="Expiry Date" value={validUntil} onChange={e => setValidUntil(e.target.value)} />
-              <button className="btn-primary" type="submit">Create Coupon</button>
-            </form>
-          </div>
+          {canManage && (
+            <div className="glass-card">
+              <h3>Create New Coupon</h3>
+              <form style={formStyle} onSubmit={handleCreateCoupon}>
+                <input style={inputStyle} placeholder="Coupon Code (e.g. SUMMER20)" value={couponCode} onChange={e => setCouponCode(e.target.value)} required />
+                <select style={inputStyle} value={discountType} onChange={e => setDiscountType(e.target.value)}>
+                  <option value="PERCENTAGE">Percentage (%)</option>
+                  <option value="FLAT">Flat Amount (₹)</option>
+                </select>
+                <input style={inputStyle} type="number" placeholder="Value" value={discountValue} onChange={e => setDiscountValue(e.target.value)} required />
+                <select style={inputStyle} value={applyTo} onChange={e => setApplyTo(e.target.value)}>
+                  <option value="ROOM_ONLY">Room Tariff Only</option>
+                  <option value="GRAND_TOTAL">Grand Total (Inc. Food/Extras)</option>
+                  <option value="ROOM_UPGRADE_ONLY">Room Upgrade Only</option>
+                  <option value="CUSTOM">Custom Category/Name</option>
+                </select>
+                {applyTo === "CUSTOM" && (
+                  <input style={inputStyle} placeholder="e.g. Food, Spa, Laundry" value={customTarget} onChange={e => setCustomTarget(e.target.value)} required />
+                )}
+                <input style={inputStyle} type="datetime-local" title="Expiry Date & Time (Optional)" placeholder="Expiry Date" value={validUntil} onChange={e => setValidUntil(e.target.value)} />
+                <button className="btn-primary" type="submit">Create Coupon</button>
+              </form>
+            </div>
+          )}
           
           <div className="glass-card" style={{ marginTop: "20px" }}>
             <h3>Active Coupons</h3>
@@ -215,25 +219,32 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                     <td style={{ padding: "8px" }}>{c.timesUsed}</td>
                     <td style={{ padding: "8px" }}>{c.validUntil ? new Date(c.validUntil).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : "No Expiry"}</td>
                     <td style={{ padding: "8px" }}>
-                      <button 
-                        onClick={() => handleToggleCouponStatus(c.id, c.isActive)}
-                        style={{
-                          background: c.isActive ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                          color: c.isActive ? "#10b981" : "#ef4444",
-                          border: "none",
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          fontWeight: "500",
-                          fontSize: "0.85rem"
-                        }}
-                      >
-                        {c.isActive ? "🟢 Active" : "🔴 Inactive"}
-                      </button>
+                    <td style={{ padding: "8px" }}>
+                      {canManage ? (
+                        <button 
+                          onClick={() => handleToggleCouponStatus(c.id, c.isActive)}
+                          style={{
+                            background: c.isActive ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                            color: c.isActive ? "#10b981" : "#ef4444",
+                            border: "none",
+                            padding: "4px 8px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            fontWeight: "500",
+                            fontSize: "0.85rem"
+                          }}
+                        >
+                          {c.isActive ? "🟢 Active" : "🔴 Inactive"}
+                        </button>
+                      ) : (
+                        <span style={{ color: c.isActive ? "#10b981" : "#ef4444", fontWeight: "500" }}>
+                          {c.isActive ? "🟢 Active" : "🔴 Inactive"}
+                        </span>
+                      )}
                       {c.validUntil && new Date(c.validUntil) < new Date() ? <div style={{ fontSize: "0.75rem", marginTop: "4px", color: "var(--text-muted)" }}>(Expired)</div> : null}
                     </td>
                     <td style={{ padding: "8px", textAlign: "center", display: "flex", gap: "8px", justifyContent: "center" }}>
-                      <button onClick={() => handleDeleteCoupon(c.id)} style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "16px" }} title="Delete Coupon">🗑️</button>
+                      {canManage && <button onClick={() => handleDeleteCoupon(c.id)} style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "16px" }} title="Delete Coupon">🗑️</button>}
                     </td>
                   </tr>
                 ))}
@@ -246,20 +257,22 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
 
       {activeTab === "affiliates" && (
         <>
-          <div className="glass-card">
-            <h3>Add New Affiliate / Partner</h3>
-            <form style={formStyle} onSubmit={handleCreateAffiliate}>
-              <input style={inputStyle} placeholder="Name" value={affName} onChange={e => setAffName(e.target.value)} required />
-              <input style={inputStyle} type="email" placeholder="Email" value={affEmail} onChange={e => setAffEmail(e.target.value)} required />
-              <input style={inputStyle} placeholder="Referral Code (e.g. MAKEMYTRIP)" value={affCode} onChange={e => setAffCode(e.target.value)} required />
-              <select style={inputStyle} value={affType} onChange={e => setAffType(e.target.value)}>
-                <option value="PERCENTAGE">Percentage (%)</option>
-                <option value="FLAT">Flat Rate (₹)</option>
-              </select>
-              <input style={inputStyle} type="number" placeholder="Commission Value" value={affValue} onChange={e => setAffValue(e.target.value)} required />
-              <button className="btn-primary" type="submit">Add Affiliate</button>
-            </form>
-          </div>
+          {canManage && (
+            <div className="glass-card">
+              <h3>Add New Affiliate / Partner</h3>
+              <form style={formStyle} onSubmit={handleCreateAffiliate}>
+                <input style={inputStyle} placeholder="Name" value={affName} onChange={e => setAffName(e.target.value)} required />
+                <input style={inputStyle} type="email" placeholder="Email" value={affEmail} onChange={e => setAffEmail(e.target.value)} required />
+                <input style={inputStyle} placeholder="Referral Code (e.g. MAKEMYTRIP)" value={affCode} onChange={e => setAffCode(e.target.value)} required />
+                <select style={inputStyle} value={affType} onChange={e => setAffType(e.target.value)}>
+                  <option value="PERCENTAGE">Percentage (%)</option>
+                  <option value="FLAT">Flat Rate (₹)</option>
+                </select>
+                <input style={inputStyle} type="number" placeholder="Commission Value" value={affValue} onChange={e => setAffValue(e.target.value)} required />
+                <button className="btn-primary" type="submit">Add Affiliate</button>
+              </form>
+            </div>
+          )}
 
           <div className="glass-card" style={{ marginTop: "20px" }}>
             <h3>Affiliate Partners & Payouts</h3>
@@ -287,14 +300,16 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                       ₹{a.pendingPayout.toFixed(2)}
                     </td>
                     <td style={{ padding: "8px", textAlign: "right" }}>
-                      <button 
-                        className="btn-secondary" 
-                        disabled={a.pendingPayout <= 0}
-                        onClick={() => handlePayout(a.id)}
-                        style={{ padding: "4px 8px", fontSize: "0.8rem", opacity: a.pendingPayout > 0 ? 1 : 0.5 }}
-                      >
-                        Approve Payout
-                      </button>
+                      {canManage && (
+                        <button 
+                          className="btn-secondary" 
+                          disabled={a.pendingPayout <= 0}
+                          onClick={() => handlePayout(a.id)}
+                          style={{ padding: "4px 8px", fontSize: "0.8rem", opacity: a.pendingPayout > 0 ? 1 : 0.5 }}
+                        >
+                          Approve Payout
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
