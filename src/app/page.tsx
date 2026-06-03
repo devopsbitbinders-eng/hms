@@ -4161,7 +4161,7 @@ export default function Dashboard() {
                       </div>
                       {newResAffiliateApplied && (
                         <div style={{ marginTop: "6px", padding: "6px 10px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "6px", fontSize: "0.8rem", color: "#a78bfa" }}>
-                          ✅ <strong>{newResAffiliateApplied.name}</strong> ({newResAffiliateApplied.referralCode}) — {newResAffiliateApplied.commissionType === "FLAT" ? `₹${newResAffiliateApplied.commissionValue}` : `${newResAffiliateApplied.commissionValue}%`} commission
+                          ✅ Referral code <strong>{newResAffiliateApplied.referralCode}</strong> applied
                           <button type="button" onClick={() => { setNewResAffiliateApplied(null); setNewResAffiliateCode(""); }} style={{ marginLeft: "8px", background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "0.8rem" }}>✕ Remove</button>
                         </div>
                       )}
