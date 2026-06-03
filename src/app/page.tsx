@@ -1395,7 +1395,7 @@ export default function Dashboard() {
     setNewResRoomId(targetRoom.id || "");
     setNewResBillingItems([{ name: "Room Rate", amount: targetRoom.basePrice || 0, category: "room" }]);
     setNewResStartIndex(colIdx);
-    setNewResDate(indexToDate(colIdx));
+    setNewResDate(timeScale === "daily" ? indexToDate(colIdx) : new Date().toISOString().split("T")[0]);
     setNewResCheckInTime("");
     setNewResDuration(timeScale === "daily" ? 1 : 1);
     setShowBookingModal(true);
@@ -3491,7 +3491,7 @@ export default function Dashboard() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
                     <div>
                       <label style={labelStyle}>🗓️ Check-out Date <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(auto)</span></label>
-                      <input style={{...inputStyle, backgroundColor: "rgba(255,255,255,0.02)", color: "var(--text-secondary)"}} type="date" value={new Date(new Date(newResDate).getTime() + (newResDuration * 86400000)).toISOString().split("T")[0]} readOnly disabled />
+                      <input style={{...inputStyle, backgroundColor: "rgba(255,255,255,0.02)", color: "var(--text-secondary)"}} type="date" value={new Date(new Date(newResDate).getTime() + (timeScale === "daily" ? newResDuration * 86400000 : 0)).toISOString().split("T")[0]} readOnly disabled />
                     </div>
                     <div>
                       <label style={labelStyle}>⏰ Expected Check-out Time <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.75rem" }}>(optional)</span></label>
