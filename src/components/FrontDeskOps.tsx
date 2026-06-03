@@ -52,6 +52,24 @@ function indexToDate(idx: number): string {
   return base.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function formatResDates(res: any): { start: string, end: string, durationStr: string } {
+  if (res.bookingType === "hourly") {
+    const slots = ["08:00 AM","10:00 AM","12:00 PM","02:00 PM","04:00 PM","06:00 PM","08:00 PM","10:00 PM","12:00 AM","02:00 AM","04:00 AM","06:00 AM"];
+    const s = slots[res.startIndex % 12] || "Unknown";
+    const e = slots[(res.startIndex + res.duration) % 12] || "Unknown";
+    return {
+      start: `Today, ${s}`,
+      end: `Today, ${e}`,
+      durationStr: `${res.duration} 2-Hr Slot${res.duration !== 1 ? "s" : ""}`
+    };
+  }
+  return {
+    start: indexToDate(res.startIndex),
+    end: indexToDate(res.startIndex + res.duration),
+    durationStr: `${res.duration} Night${res.duration !== 1 ? "s" : ""}`
+  };
+}
+
 // ── SAC / HSN CODE LOOKUP ──────────────────────────────────────────
 function getSacCode(category: string, name: string): string {
   const n = name.toLowerCase();
@@ -863,12 +881,12 @@ export default function FrontDeskOps({
                       {room ? `Room ${room.number} — ${room.name} (${room.type})` : "Room N/A"} · {res.numAdults || 1} Adult{(res.numAdults || 1) !== 1 ? "s" : ""}
                     </div>
                     <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                      {indexToDate(res.startIndex)} → {indexToDate(res.startIndex + res.duration)} · {res.duration} Night{res.duration !== 1 ? "s" : ""}
+                      {formatResDates(res).start} → {formatResDates(res).end} · {formatResDates(res).durationStr}
                     </div>
 
                       {activeTab === "history" && (
                         <div style={{ marginTop: "6px", display: "flex", gap: "12px" }}>
-                          <span style={{ fontSize: "0.75rem", color: "#10b981", background: "rgba(16, 185, 129, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>Checked out on {res.checkOutTime ? new Date(res.checkOutTime).toLocaleDateString() : indexToDate(res.startIndex + res.duration)}</span>
+                          <span style={{ fontSize: "0.75rem", color: "#10b981", background: "rgba(16, 185, 129, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>Checked out on {res.checkOutTime ? new Date(res.checkOutTime).toLocaleDateString() : formatResDates(res).end}</span>
                           {res.paymentMethod && <span style={{ fontSize: "0.75rem", color: "#6366f1", background: "rgba(99, 102, 241, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>Paid via {res.paymentMethod}</span>}
                         </div>
                       )}
@@ -1280,8 +1298,8 @@ export default function FrontDeskOps({
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "0.9rem" }}>
                   <div><strong>Room:</strong> {getRoomForRes(viewProfileRes)?.number || "N/A"}</div>
                   <div><strong>Status:</strong> <span style={{ textTransform: "capitalize" }}>{viewProfileRes.status}</span></div>
-                  <div><strong>Check-in:</strong> {indexToDate(viewProfileRes.startIndex)}</div>
-                  <div><strong>Check-out:</strong> {indexToDate(viewProfileRes.startIndex + viewProfileRes.duration)}</div>
+                  <div><strong>Check-in:</strong> {formatResDates(viewProfileRes).start}</div>
+                  <div><strong>Check-out:</strong> {formatResDates(viewProfileRes).end}</div>
                   <div><strong>Adults:</strong> {viewProfileRes.numAdults || 1}</div>
                   <div><strong>Children:</strong> {viewProfileRes.numChildren || 0}</div>
                   <div><strong>Booking Type:</strong> <span style={{ textTransform: "capitalize" }}>{viewProfileRes.bookingType}</span></div>
