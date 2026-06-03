@@ -21,6 +21,7 @@ export interface Reservation {
   dob?: string;
   nationality?: string;
   couponId?: string;
+  coupon?: any;
 
   // B2B Billing Details
   companyName?: string;
