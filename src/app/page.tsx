@@ -1114,7 +1114,7 @@ export default function Dashboard() {
       (new Date().setHours(0, 0, 0, 0) - BASE_DATE.setHours(0, 0, 0, 0)) /
         (1000 * 60 * 60 * 24)
     );
-    if (newResStartIndex < todayIndex) {
+    if (timeScale === "daily" && newResStartIndex < todayIndex) {
       addToast("Past Date Restriction|You cannot create a booking that starts in the past. Please select today or a future date.", "error");
       return;
     }
@@ -3577,7 +3577,7 @@ export default function Dashboard() {
                           (new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) /
                             (1000 * 60 * 60 * 24)
                         );
-                        if (newResStartIndex < todayIdx) {
+                        if (timeScale === "daily" && newResStartIndex < todayIdx) {
                           addToast("Past Date Restriction|Cannot create a booking starting in the past. Please select today or a future date.", "error");
                         } else {
                           setNewResStep(2);
