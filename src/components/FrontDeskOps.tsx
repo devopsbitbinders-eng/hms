@@ -245,9 +245,21 @@ export default function FrontDeskOps({
 
   // ── OVERSTAY DETECTION ───────────────────────────────────────────────────
   const overstayGuests = useMemo(
-    () => currentReservations.filter(
-      (r) => r.status === "checked-in" && r.bookingType !== "hourly" && (r.startIndex + r.duration) < todayIndex
-    ),
+    () => {
+      const currentHour = new Date().getHours();
+      // 08:00 AM is index 0. If hour is 8-9, index is 0. If hour is 2-3 AM, hour is 2, index is (2+16)/2 = 9
+      const currentSlotIndex = Math.floor((currentHour >= 8 ? currentHour - 8 : currentHour + 16) / 2);
+      
+      return currentReservations.filter(
+        (r) => {
+          if (r.status !== "checked-in") return false;
+          if (r.bookingType === "hourly") {
+            return (r.startIndex + r.duration) <= currentSlotIndex;
+          }
+          return (r.startIndex + r.duration) < todayIndex;
+        }
+      );
+    },
     [currentReservations, todayIndex]
   );
 
@@ -257,16 +269,18 @@ export default function FrontDeskOps({
     setIsExtending(true);
     setExtendConflict(null);
     try {
+      const isHourly = extendRes.bookingType === "hourly";
       const newEnd = extendRes.startIndex + extendRes.duration + extendNights;
       // Conflict check: any other confirmed/checked-in reservation in that room overlapping the extension period
       const conflict = currentReservations.find((r) =>
         r.id !== extendRes.id &&
         r.roomId === extendRes.roomId &&
         r.status !== "checked-out" &&
+        (r.bookingType || "daily") === (extendRes.bookingType || "daily") &&
         Math.max(r.startIndex, extendRes.startIndex + extendRes.duration) < Math.min(r.startIndex + r.duration, newEnd)
       );
       if (conflict) {
-        setExtendConflict(`Room is already booked for ${conflict.guestName} during that period. Please choose fewer nights or change room.`);
+        setExtendConflict(`Room is already booked for ${conflict.guestName} during that period. Please choose fewer ${isHourly ? "slots" : "nights"} or change room.`);
         setIsExtending(false);
         return;
       }
@@ -282,7 +296,7 @@ export default function FrontDeskOps({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           duration: extendRes.duration + extendNights,
-          details: (extendRes.details || "") + `\n[Stay Extended: +${extendNights} night(s) by Front Desk on ${new Date().toLocaleDateString("en-IN")}]`,
+          details: (extendRes.details || "") + `\n[Stay Extended: +${extendNights} ${isHourly ? "slot(s)" : "night(s)"} by Front Desk on ${new Date().toLocaleDateString("en-IN")}]`,
         }),
       });
       const resData = await resRes.json();
@@ -295,14 +309,14 @@ export default function FrontDeskOps({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             reservationId: extendRes.id,
-            name: `Room Tariff (Extended Stay: ${extendNights} extra night${extendNights > 1 ? "s" : ""} @ ₹${perNight.toFixed(0)}/nt)`,
+            name: `Room Tariff (Extended Stay: ${extendNights} extra ${isHourly ? "slot(s)" : "night(s)"} @ ₹${perNight.toFixed(0)}/${isHourly ? "slot" : "nt"})`,
             amount: extraCharge,
             category: "room",
           }),
         });
       }
 
-      addToast(`✅ Stay extended by ${extendNights} night(s) for ${extendRes.guestName}!${extraCharge > 0 ? ` Extra charge of ₹${extraCharge.toFixed(2)} added to folio.` : ""}`, "success");
+      addToast(`✅ Stay extended by ${extendNights} ${isHourly ? "slot(s)" : "night(s)"} for ${extendRes.guestName}!${extraCharge > 0 ? ` Extra charge of ₹${extraCharge.toFixed(2)} added to folio.` : ""}`, "success");
       setExtendRes(null);
       setExtendNights(1);
       await refreshData();
@@ -970,7 +984,7 @@ export default function FrontDeskOps({
               <div style={{ margin: "16px 20px", padding: "12px 18px", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "10px", display: "flex", alignItems: "center", gap: "12px" }}>
                 <span style={{ fontSize: "1.5rem" }}>⚠️</span>
                 <div>
-                  <div style={{ fontWeight: "700", color: "#f87171", fontSize: "0.9rem" }}>Overstay Alert — {overstayGuests.length} guest{overstayGuests.length > 1 ? "s" : ""} past checkout date!</div>
+                  <div style={{ fontWeight: "700", color: "#f87171", fontSize: "0.9rem" }}>Overstay Alert — {overstayGuests.length} guest{overstayGuests.length > 1 ? "s" : ""} past checkout {overstayGuests.some(g => g.bookingType === "hourly") ? "time" : "date"}!</div>
                   <div style={{ fontSize: "0.78rem", color: "rgba(248,113,113,0.8)", marginTop: "2px" }}>
                     {overstayGuests.map(g => g.guestName).join(", ")} — Please process checkout or extend their stay.
                   </div>
@@ -980,7 +994,7 @@ export default function FrontDeskOps({
             {displayList.map((res, idx) => {
               const room = getRoomForRes(res);
               const bill = computeBill(res);
-              const isOverstay = res.status === "checked-in" && res.bookingType !== "hourly" && (res.startIndex + res.duration) < todayIndex;
+              const isOverstay = overstayGuests.some(g => g.id === res.id);
               return (
                 <div
                   key={res.id}
@@ -1028,7 +1042,7 @@ export default function FrontDeskOps({
                     </div>
                     <div style={{ fontSize: "0.78rem", color: isOverstay ? "#f87171" : "var(--text-muted)", marginTop: "2px", fontWeight: isOverstay ? "600" : undefined }}>
                       {formatResDates(res).start} → {formatResDates(res).end} · {formatResDates(res).durationStr}
-                      {isOverstay && <> &nbsp;·&nbsp; <span style={{ color: "#f87171" }}>Overstayed by {todayIndex - (res.startIndex + res.duration)} night(s)</span></>}
+                      {isOverstay && <> &nbsp;·&nbsp; <span style={{ color: "#f87171" }}>Overstayed by {res.bookingType === "hourly" ? "time slot" : `${todayIndex - (res.startIndex + res.duration)} night(s)`}</span></>}
                     </div>
 
                       {activeTab === "history" && (
@@ -1903,7 +1917,7 @@ export default function FrontDeskOps({
                 </div>
               )}
 
-              <label style={{ display: "block", marginBottom: "8px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>Additional Nights</label>
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>Additional {extendRes.bookingType === "hourly" ? "Slots (2-Hr each)" : "Nights"}</label>
               <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "24px" }}>
                 <button 
                   className="btn-secondary" 
@@ -1922,11 +1936,11 @@ export default function FrontDeskOps({
               <div style={{ padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", marginBottom: "24px", fontSize: "0.85rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", color: "var(--text-secondary)" }}>
                   <span>Current Departure:</span>
-                  <span style={{ color: "#fff" }}>{new Date(new Date("2026-05-20").getTime() + (extendRes.startIndex + extendRes.duration) * 86400000).toLocaleDateString("en-IN")}</span>
+                  <span style={{ color: "#fff" }}>{formatResDates(extendRes).end}</span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-secondary)", fontWeight: "600" }}>
                   <span>New Departure:</span>
-                  <span style={{ color: "#10b981" }}>{new Date(new Date("2026-05-20").getTime() + (extendRes.startIndex + extendRes.duration + extendNights) * 86400000).toLocaleDateString("en-IN")}</span>
+                  <span style={{ color: "#10b981" }}>{formatResDates({ ...extendRes, duration: extendRes.duration + extendNights }).end}</span>
                 </div>
               </div>
 
