@@ -125,10 +125,35 @@ export async function POST(request: Request) {
         channelName,
         type: "booking_webhook",
         status: "success",
-        message: `[📥 Webhook Inbound] Registered reservation for "${guestName}" in Room ${room.number} (May ${20 + startIndex}, ${parsedDuration} nights) from ${channelName} listing ID "${channel.listingId}". Zero-lag fanout updated remaining connected OTAs.`,
+        message: `[📥 Webhook Inbound] Registered reservation for "${guestName}" in Room ${room.number} (May ${20 + startIndex}, ${parsedDuration} nights) from ${channelName} listing ID "${channel.listingId}". Zero-lag fanout updating remaining connected OTAs...`,
         propertyId
       }
     });
+
+    // Fanout: outbound sync to other connected channels
+    const otherChannels = await prisma.channel.findMany({
+      where: {
+        propertyId,
+        connected: true,
+        NOT: {
+          name: channelName
+        }
+      }
+    });
+
+    if (otherChannels.length > 0) {
+      const logsToCreate = otherChannels.map(ch => ({
+        channelName: ch.name,
+        type: "inventory_sync",
+        status: "success",
+        message: `[📤 Outbound Webhook] Zero-lag inventory update pushed! Blocked Room ${room.number} on ${ch.name} for May ${20 + startIndex} (${parsedDuration} nights) due to new booking from ${channelName}.`,
+        propertyId
+      }));
+
+      await prisma.channelLog.createMany({
+        data: logsToCreate
+      });
+    }
 
     return NextResponse.json({ success: true, reservation: simulatedOtaReservation });
   } catch (error: any) {
