@@ -48,8 +48,10 @@ export async function POST(request: Request) {
         role: updatedUser.role,
         avatar: updatedUser.avatar,
         propertyId: updatedUser.propertyId,
+        ownerId: updatedUser.ownerId,
         allowRoomManagement: updatedUser.allowRoomManagement,
         isFirstLogin: updatedUser.isFirstLogin,
+        permissions: updatedUser.permissions,
       },
     });
   } catch (error: any) {
