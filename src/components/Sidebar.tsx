@@ -56,7 +56,7 @@ export default function Sidebar({
       return item.id !== "settings";
     }
     if (role === "Front Office Manager") {
-      return ["front-office", "front-desk", "housekeeping", "kitchen", "promotions", "reviews", "attendance", "staff-management"].includes(item.id);
+      return ["front-office", "front-desk", "housekeeping", "promotions", "reviews", "attendance"].includes(item.id);
     }
     if (role === "Receptionist") {
       return ["front-office", "front-desk", "housekeeping", "kitchen", "reviews", "attendance"].includes(item.id);

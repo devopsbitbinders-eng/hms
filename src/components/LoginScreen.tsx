@@ -304,8 +304,8 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
                     <input type="text" value={registerUsername} onChange={(e) => setRegisterUsername(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="e.g. admin" required />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Password</label>
-                    <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="Set a strong password" required />
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Access PIN</label>
+                    <input type="password" value={registerPassword} onChange={(e) => setRegisterPassword(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="Set a strong PIN (e.g. 4+ digits)" required />
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Referral Code (Optional)</label>
@@ -328,7 +328,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (user:
                     <input type="text" value={ownerUsername} onChange={(e) => setOwnerUsername(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="admin" required />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Password</label>
+                    <label style={{ display: "block", fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "8px" }}>Access PIN</label>
                     <input type="password" value={ownerPassword} onChange={(e) => setOwnerPassword(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "rgba(255,255,255,0.05)", color: "#fff" }} placeholder="••••••••" required />
                   </div>
                   {error && <div style={{ color: "#ef4444", fontSize: "0.85rem", textAlign: "center", backgroundColor: "rgba(239, 68, 68, 0.1)", padding: "10px", borderRadius: "8px" }}>{error}</div>}
