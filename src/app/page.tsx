@@ -103,7 +103,6 @@ export default function Dashboard() {
     if (currentUser.role === "Front Office Manager") {
       const defaults = [
         "front-office", "front-desk", "housekeeping", "reviews", "attendance",
-        "attendance:approve-leave", "attendance:approve-swap",
         "staff-management", "staff-management:edit-shift"
       ];
       return defaults.includes(permId);
@@ -2383,7 +2382,12 @@ export default function Dashboard() {
                   </div>
                   
                   {/* ========== ANALYTICS DASHBOARD ========== */}
-                  <AttendanceAnalytics usersList={usersList} ownerId={currentUser?.ownerId || currentUser?.id} />
+                  <AttendanceAnalytics 
+                    usersList={usersList} 
+                    ownerId={currentUser?.ownerId || currentUser?.id} 
+                    currentUserId={currentUser?.id}
+                    canViewAll={currentUser?.role === "Super Admin" || hasPermission("attendance:approve-leave")}
+                  />
           </section>
 ) : activeMenu === "staff-management" ? (
           <section style={{ padding: "40px 32px", overflowY: "auto", flexGrow: 1, minHeight: 0 }}>

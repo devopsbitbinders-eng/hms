@@ -5,11 +5,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-export default function AttendanceAnalytics({ usersList, ownerId }: { usersList: any[], ownerId?: string }) {
+export default function AttendanceAnalytics({ usersList, ownerId, currentUserId, canViewAll = true }: { usersList: any[], ownerId?: string, currentUserId?: string, canViewAll?: boolean }) {
   const [attendances, setAttendances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<"weekly" | "monthly" | "yearly">("weekly");
-  const [selectedUserId, setSelectedUserId] = useState<string>("all");
+  const [selectedUserId, setSelectedUserId] = useState<string>(canViewAll ? "all" : (currentUserId || "all"));
 
   useEffect(() => {
     const fetchAllAttendances = async () => {
@@ -148,19 +148,25 @@ export default function AttendanceAnalytics({ usersList, ownerId }: { usersList:
         <h2 style={{ fontSize: "1.2rem", fontWeight: "600", color: "#fff" }}>📊 Working Hours & Overtime Analytics</h2>
         
         <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-          <select 
-            value={selectedUserId} 
-            onChange={(e) => setSelectedUserId(e.target.value)}
-            style={{ 
-              background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-color)", 
-              color: "#fff", padding: "8px 12px", borderRadius: "6px", outline: "none", fontSize: "0.85rem"
-            }}
-          >
-            <option value="all">All Staff Members</option>
-            {usersList.map(u => (
-              <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-            ))}
-          </select>
+          {canViewAll ? (
+            <select 
+              value={selectedUserId} 
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              style={{ 
+                background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-color)", 
+                color: "#fff", padding: "8px 12px", borderRadius: "6px", outline: "none", fontSize: "0.85rem"
+              }}
+            >
+              <option value="all">All Staff Members</option>
+              {usersList.map(u => (
+                <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+              ))}
+            </select>
+          ) : (
+            <div style={{ background: "rgba(0,0,0,0.3)", border: "1px solid var(--border-color)", color: "#fff", padding: "8px 12px", borderRadius: "6px", fontSize: "0.85rem" }}>
+              My Analytics
+            </div>
+          )}
 
           <div style={{ display: "flex", background: "rgba(0,0,0,0.3)", borderRadius: "6px", border: "1px solid var(--border-color)", overflow: "hidden" }}>
             {[ {id: "weekly", label: "Daily (Last 30 Days)"}, {id: "monthly", label: "Monthly (Last 12 Months)"}, {id: "yearly", label: "Yearly (All Time)"} ].map(range => (
