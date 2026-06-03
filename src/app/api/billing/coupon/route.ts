@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, message: "Coupon applied successfully" });
+    return NextResponse.json({ success: true, message: "Coupon applied successfully", coupon });
   } catch (error: any) {
     console.error(error);
     return NextResponse.json({ success: false, error: "Failed to apply coupon" }, { status: 500 });

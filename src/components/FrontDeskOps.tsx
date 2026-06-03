@@ -667,7 +667,7 @@ export default function FrontDeskOps({
         return;
       }
 
-      setUpgradeCouponData({ success: true, code: upgradeCouponCode });
+      setUpgradeCouponData({ success: true, code: upgradeCouponCode, coupon: applyData.coupon });
       addToast(`✅ Coupon ${upgradeCouponCode} applied! Discount will be calculated upon checkout.`, "success");
     } catch (err: any) {
       addToast(`Failed to apply coupon: ${err.message}`, "error");
@@ -1259,6 +1259,28 @@ export default function FrontDeskOps({
                       </button>
                     )}
                   </div>
+                  {upgradeCouponData?.coupon && (
+                    <div style={{ padding: "10px", background: "rgba(16, 185, 129, 0.1)", borderRadius: "8px", border: "1px solid rgba(16, 185, 129, 0.3)", marginBottom: "20px" }}>
+                      {(() => {
+                        const c = upgradeCouponData.coupon;
+                        let discount = 0;
+                        const cost = parseFloat(upgradeCost) || 0;
+                        if (c.discountType === "PERCENTAGE") {
+                          discount = cost * (c.discountValue / 100);
+                          if (c.maxDiscount && discount > c.maxDiscount) discount = c.maxDiscount;
+                        } else {
+                          discount = c.discountValue;
+                        }
+                        const finalCost = Math.max(0, cost - discount);
+                        return (
+                          <div style={{ color: "#10b981", fontSize: "0.9rem" }}>
+                            <strong>Discount Applied: </strong> ₹{discount.toFixed(2)} <br/>
+                            <strong>Final Upgrade Cost: </strong> ₹{finalCost.toFixed(2)}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </>
               )}
 

@@ -485,15 +485,18 @@ export default function VisualGrid({
             >
               <div className={styles.bookingCardTitle}>
                 {res.guestName}
-                {res.details && res.details.includes("[Upgraded") && (
-                  <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(16,185,129,0.3)", color: "#a7f3d0", padding: "2px 6px", borderRadius: "10px" }}>⭐ Upgraded</span>
-                )}
-                {res.details && res.details.includes("[Swapped") && (
-                  <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(236,72,153,0.3)", color: "#fbcfe8", padding: "2px 6px", borderRadius: "10px" }}>🔄 Swapped</span>
-                )}
-                {res.details && res.details.includes("[Room Change:") && !res.details.includes("[Upgraded") && !res.details.includes("[Swapped") && (
-                  <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(99,102,241,0.3)", color: "#c7d2fe", padding: "2px 6px", borderRadius: "10px" }}>🔁 Moved</span>
-                )}
+                {(() => {
+                  if (!res.details) return null;
+                  const upIdx = res.details.lastIndexOf("[Upgraded");
+                  const swapIdx = res.details.lastIndexOf("[Swapped");
+                  const moveIdx = res.details.lastIndexOf("[Room Change:");
+                  const maxIdx = Math.max(upIdx, swapIdx, moveIdx);
+                  if (maxIdx === -1) return null;
+                  if (maxIdx === upIdx) return <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(16,185,129,0.3)", color: "#a7f3d0", padding: "2px 6px", borderRadius: "10px" }}>⭐ Upgraded</span>;
+                  if (maxIdx === swapIdx) return <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(236,72,153,0.3)", color: "#fbcfe8", padding: "2px 6px", borderRadius: "10px" }}>🔄 Swapped</span>;
+                  if (maxIdx === moveIdx) return <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(99,102,241,0.3)", color: "#c7d2fe", padding: "2px 6px", borderRadius: "10px" }}>🔁 Moved</span>;
+                  return null;
+                })()}
                 {res.isGroup && <span style={{ fontSize: "0.6rem", display: "block", color: "var(--text-secondary)" }}>🏢 Group: {res.groupName}</span>}
               </div>
               <div className={styles.bookingCardDetail}>
