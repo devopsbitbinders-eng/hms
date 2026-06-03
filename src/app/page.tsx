@@ -343,6 +343,12 @@ export default function Dashboard() {
   const [newResUpiTransactionId, setNewResUpiTransactionId] = useState("");
   const [newResSpecialRequests, setNewResSpecialRequests] = useState("");
   const [newResGuestTag, setNewResGuestTag] = useState("");
+  const [newResCouponCode, setNewResCouponCode] = useState("");
+  const [newResAffiliateCode, setNewResAffiliateCode] = useState("");
+  const [newResCouponApplied, setNewResCouponApplied] = useState<any>(null);
+  const [newResAffiliateApplied, setNewResAffiliateApplied] = useState<any>(null);
+  const [couponCheckLoading, setCouponCheckLoading] = useState(false);
+  const [affiliateCheckLoading, setAffiliateCheckLoading] = useState(false);
 
   // Helpers: bidirectional sync between Arrival Date picker and startIndex
   const BASE_DATE = new Date(2026, 4, 20); // May 20, 2026
@@ -1093,6 +1099,50 @@ export default function Dashboard() {
     }
   };
 
+  // 3a. APPLY COUPON CODE
+  const handleApplyCoupon = async () => {
+    if (!newResCouponCode.trim()) return;
+    setCouponCheckLoading(true);
+    try {
+      const oId = currentUser?.ownerId || currentUser?.id;
+      const res = await fetch(`/api/coupons?ownerId=${oId}&code=${newResCouponCode.trim().toUpperCase()}&t=${Date.now()}`);
+      const data = await res.json();
+      if (data.success && data.coupons && data.coupons.length > 0) {
+        const coupon = data.coupons[0];
+        if (!coupon.isActive) { addToast("This coupon is not active.", "error"); return; }
+        if (coupon.validUntil && new Date(coupon.validUntil) < new Date()) { addToast("This coupon has expired.", "error"); return; }
+        setNewResCouponApplied(coupon);
+        addToast(`✅ Coupon "${coupon.code}" applied! ${coupon.discountType === "FLAT" ? `₹${coupon.discountValue} off` : `${coupon.discountValue}% off`}`, "success");
+      } else {
+        setNewResCouponApplied(null);
+        addToast("Invalid or expired coupon code.", "error");
+      }
+    } catch { addToast("Failed to validate coupon.", "error"); }
+    finally { setCouponCheckLoading(false); }
+  };
+
+  // 3b. APPLY AFFILIATE REFERRAL CODE
+  const handleApplyAffiliateCode = async () => {
+    if (!newResAffiliateCode.trim()) return;
+    setAffiliateCheckLoading(true);
+    try {
+      const oId = currentUser?.ownerId || currentUser?.id;
+      const res = await fetch(`/api/affiliates?ownerId=${oId}&t=${Date.now()}`);
+      const data = await res.json();
+      if (data.success) {
+        const aff = data.affiliates.find((a: any) => a.referralCode === newResAffiliateCode.trim().toUpperCase() && a.isActive);
+        if (aff) {
+          setNewResAffiliateApplied(aff);
+          addToast(`✅ Affiliate "${aff.name}" (${aff.referralCode}) will earn commission on this booking!`, "success");
+        } else {
+          setNewResAffiliateApplied(null);
+          addToast("Invalid or inactive affiliate code.", "error");
+        }
+      }
+    } catch { addToast("Failed to validate affiliate code.", "error"); }
+    finally { setAffiliateCheckLoading(false); }
+  };
+
   // 3. CREATE BOOKING / RESERVATION
   const handleCreateReservation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1228,10 +1278,26 @@ export default function Dashboard() {
           upiTransactionId: newResUpiTransactionId,
           specialRequests: newResSpecialRequests,
           guestTag: newResGuestTag,
+
+          // Coupon & Affiliate
+          couponId: newResCouponApplied?.id || null,
+          affiliateId: newResAffiliateApplied?.id || null,
         }),
       });
       const data = await response.json();
       if (data.success) {
+        // If affiliate code was used, record commission on the booking
+        if (newResAffiliateApplied && data.reservation?.id) {
+          const aff = newResAffiliateApplied;
+          const roomItem = newResBillingItems.find((b: any) => b.category === "room");
+          const roomTotal = roomItem ? roomItem.amount * newResDuration : 0;
+          const earned = aff.commissionType === "FLAT" ? aff.commissionValue : Math.round((roomTotal * aff.commissionValue) / 100);
+          await fetch("/api/affiliates", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: aff.id, action: "COMMISSION", earned, reservationId: data.reservation.id }),
+          });
+        }
         addToast(`📅 Booking for "${newResGuestName}" registered persistently!`);
 
         // --- OUTBOUND OTA CHANNEL SYNC PIPELINE ---
@@ -1349,6 +1415,10 @@ export default function Dashboard() {
         setNewResUpiTransactionId("");
         setNewResSpecialRequests("");
         setNewResGuestTag("");
+        setNewResCouponCode("");
+        setNewResAffiliateCode("");
+        setNewResCouponApplied(null);
+        setNewResAffiliateApplied(null);
         setNewResBillingItems([{ name: "Room Tariff", amount: 4500, category: "room" }]);
         setNewResGstMode("exclusive");
         await loadData();
@@ -4047,6 +4117,54 @@ export default function Dashboard() {
                         <option value="Frequent Flyer">✈️ Frequent Flyer (Loyalty)</option>
                         <option value="Blacklisted">⚠️ Blacklisted (Refuse Entry)</option>
                       </select>
+                    </div>
+                  </div>
+
+                  {/* ── COUPON & AFFILIATE CODE ── */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", padding: "16px", background: "rgba(139,92,246,0.05)", border: "1px dashed rgba(139,92,246,0.3)", borderRadius: "8px" }}>
+                    <div>
+                      <label style={labelStyle}>🎟️ Coupon / Discount Code <span style={{ fontWeight: 400, fontSize: "0.75rem", color: "var(--text-muted)" }}>(optional)</span></label>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          style={{ ...inputStyle, flex: 1, textTransform: "uppercase" }}
+                          type="text"
+                          placeholder="e.g. SUMMER20"
+                          value={newResCouponCode}
+                          onChange={(e) => { setNewResCouponCode(e.target.value.toUpperCase()); setNewResCouponApplied(null); }}
+                        />
+                        <button type="button" onClick={handleApplyCoupon} disabled={couponCheckLoading || !newResCouponCode}
+                          style={{ padding: "8px 14px", borderRadius: "6px", border: "none", background: "var(--primary-color)", color: "#fff", cursor: "pointer", fontSize: "0.8rem", opacity: (!newResCouponCode || couponCheckLoading) ? 0.5 : 1 }}>
+                          {couponCheckLoading ? "..." : "Apply"}
+                        </button>
+                      </div>
+                      {newResCouponApplied && (
+                        <div style={{ marginTop: "6px", padding: "6px 10px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "6px", fontSize: "0.8rem", color: "#10b981" }}>
+                          ✅ <strong>{newResCouponApplied.code}</strong> — {newResCouponApplied.discountType === "FLAT" ? `₹${newResCouponApplied.discountValue}` : `${newResCouponApplied.discountValue}%`} off {newResCouponApplied.applyTo.replace(/_/g, " ")}
+                          <button type="button" onClick={() => { setNewResCouponApplied(null); setNewResCouponCode(""); }} style={{ marginLeft: "8px", background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "0.8rem" }}>✕ Remove</button>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label style={labelStyle}>🤝 Affiliate Referral Code <span style={{ fontWeight: 400, fontSize: "0.75rem", color: "var(--text-muted)" }}>(optional)</span></label>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          style={{ ...inputStyle, flex: 1, textTransform: "uppercase" }}
+                          type="text"
+                          placeholder="e.g. MAKEMYTRIP"
+                          value={newResAffiliateCode}
+                          onChange={(e) => { setNewResAffiliateCode(e.target.value.toUpperCase()); setNewResAffiliateApplied(null); }}
+                        />
+                        <button type="button" onClick={handleApplyAffiliateCode} disabled={affiliateCheckLoading || !newResAffiliateCode}
+                          style={{ padding: "8px 14px", borderRadius: "6px", border: "none", background: "var(--primary-color)", color: "#fff", cursor: "pointer", fontSize: "0.8rem", opacity: (!newResAffiliateCode || affiliateCheckLoading) ? 0.5 : 1 }}>
+                          {affiliateCheckLoading ? "..." : "Apply"}
+                        </button>
+                      </div>
+                      {newResAffiliateApplied && (
+                        <div style={{ marginTop: "6px", padding: "6px 10px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "6px", fontSize: "0.8rem", color: "#a78bfa" }}>
+                          ✅ <strong>{newResAffiliateApplied.name}</strong> ({newResAffiliateApplied.referralCode}) — {newResAffiliateApplied.commissionType === "FLAT" ? `₹${newResAffiliateApplied.commissionValue}` : `${newResAffiliateApplied.commissionValue}%`} commission
+                          <button type="button" onClick={() => { setNewResAffiliateApplied(null); setNewResAffiliateCode(""); }} style={{ marginLeft: "8px", background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "0.8rem" }}>✕ Remove</button>
+                        </div>
+                      )}
                     </div>
                   </div>
 

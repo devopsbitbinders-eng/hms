@@ -5,7 +5,11 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const ownerId = searchParams.get("ownerId");
-    const whereFilter = ownerId ? { ownerId } : {};
+    const code = searchParams.get("code");
+
+    const whereFilter: any = {};
+    if (ownerId) whereFilter.ownerId = ownerId;
+    if (code) whereFilter.code = code.toUpperCase();
 
     const coupons = await prisma.coupon.findMany({
       where: whereFilter,
