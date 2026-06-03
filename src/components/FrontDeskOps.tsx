@@ -1003,6 +1003,7 @@ export default function FrontDeskOps({
                     borderBottom: idx < displayList.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
                     display: "flex",
                     alignItems: "center",
+                    flexWrap: "wrap",
                     gap: "16px",
                     background: isOverstay ? "rgba(239,68,68,0.04)" : undefined,
                     borderLeft: isOverstay ? "3px solid #ef4444" : undefined,
@@ -1026,8 +1027,8 @@ export default function FrontDeskOps({
                   </div>
 
                   {/* Info */}
-                  <div style={{ flexGrow: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: "600", fontSize: "0.95rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ flexGrow: 1, minWidth: "250px" }}>
+                    <div style={{ fontWeight: "600", fontSize: "0.95rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       {res.guestName}
                       {res.isGroup && <span style={{ fontSize: "0.7rem", background: "rgba(99,102,241,0.2)", color: "#818cf8", padding: "2px 8px", borderRadius: "20px" }}>Group</span>}
                       {isOverstay && (
@@ -1046,7 +1047,7 @@ export default function FrontDeskOps({
                     </div>
 
                       {activeTab === "history" && (
-                        <div style={{ marginTop: "6px", display: "flex", gap: "12px" }}>
+                        <div style={{ marginTop: "6px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
                           <span style={{ fontSize: "0.75rem", color: "#10b981", background: "rgba(16, 185, 129, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>Checked out on {res.checkOutTime ? new Date(res.checkOutTime).toLocaleDateString() : formatResDates(res).end}</span>
                           {res.paymentMethod && <span style={{ fontSize: "0.75rem", color: "#6366f1", background: "rgba(99, 102, 241, 0.1)", padding: "2px 6px", borderRadius: "4px" }}>Paid via {res.paymentMethod}</span>}
                         </div>
@@ -1060,13 +1061,13 @@ export default function FrontDeskOps({
                   </div>
 
                   {/* Bill Total */}
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ textAlign: "right", flexShrink: 0, marginLeft: "auto" }}>
                     <div style={{ fontWeight: "700", fontSize: "0.95rem", color: "#10b981" }}>{formatCurrency(bill.total)}</div>
                     <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>incl. GST</div>
                   </div>
 
                   {/* Actions */}
-                  <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", flexShrink: 0, justifyContent: "flex-end" }}>
                     <button
                       className="btn-secondary"
                       style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "rgba(56,189,248,0.15)", border: "1px solid rgba(56,189,248,0.4)", color: "#38bdf8" }}
