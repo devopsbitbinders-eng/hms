@@ -86,6 +86,25 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
     }
   };
 
+  const handleToggleCouponStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch("/api/coupons", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isActive: !currentStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast(`Coupon ${!currentStatus ? 'activated' : 'deactivated'} successfully!`, "success");
+        fetchData();
+      } else {
+        addToast(data.error || "Failed to update coupon", "error");
+      }
+    } catch (err: any) {
+      addToast(err.message || "Failed to update coupon", "error");
+    }
+  };
+
   const handleCreateAffiliate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -196,10 +215,24 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
                     <td style={{ padding: "8px" }}>{c.timesUsed}</td>
                     <td style={{ padding: "8px" }}>{c.validUntil ? new Date(c.validUntil).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : "No Expiry"}</td>
                     <td style={{ padding: "8px" }}>
-                      {c.isActive ? "🟢 Active" : "🔴 Inactive"}
-                      {c.validUntil && new Date(c.validUntil) < new Date() ? " (Expired)" : ""}
+                      <button 
+                        onClick={() => handleToggleCouponStatus(c.id, c.isActive)}
+                        style={{
+                          background: c.isActive ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                          color: c.isActive ? "#10b981" : "#ef4444",
+                          border: "none",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          fontWeight: "500",
+                          fontSize: "0.85rem"
+                        }}
+                      >
+                        {c.isActive ? "🟢 Active" : "🔴 Inactive"}
+                      </button>
+                      {c.validUntil && new Date(c.validUntil) < new Date() ? <div style={{ fontSize: "0.75rem", marginTop: "4px", color: "var(--text-muted)" }}>(Expired)</div> : null}
                     </td>
-                    <td style={{ padding: "8px", textAlign: "center" }}>
+                    <td style={{ padding: "8px", textAlign: "center", display: "flex", gap: "8px", justifyContent: "center" }}>
                       <button onClick={() => handleDeleteCoupon(c.id)} style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "16px" }} title="Delete Coupon">🗑️</button>
                     </td>
                   </tr>
