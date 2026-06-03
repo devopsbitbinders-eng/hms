@@ -59,25 +59,7 @@ export default function Header({
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft}>
-        {!isSuperAdmin && activeProp ? (
-          <div
-            className={styles.propertySelector}
-            style={{
-              cursor: "default",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontWeight: "600",
-              color: "#fff",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "8px",
-              padding: "10px 16px",
-            }}
-          >
-            {getPropertyEmoji(activeProp.type)} {activeProp.name}
-          </div>
-        ) : hasProperties ? (
+        {hasProperties ? (
           <select
             className={styles.propertySelector}
             value={activeProperty}

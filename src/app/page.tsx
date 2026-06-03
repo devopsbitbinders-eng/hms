@@ -1862,7 +1862,7 @@ export default function Dashboard() {
   };
 
   const stats = calculateOccupancyStats();
-  const hasProperties = Object.keys(propertyRooms).length > 0;
+  const hasProperties = propertiesList.length > 0 || Object.keys(propertyRooms).length > 0;
 
   if (loading) {
     return (
