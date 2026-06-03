@@ -407,8 +407,12 @@ export default function VisualGrid({
           })
           .map((res) => {
           // Map reservations to a continuous timeline (Morning = .0, Afternoon = .5)
-          let visualStart = (res.duration === 0 ? res.startIndex : res.startIndex + 0.5) - (timeScale === "daily" ? dateOffset : 0);
-          let visualEnd = (res.duration === 0 ? res.startIndex + 0.5 : res.startIndex + res.duration + 0.5) - (timeScale === "daily" ? dateOffset : 0);
+          let visualStart = timeScale === "daily" 
+            ? (res.duration === 0 ? res.startIndex : res.startIndex + 0.5) - dateOffset 
+            : res.startIndex;
+          let visualEnd = timeScale === "daily"
+            ? (res.duration === 0 ? res.startIndex + 0.5 : res.startIndex + res.duration + 0.5) - dateOffset
+            : res.startIndex + res.duration;
 
           if (res.status === "checked-out" && res.checkOutTime && timeScale === "daily") {
             const checkOutDate = new Date(res.checkOutTime);
@@ -424,8 +428,8 @@ export default function VisualGrid({
           // Calculate actual overlaps in continuous time
           const overlapIndex = reservations.filter(r => {
             if (r.roomId !== res.roomId || r.id === res.id) return false;
-            let rStart = r.duration === 0 ? r.startIndex : r.startIndex + 0.5;
-            let rEnd = r.duration === 0 ? r.startIndex + 0.5 : r.startIndex + r.duration + 0.5;
+            let rStart = timeScale === "daily" ? (r.duration === 0 ? r.startIndex : r.startIndex + 0.5) : r.startIndex;
+            let rEnd = timeScale === "daily" ? (r.duration === 0 ? r.startIndex + 0.5 : r.startIndex + r.duration + 0.5) : r.startIndex + r.duration;
             
             if (r.status === "checked-out" && r.checkOutTime && timeScale === "daily") {
               const rCheckOutDate = new Date(r.checkOutTime);
@@ -452,12 +456,27 @@ export default function VisualGrid({
           const marginLeftPercent = (leftShiftCells / cellSpan) * 100;
 
           // What is the true visual width in cells?
-          const visualWidthCells = Math.min(visualEnd, colCount) - visualStart;
+          const visualWidthCells = Math.min(visualEnd, colCount) - Math.max(visualStart, 0);
           const widthPercent = (visualWidthCells / cellSpan) * 100;
 
           // Determine visual styling
           const isMorningStart = leftShiftCells === 0;
           const isMorningEnd = (visualEnd - Math.floor(visualEnd)) === 0.5;
+          
+          // Overstay calculation
+          const todayIndex = Math.floor(
+            (new Date().setHours(0, 0, 0, 0) - new Date("2026-05-20").setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24)
+          );
+          let isOverstay = false;
+          if (res.status === "checked-in") {
+            if (timeScale === "hourly") {
+              const currentHour = new Date().getHours();
+              const currentSlotIndex = Math.floor((currentHour >= 8 ? currentHour - 8 : currentHour + 16) / 2);
+              isOverstay = (res.startIndex + res.duration) <= currentSlotIndex;
+            } else {
+              isOverstay = (res.startIndex + res.duration) < todayIndex;
+            }
+          }
 
           let blockStyle: React.CSSProperties = {
             gridRow: `${res.roomIndex + 2} / span 1`,
@@ -472,6 +491,7 @@ export default function VisualGrid({
             opacity: res.status === "checked-out" ? 0.6 : 1,
             borderLeft: !isMorningStart ? "2px dashed rgba(255,255,255,0.3)" : "none",
             borderRight: isMorningEnd ? "2px dashed rgba(255,255,255,0.3)" : "none",
+            boxShadow: isOverstay ? "0 0 10px rgba(239, 68, 68, 0.5)" : undefined,
           };
 
           return (
@@ -485,16 +505,19 @@ export default function VisualGrid({
             >
               <div className={styles.bookingCardTitle}>
                 {res.guestName}
+                {isOverstay && <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(239,68,68,0.3)", color: "#fca5a5", padding: "2px 6px", borderRadius: "10px", animation: "pulse 2s infinite" }}>⚠️ Overstay</span>}
                 {(() => {
                   if (!res.details) return null;
                   const upIdx = res.details.lastIndexOf("[Upgraded");
                   const swapIdx = res.details.lastIndexOf("[Swapped");
                   const moveIdx = res.details.lastIndexOf("[Room Change:");
-                  const maxIdx = Math.max(upIdx, swapIdx, moveIdx);
+                  const extIdx = res.details.lastIndexOf("[Stay Extended");
+                  const maxIdx = Math.max(upIdx, swapIdx, moveIdx, extIdx);
                   if (maxIdx === -1) return null;
                   if (maxIdx === upIdx) return <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(16,185,129,0.3)", color: "#a7f3d0", padding: "2px 6px", borderRadius: "10px" }}>⭐ Upgraded</span>;
                   if (maxIdx === swapIdx) return <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(236,72,153,0.3)", color: "#fbcfe8", padding: "2px 6px", borderRadius: "10px" }}>🔄 Swapped</span>;
                   if (maxIdx === moveIdx) return <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(99,102,241,0.3)", color: "#c7d2fe", padding: "2px 6px", borderRadius: "10px" }}>🔁 Moved</span>;
+                  if (maxIdx === extIdx && !isOverstay) return <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(56,189,248,0.3)", color: "#bae6fd", padding: "2px 6px", borderRadius: "10px" }}>📅 Extended</span>;
                   return null;
                 })()}
                 {res.isGroup && <span style={{ fontSize: "0.6rem", display: "block", color: "var(--text-secondary)" }}>🏢 Group: {res.groupName}</span>}
