@@ -1801,9 +1801,14 @@ export default function Dashboard() {
 
     setNewResBillingItems(prev => {
       const filtered = prev.filter(item => !item.name.startsWith("Room Tariff") && item.name !== "Room Rate");
-      return [{ name: `Room Tariff (${newResDuration} Nights @ ₹${targetPrice}/nt)`, amount: targetPrice * newResDuration, category: "room" }, ...filtered];
+      const isHourly = timeScale === "hourly";
+      const actualPrice = isHourly ? Math.round(targetPrice / 4) : targetPrice;
+      const label = isHourly 
+        ? `Room Tariff (${newResDuration} 2-Hr Slots @ ₹${actualPrice}/slot)`
+        : `Room Tariff (${newResDuration} Nights @ ₹${actualPrice}/nt)`;
+      return [{ name: label, amount: actualPrice * newResDuration, category: "room" }, ...filtered];
     });
-  }, [newResRoomId, newResMealPlan, newResDuration, currentRooms]);
+  }, [newResRoomId, newResMealPlan, newResDuration, currentRooms, timeScale]);
   const currentReservations = allReservations[activeProperty] || [];
   const currentProperty = propertiesList.find((p) => mapPropertyKey(p.name) === activeProperty);
   const activePropertyType = currentProperty?.type || "Premium Hotel";
