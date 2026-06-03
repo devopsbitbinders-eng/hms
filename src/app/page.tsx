@@ -93,7 +93,7 @@ export default function Dashboard() {
     if (currentUser.role === "General Manager") {
       // GM has all these defaults
       const defaults = [
-        "front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", 
+        "front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "promotions", 
         "attendance:approve-leave", "attendance:approve-swap", "attendance:manual-clock",
         "staff-management", "staff-management:add", "staff-management:edit-shift"
       ];
@@ -1461,7 +1461,7 @@ export default function Dashboard() {
               }
               return false;
             }
-            if (userObj.role === "General Manager") return ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "staff-management"].includes(permId);
+            if (userObj.role === "General Manager") return ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "staff-management", "promotions"].includes(permId);
             if (userObj.role === "Front Office Manager") return ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "staff-management"].includes(permId);
             if (userObj.role === "Receptionist" || userObj.role === "Front Office Clerk") return ["front-office", "front-desk", "housekeeping", "attendance"].includes(permId);
             if (userObj.role === "Housekeeping Supervisor") return ["housekeeping", "attendance"].includes(permId);
@@ -1469,7 +1469,7 @@ export default function Dashboard() {
             return false;
           };
 
-          const possibleMenus = ["front-office", "front-desk", "housekeeping", "finance", "reviews", "attendance", "staff-management", "channel-manager"];
+          const possibleMenus = ["front-office", "front-desk", "housekeeping", "finance", "reviews", "attendance", "staff-management", "channel-manager", "promotions"];
           let targetMenu = "front-office";
           
           if (data.user.role === "Housekeeping Supervisor" && hasPerm("housekeeping", data.user)) {
@@ -2437,8 +2437,8 @@ export default function Dashboard() {
                                     setEditingPermissionsUserId(user.id);
                                     let defaultPerms = user.permissions || [];
                                     if (!user.permissions) {
-                                      if (user.role === "Super Admin") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "attendance:approve-leave", "attendance:approve-swap", "attendance:manual-clock", "staff-management", "staff-management:add", "staff-management:edit-shift", "staff-management:delete", "settings"];
-                                      else if (user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "attendance:approve-leave", "attendance:approve-swap", "attendance:manual-clock", "staff-management", "staff-management:add", "staff-management:edit-shift"];
+                                      if (user.role === "Super Admin") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "attendance:approve-leave", "attendance:approve-swap", "attendance:manual-clock", "staff-management", "staff-management:add", "staff-management:edit-shift", "staff-management:delete", "settings", "promotions"];
+                                      else if (user.role === "General Manager") defaultPerms = ["front-office", "front-desk", "channel-manager", "housekeeping", "finance", "reviews", "attendance", "attendance:approve-leave", "attendance:approve-swap", "attendance:manual-clock", "staff-management", "staff-management:add", "staff-management:edit-shift", "promotions"];
                                       else if (user.role === "Front Office Manager") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance", "attendance:approve-leave", "attendance:approve-swap", "staff-management", "staff-management:edit-shift"];
                                       else if (user.role === "Receptionist") defaultPerms = ["front-office", "front-desk", "housekeeping", "reviews", "attendance"];
                                       else if (user.role === "Finance Executive") defaultPerms = ["front-office", "front-desk", "finance", "attendance"];
@@ -4626,6 +4626,7 @@ export default function Dashboard() {
                 { id: "housekeeping", label: "🧹 Housekeeping & Ops", subPerms: [{id: "housekeeping:status", label: "Update Room Status"}, {id: "housekeeping:assign", label: "Assign Tasks to Staff"}] },
                 { id: "kitchen", label: "🍳 Kitchen", subPerms: [{id: "kitchen:manage", label: "Manage Kitchen Orders"}, {id: "kitchen:add", label: "Add & Modify Menu Items"}] },
                 { id: "finance", label: "💰 Finance & GST", subPerms: [{id: "finance:reports", label: "View Financial Reports"}, {id: "finance:invoices", label: "Export Invoices & GST"}] },
+                { id: "promotions", label: "🎁 Promotions & Coupons", subPerms: [{id: "promotions:manage", label: "Create & Manage Deals"}] },
                 { id: "reviews", label: "⭐ Reviews", subPerms: [{id: "reviews:reply", label: "Reply to Guest Reviews"}, {id: "reviews:moderate", label: "Moderate & Hide Reviews"}] },
                 { 
                   id: "attendance", label: "⏱️ Attendance", 
