@@ -1727,6 +1727,33 @@ export default function Dashboard() {
     }
   };
 
+  // ACCOUNT ACTIONS
+  const handleLogout = () => {
+    localStorage.removeItem("aether_pms_user");
+    setCurrentUser(null);
+    window.location.reload();
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!currentUser) return;
+    if (!window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/users/${currentUser.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success || res.ok) {
+        addToast("Account deleted successfully.", "success");
+        handleLogout();
+      } else {
+        throw new Error(data.error || "Failed to delete account.");
+      }
+    } catch (err: any) {
+      addToast(err.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 4. WIPE DATABASE
   const handleClearDatabase = async () => {
     if (!confirm("🚨 DANGER: Are you sure you want to delete all database tables? This will delete all properties, rooms, bookings, and splits. This cannot be undone!")) {
@@ -2873,8 +2900,37 @@ export default function Dashboard() {
               )}
 
               {settingsSubTab === "system" && (
-              <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
-                <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "4px" }}>⚠️ Dangerous Database Actions</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "4px" }}>👤 Account Management</h2>
+                  
+                  <div style={{ backgroundColor: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "8px", padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ maxWidth: "70%" }}>
+                      <strong style={{ color: "#fff", display: "block", marginBottom: "4px" }}>Log Out Current Account</strong>
+                      <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: "1.4" }}>
+                        Securely end your current session. You will need your PIN to log back in.
+                      </span>
+                    </div>
+                    <button className="btn-secondary" style={{ padding: "10px 16px", whiteSpace: "nowrap" }} onClick={handleLogout}>
+                      Log Out Now
+                    </button>
+                  </div>
+
+                  <div style={{ backgroundColor: "rgba(239, 68, 68, 0.04)", border: "1px solid rgba(239, 68, 68, 0.15)", borderRadius: "8px", padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ maxWidth: "70%" }}>
+                      <strong style={{ color: "#ef4444", display: "block", marginBottom: "4px" }}>Delete My Account</strong>
+                      <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: "1.4" }}>
+                        Permanently delete your profile and revoke your access from the system.
+                      </span>
+                    </div>
+                    <button className="btn-secondary" style={{ borderColor: "rgba(239, 68, 68, 0.3)", color: "#f87171", padding: "10px 16px", whiteSpace: "nowrap" }} onClick={handleDeleteAccount}>
+                      Delete Account
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <h2 style={{ fontSize: "1.1rem", color: "#fff", fontWeight: "600", marginBottom: "4px" }}>⚠️ Dangerous Database Actions</h2>
                 
                 {(currentUser?.role === "Super Admin" || currentUser?.role === "Owner") ? (
                   <>
@@ -2913,6 +2969,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
+              </div>
               </div>
               )}
             </div>
