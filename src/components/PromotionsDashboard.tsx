@@ -151,7 +151,7 @@ export default function PromotionsDashboard({ currentUser, addToast }: { current
   const formStyle = { display: "flex", gap: "10px", flexWrap: "wrap" as "wrap", marginBottom: "20px", padding: "20px", background: "var(--bg-secondary)", borderRadius: "8px" };
   const inputStyle = { padding: "8px", borderRadius: "4px", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)" };
 
-  const canManage = currentUser?.role === "Super Admin" || currentUser?.role === "Owner" || currentUser?.role === "General Manager" || (currentUser?.permissions || []).includes("promotions:manage");
+  const canManage = currentUser?.role === "Super Admin" || currentUser?.role === "Owner" || (currentUser?.permissions || []).includes("promotions:manage");
 
   return (
     <div style={{ padding: "24px" }}>
