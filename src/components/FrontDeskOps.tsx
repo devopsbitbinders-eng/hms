@@ -183,8 +183,7 @@ export default function FrontDeskOps({
       currentReservations.filter(
         (r) =>
           r.status === "confirmed" &&
-          r.startIndex === todayIndex &&
-          r.bookingType !== "hourly"
+          (r.bookingType === "hourly" || r.startIndex === todayIndex)
       ),
     [currentReservations, todayIndex]
   );
@@ -199,8 +198,7 @@ export default function FrontDeskOps({
       currentReservations.filter(
         (r) =>
           r.status === "checked-in" &&
-          r.startIndex + r.duration === todayIndex &&
-          r.bookingType !== "hourly"
+          (r.bookingType === "hourly" || r.startIndex + r.duration === todayIndex)
       ),
     [currentReservations, todayIndex]
   );
