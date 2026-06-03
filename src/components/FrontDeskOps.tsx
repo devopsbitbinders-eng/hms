@@ -166,6 +166,12 @@ export default function FrontDeskOps({
   const [isApplyingUpgradeCoupon, setIsApplyingUpgradeCoupon] = useState(false);
   const [upgradeCouponData, setUpgradeCouponData] = useState<any>(null);
 
+  // Stay Extension state
+  const [extendRes, setExtendRes] = useState<Reservation | null>(null);
+  const [extendNights, setExtendNights] = useState(1);
+  const [isExtending, setIsExtending] = useState(false);
+  const [extendConflict, setExtendConflict] = useState<string | null>(null);
+
   // Food Order state
   const [foodOrderRes, setFoodOrderRes] = useState<Reservation | null>(null);
   const [kitchenMenu, setKitchenMenu] = useState<any[]>([]);
@@ -236,6 +242,76 @@ export default function FrontDeskOps({
 
   const getRoomForRes = (res: Reservation): Room | undefined =>
     currentRooms.find((r) => r.id === res.roomId);
+
+  // ── OVERSTAY DETECTION ───────────────────────────────────────────────────
+  const overstayGuests = useMemo(
+    () => currentReservations.filter(
+      (r) => r.status === "checked-in" && r.bookingType !== "hourly" && (r.startIndex + r.duration) < todayIndex
+    ),
+    [currentReservations, todayIndex]
+  );
+
+  // ── EXTEND STAY HANDLER ───────────────────────────────────────────────────
+  const handleExtendStay = async () => {
+    if (!extendRes || extendNights < 1) return;
+    setIsExtending(true);
+    setExtendConflict(null);
+    try {
+      const newEnd = extendRes.startIndex + extendRes.duration + extendNights;
+      // Conflict check: any other confirmed/checked-in reservation in that room overlapping the extension period
+      const conflict = currentReservations.find((r) =>
+        r.id !== extendRes.id &&
+        r.roomId === extendRes.roomId &&
+        r.status !== "checked-out" &&
+        Math.max(r.startIndex, extendRes.startIndex + extendRes.duration) < Math.min(r.startIndex + r.duration, newEnd)
+      );
+      if (conflict) {
+        setExtendConflict(`Room is already booked for ${conflict.guestName} during that period. Please choose fewer nights or change room.`);
+        setIsExtending(false);
+        return;
+      }
+
+      // Calculate extra charge
+      const roomItem = extendRes.billingItems.find(i => i.category === "room" && i.amount > 0);
+      const perNight = roomItem && extendRes.duration > 0 ? roomItem.amount / extendRes.duration : 0;
+      const extraCharge = perNight * extendNights;
+
+      // 1. Update duration in reservation
+      const resRes = await fetch(`/api/reservations/${extendRes.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          duration: extendRes.duration + extendNights,
+          details: (extendRes.details || "") + `\n[Stay Extended: +${extendNights} night(s) by Front Desk on ${new Date().toLocaleDateString("en-IN")}]`,
+        }),
+      });
+      const resData = await resRes.json();
+      if (!resData.success) throw new Error(resData.error || "Failed to update duration");
+
+      // 2. Add extra room charge to folio
+      if (extraCharge > 0) {
+        await fetch("/api/billing/folio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            reservationId: extendRes.id,
+            name: `Room Tariff (Extended Stay: ${extendNights} extra night${extendNights > 1 ? "s" : ""} @ ₹${perNight.toFixed(0)}/nt)`,
+            amount: extraCharge,
+            category: "room",
+          }),
+        });
+      }
+
+      addToast(`✅ Stay extended by ${extendNights} night(s) for ${extendRes.guestName}!${extraCharge > 0 ? ` Extra charge of ₹${extraCharge.toFixed(2)} added to folio.` : ""}`, "success");
+      setExtendRes(null);
+      setExtendNights(1);
+      await refreshData();
+    } catch (err: any) {
+      addToast(`❌ Extension failed: ${err.message}`, "error");
+    } finally {
+      setIsExtending(false);
+    }
+  };
 
   // ── SECTION 170 CGST-COMPLIANT BILL COMPUTATION ──────────────────────────
   const computeBill = (res: Reservation, summarizeFoodItem: boolean = false) => {
@@ -352,6 +428,30 @@ export default function FrontDeskOps({
       const diff = Math.abs(originalDuration - actualDuration);
       const timeStr = actualDuration < originalDuration ? `early by ${diff} night(s)` : `late by ${diff} night(s)`;
       updatedDetails += `\n[System: Guest checked out ${timeStr}. Duration auto-adjusted from ${originalDuration} to ${actualDuration} nights to free up calendar.]`;
+      
+      try {
+        const roomItem = checkoutRes.billingItems.find(i => i.category === "room" && i.amount > 0);
+        if (roomItem && originalDuration > 0) {
+          const perNight = roomItem.amount / originalDuration;
+          const chargeName = actualDuration > originalDuration 
+            ? `Room Tariff (Extended Stay: ${diff} extra nights)`
+            : `Early Checkout Refund (${diff} nights cancelled)`;
+          const chargeAmount = actualDuration > originalDuration ? (perNight * diff) : -(perNight * diff);
+          
+          await fetch("/api/billing/folio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reservationId: checkoutRes.id,
+              name: chargeName,
+              amount: chargeAmount,
+              category: "room"
+            })
+          });
+        }
+      } catch (e) {
+        console.error("Failed to post duration auto-adjustment charge", e);
+      }
     }
 
     if (summarizeFood) {
@@ -865,9 +965,22 @@ export default function FrontDeskOps({
           </div>
         ) : (
           <div>
+            {/* Overstay Alert Banner */}
+            {activeTab === "inhouse" && overstayGuests.length > 0 && (
+              <div style={{ margin: "16px 20px", padding: "12px 18px", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.4)", borderRadius: "10px", display: "flex", alignItems: "center", gap: "12px" }}>
+                <span style={{ fontSize: "1.5rem" }}>⚠️</span>
+                <div>
+                  <div style={{ fontWeight: "700", color: "#f87171", fontSize: "0.9rem" }}>Overstay Alert — {overstayGuests.length} guest{overstayGuests.length > 1 ? "s" : ""} past checkout date!</div>
+                  <div style={{ fontSize: "0.78rem", color: "rgba(248,113,113,0.8)", marginTop: "2px" }}>
+                    {overstayGuests.map(g => g.guestName).join(", ")} — Please process checkout or extend their stay.
+                  </div>
+                </div>
+              </div>
+            )}
             {displayList.map((res, idx) => {
               const room = getRoomForRes(res);
               const bill = computeBill(res);
+              const isOverstay = res.status === "checked-in" && res.bookingType !== "hourly" && (res.startIndex + res.duration) < todayIndex;
               return (
                 <div
                   key={res.id}
@@ -877,6 +990,8 @@ export default function FrontDeskOps({
                     display: "flex",
                     alignItems: "center",
                     gap: "16px",
+                    background: isOverstay ? "rgba(239,68,68,0.04)" : undefined,
+                    borderLeft: isOverstay ? "3px solid #ef4444" : undefined,
                   }}
                 >
                   {/* Avatar */}
@@ -884,7 +999,7 @@ export default function FrontDeskOps({
                     width: "42px",
                     height: "42px",
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                    background: isOverstay ? "linear-gradient(135deg, #ef4444, #b91c1c)" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -898,15 +1013,22 @@ export default function FrontDeskOps({
 
                   {/* Info */}
                   <div style={{ flexGrow: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: "600", fontSize: "0.95rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontWeight: "600", fontSize: "0.95rem", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: "8px" }}>
                       {res.guestName}
-                      {res.isGroup && <span style={{ marginLeft: "8px", fontSize: "0.7rem", background: "rgba(99,102,241,0.2)", color: "#818cf8", padding: "2px 8px", borderRadius: "20px" }}>Group</span>}
+                      {res.isGroup && <span style={{ fontSize: "0.7rem", background: "rgba(99,102,241,0.2)", color: "#818cf8", padding: "2px 8px", borderRadius: "20px" }}>Group</span>}
+                      {isOverstay && (
+                        <span style={{ fontSize: "0.65rem", background: "rgba(239,68,68,0.2)", color: "#f87171", padding: "2px 8px", borderRadius: "20px", border: "1px solid rgba(239,68,68,0.4)", fontWeight: "700", animation: "pulse 2s infinite" }}>⚠️ OVERSTAY</span>
+                      )}
+                      {res.details?.includes("[Stay Extended") && !isOverstay && (
+                        <span style={{ fontSize: "0.65rem", background: "rgba(16,185,129,0.2)", color: "#34d399", padding: "2px 8px", borderRadius: "20px", border: "1px solid rgba(16,185,129,0.3)" }}>📅 Extended</span>
+                      )}
                     </div>
                     <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "2px" }}>
                       {room ? `Room ${room.number} — ${room.name} (${room.type})` : "Room N/A"} · {res.numAdults || 1} Adult{(res.numAdults || 1) !== 1 ? "s" : ""}
                     </div>
-                    <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: "2px" }}>
+                    <div style={{ fontSize: "0.78rem", color: isOverstay ? "#f87171" : "var(--text-muted)", marginTop: "2px", fontWeight: isOverstay ? "600" : undefined }}>
                       {formatResDates(res).start} → {formatResDates(res).end} · {formatResDates(res).durationStr}
+                      {isOverstay && <> &nbsp;·&nbsp; <span style={{ color: "#f87171" }}>Overstayed by {todayIndex - (res.startIndex + res.duration)} night(s)</span></>}
                     </div>
 
                       {activeTab === "history" && (
@@ -955,6 +1077,13 @@ export default function FrontDeskOps({
                           onClick={() => setFolioRes(res)}
                         >
                           💰 Add Charge
+                        </button>
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", color: "#34d399" }}
+                          onClick={() => { setExtendRes(res); setExtendNights(1); setExtendConflict(null); }}
+                        >
+                          📅 Extend Stay
                         </button>
                         <button
                           className="btn-secondary"
@@ -1013,13 +1142,22 @@ export default function FrontDeskOps({
                       </button>
                     )}
                     {activeTab === "departures" && (
-                      <button
-                        className="btn-primary"
-                        style={{ padding: "8px 16px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
-                        onClick={() => setCheckoutRes(res)}
-                      >
-                        🏁 Check Out
-                      </button>
+                      <>
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: "8px 14px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.4)", color: "#34d399" }}
+                          onClick={() => { setExtendRes(res); setExtendNights(1); setExtendConflict(null); }}
+                        >
+                          📅 Extend Stay
+                        </button>
+                        <button
+                          className="btn-primary"
+                          style={{ padding: "8px 16px", fontSize: "0.8rem", whiteSpace: "nowrap", background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+                          onClick={() => setCheckoutRes(res)}
+                        >
+                          🏁 Check Out
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -1740,6 +1878,71 @@ export default function FrontDeskOps({
                   <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "8px" }}>Redirecting...</div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EXTEND STAY MODAL ─────────────────────────────── */}
+      {extendRes && (
+        <div className={styles.modalOverlay}>
+          <div className={`${styles.modalContent} glass-card`} style={{ maxWidth: "450px" }}>
+            <div className={styles.modalHeader}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "700" }}>📅 Extend Stay</h2>
+              <button className={styles.modalCloseBtn} onClick={() => setExtendRes(null)}>✕</button>
+            </div>
+            <div style={{ padding: "20px 0" }}>
+              <p style={{ color: "var(--text-secondary)", marginBottom: "20px", fontSize: "0.9rem" }}>
+                Guest: <strong>{extendRes.guestName}</strong><br/>
+                Room: {getRoomForRes(extendRes)?.number}
+              </p>
+              
+              {extendConflict && (
+                <div style={{ padding: "10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "8px", color: "#f87171", fontSize: "0.85rem", marginBottom: "20px" }}>
+                  ⚠️ {extendConflict}
+                </div>
+              )}
+
+              <label style={{ display: "block", marginBottom: "8px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>Additional Nights</label>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "24px" }}>
+                <button 
+                  className="btn-secondary" 
+                  style={{ padding: "8px 16px", fontSize: "1.2rem" }}
+                  onClick={() => setExtendNights(Math.max(1, extendNights - 1))}
+                  disabled={extendNights <= 1}
+                >-</button>
+                <div style={{ fontSize: "1.2rem", fontWeight: "700", width: "40px", textAlign: "center", color: "#fff" }}>{extendNights}</div>
+                <button 
+                  className="btn-secondary" 
+                  style={{ padding: "8px 16px", fontSize: "1.2rem" }}
+                  onClick={() => setExtendNights(extendNights + 1)}
+                >+</button>
+              </div>
+
+              <div style={{ padding: "12px", background: "rgba(255,255,255,0.03)", borderRadius: "8px", marginBottom: "24px", fontSize: "0.85rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", color: "var(--text-secondary)" }}>
+                  <span>Current Departure:</span>
+                  <span style={{ color: "#fff" }}>{new Date(new Date("2026-05-20").getTime() + (extendRes.startIndex + extendRes.duration) * 86400000).toLocaleDateString("en-IN")}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-secondary)", fontWeight: "600" }}>
+                  <span>New Departure:</span>
+                  <span style={{ color: "#10b981" }}>{new Date(new Date("2026-05-20").getTime() + (extendRes.startIndex + extendRes.duration + extendNights) * 86400000).toLocaleDateString("en-IN")}</span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button className="btn-secondary" style={{ flexGrow: 1, justifyContent: "center" }} onClick={() => setExtendRes(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="btn-primary"
+                  style={{ flexGrow: 2, justifyContent: "center", background: "linear-gradient(135deg, #10b981, #059669)", fontWeight: "700" }}
+                  onClick={handleExtendStay}
+                  disabled={isExtending || extendNights < 1}
+                >
+                  {isExtending ? "⏳ Extending..." : "📅 Confirm Extension"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
