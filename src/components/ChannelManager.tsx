@@ -72,6 +72,7 @@ export default function ChannelManager({
   const [simDuration, setSimDuration] = useState("2");
   const [simGuestName, setSimGuestName] = useState("");
   const [simulating, setSimulating] = useState(false);
+  const [autoSimulate, setAutoSimulate] = useState(false);
 
   // Custom Channel Registration State
   const [showCustomModal, setShowCustomModal] = useState(false);
@@ -276,6 +277,53 @@ END:VCALENDAR`);
       setSimRoomId(currentRooms[0].id || "");
     }
   }, [activePropertyId, currentRooms]);
+
+  // Background Real-Time Webhook Simulator (Polling)
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (autoSimulate && channels.some(c => c.connected)) {
+      interval = setInterval(async () => {
+        const connectedChannels = channels.filter(c => c.connected);
+        if (connectedChannels.length === 0) return;
+        const randomChannel = connectedChannels[Math.floor(Math.random() * connectedChannels.length)];
+        
+        const randomRoom = currentRooms[Math.floor(Math.random() * currentRooms.length)];
+        if (!randomRoom) return;
+
+        const names = ["John Doe", "Jane Smith", "Alice Johnson", "Bob Williams", "Charlie Brown", "David Lee", "Eve Davis", "Satoshi Nakamoto", "Kajal Agarwal", "Priya Sharma"];
+        const randomName = names[Math.floor(Math.random() * names.length)];
+
+        const randomDay = 20 + Math.floor(Math.random() * 10); // Between 20 and 29
+        const randomDate = `2026-05-${randomDay}`;
+        const randomDuration = Math.floor(Math.random() * 3) + 1; // 1 to 3 nights
+
+        try {
+          const res = await fetch("/api/channels/simulate-booking", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              channelName: randomChannel.name,
+              roomId: randomRoom.id,
+              startDateStr: randomDate,
+              duration: String(randomDuration),
+              guestName: `[Auto-Sync] ${randomName}`,
+              propertyId: activePropertyId
+            })
+          });
+          const data = await res.json();
+          if (res.status === 200 && data.success) {
+            refreshCalendar();
+            fetchLogs();
+          } else {
+            fetchLogs(); // refresh logs to show collision blocked msg
+          }
+        } catch (err) {
+          console.error("Auto simulator error:", err);
+        }
+      }, 15000); // Trigger a webhook every 15 seconds
+    }
+    return () => clearInterval(interval);
+  }, [autoSimulate, channels, currentRooms, activePropertyId, refreshCalendar]);
 
   // Custom Channels Handler
   const handleRegisterCustom = async (e: React.FormEvent) => {
@@ -1013,6 +1061,43 @@ END:VCALENDAR`);
                   {simulating ? "⏳ Processing Transaction handshake..." : "🔌 Simulate Inbound Webhook Booking ⚡"}
                 </button>
               </form>
+
+              {/* Real-Time Auto Polling Toggle */}
+              <div style={{ marginTop: "24px", padding: "16px", backgroundColor: "rgba(16, 185, 129, 0.05)", border: "1px dashed rgba(16, 185, 129, 0.3)", borderRadius: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <h4 style={{ fontSize: "0.95rem", fontWeight: "600", color: "#10b981", margin: "0 0 6px 0", display: "flex", alignItems: "center", gap: "6px" }}>
+                      📡 Real-Time OTA Webhook Polling
+                    </h4>
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: 0 }}>
+                      Continuously listen and fetch live updates from OTAs in the background.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!autoSimulate && !channels.some(c => c.connected)) {
+                        addToast("⚠️ Please connect at least one channel first!", "warning");
+                        return;
+                      }
+                      setAutoSimulate(!autoSimulate);
+                      if (!autoSimulate) addToast("📡 Real-time background syncing activated!", "success");
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      fontWeight: "700",
+                      fontSize: "0.8rem",
+                      cursor: "pointer",
+                      background: autoSimulate ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.15)",
+                      color: autoSimulate ? "#fca5a5" : "#6ee7b7",
+                      border: `1px solid ${autoSimulate ? "rgba(239, 68, 68, 0.4)" : "rgba(16, 185, 129, 0.4)"}`,
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    {autoSimulate ? "🛑 Stop Polling" : "▶️ Start Real-Time Sync"}
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* 6. Live Activity Sync Feed Terminal */}
