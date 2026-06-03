@@ -485,11 +485,14 @@ export default function VisualGrid({
             >
               <div className={styles.bookingCardTitle}>
                 {res.guestName}
+                {res.details && res.details.includes("[Upgraded") && (
+                  <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(16,185,129,0.3)", color: "#a7f3d0", padding: "2px 6px", borderRadius: "10px" }}>⭐ Upgraded</span>
+                )}
                 {res.details && res.details.includes("[Swapped") && (
                   <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(236,72,153,0.3)", color: "#fbcfe8", padding: "2px 6px", borderRadius: "10px" }}>🔄 Swapped</span>
                 )}
-                {res.details && res.details.includes("[Upgraded") && (
-                  <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(16,185,129,0.3)", color: "#a7f3d0", padding: "2px 6px", borderRadius: "10px" }}>⭐ Upgraded</span>
+                {res.details && res.details.includes("[Room Change:") && !res.details.includes("[Upgraded") && !res.details.includes("[Swapped") && (
+                  <span style={{ marginLeft: "6px", fontSize: "0.6rem", background: "rgba(99,102,241,0.3)", color: "#c7d2fe", padding: "2px 6px", borderRadius: "10px" }}>🔁 Moved</span>
                 )}
                 {res.isGroup && <span style={{ fontSize: "0.6rem", display: "block", color: "var(--text-secondary)" }}>🏢 Group: {res.groupName}</span>}
               </div>
